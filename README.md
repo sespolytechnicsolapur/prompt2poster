@@ -159,7 +159,7 @@ PORT=3001
 
 ---
 
-## 🗄️ Supabase Database & Storage Setup
+## 🗄️ Supabase Database & Storage Setup :
 
 1. Open your [Supabase Dashboard](https://supabase.com).
 2. Navigate to **SQL Editor** and run the contents of [`supabase/schema.sql`](file:///C:/Users/HP/.gemini/antigravity/scratch/Prompt2Poster/supabase/schema.sql).
