@@ -6,7 +6,7 @@ export function Footer() {
     <footer style={{
       marginTop: 'auto',
       borderTop: '1px solid var(--border-color)',
-      background: '#070A12',
+      background: 'var(--bg-card-solid)',
       padding: '3rem 0 2rem 0',
       color: 'var(--text-muted)'
     }}>
@@ -25,7 +25,7 @@ export function Footer() {
                 fontFamily: 'var(--font-heading)',
                 fontSize: '1.2rem',
                 fontWeight: 800,
-                color: '#FFFFFF'
+                color: 'var(--text-main)'
               }}>
                 Prompt2Poster
               </span>
@@ -37,7 +37,7 @@ export function Footer() {
 
           {/* Tech Architecture Stack */}
           <div>
-            <h4 style={{ color: '#FFFFFF', marginBottom: '1rem', fontSize: '0.95rem' }}>Technology Stack</h4>
+            <h4 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '0.95rem' }}>Technology Stack</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Cpu size={14} color="var(--accent-cyan)" />
@@ -56,7 +56,7 @@ export function Footer() {
 
           {/* Criteria Breakdown Summary */}
           <div>
-            <h4 style={{ color: '#FFFFFF', marginBottom: '1rem', fontSize: '0.95rem' }}>Official Evaluation Criteria</h4>
+            <h4 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '0.95rem' }}>Official Evaluation Criteria</h4>
             <div style={{ fontSize: '0.82rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', color: 'var(--text-dim)' }}>
               <div>• Relevance (20 pts)</div>
               <div>• Visual Hierarchy (15 pts)</div>

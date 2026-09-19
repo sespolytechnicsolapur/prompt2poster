@@ -20,7 +20,7 @@ export function PosterPreview({ src, alt, contestantName }) {
           position: 'relative',
           borderRadius: 'var(--radius-md)',
           overflow: 'hidden',
-          background: '#040711',
+          background: '#EEEEEE',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -41,7 +41,7 @@ export function PosterPreview({ src, alt, contestantName }) {
             position: 'absolute',
             bottom: '1rem',
             right: '1rem',
-            background: 'rgba(9, 13, 22, 0.8)',
+            background: '#000000',
             backdropFilter: 'blur(8px)',
             border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-md)',
@@ -66,7 +66,7 @@ export function PosterPreview({ src, alt, contestantName }) {
             position: 'fixed',
             inset: 0,
             zIndex: 999,
-            background: 'rgba(5, 8, 16, 0.92)',
+            background: 'var(--bg-card)',
             backdropFilter: 'blur(12px)',
             display: 'flex',
             alignItems: 'center',
@@ -88,11 +88,11 @@ export function PosterPreview({ src, alt, contestantName }) {
             />
             <div style={{
               textAlign: 'center',
-              color: 'var(--text-muted)',
+              color: 'var(--text-main)',
               fontSize: '0.9rem',
               marginTop: '0.75rem'
             }}>
-              Poster Submission by <strong style={{ color: '#FFFFFF' }}>{contestantName}</strong> (Click anywhere to close)
+              Poster Submission by <strong style={{ color: 'var(--text-main)' }}>{contestantName}</strong> (Click anywhere to close)
             </div>
           </div>
         </div>

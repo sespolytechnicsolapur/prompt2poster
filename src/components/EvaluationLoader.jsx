@@ -15,92 +15,80 @@ export function EvaluationLoader({ currentStage = 1 }) {
       textAlign: 'center',
       maxWidth: '620px',
       margin: '0 auto',
-      background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(9, 13, 22, 0.95) 100%)',
-      border: '1px solid var(--border-color-glow)',
-      boxShadow: 'var(--glow-primary)'
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
     }}>
       <div style={{
         width: '72px',
         height: '72px',
+        background: 'rgba(14, 165, 233, 0.1)',
+        border: '2px solid rgba(14, 165, 233, 0.2)',
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)',
-        border: '1px solid var(--accent-primary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         margin: '0 auto 1.5rem auto'
       }}>
-        <Loader2 size={36} color="var(--accent-cyan)" className="animate-pulse-glow" style={{ animation: 'spin 1.5s linear infinite' }} />
+        <Loader2 size={36} color="var(--accent-primary)" style={{ animation: 'spin 1.5s linear infinite' }} />
       </div>
 
-      <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>
+      <h3 style={{ fontSize: '1.8rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
         AI Judge Evaluating Poster
       </h3>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '2.5rem' }}>
+      <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '2.5rem', fontWeight: 500 }}>
         Evaluating submission against official 7 criteria (Score /100)
       </p>
 
       {/* Progress Stages */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'left' }}>
         {stages.map((stg) => {
           const Icon = stg.icon;
           const isDone = stg.id < currentStage;
           const isCurrent = stg.id === currentStage;
 
           return (
-            <div
+              <div
               key={stg.id}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1rem',
-                padding: '0.85rem 1.125rem',
+                padding: '1rem 1.25rem',
+                background: isCurrent ? 'var(--accent-primary)' : isDone ? 'var(--bg-main)' : 'rgba(255,255,255,0.5)',
+                border: `1px solid ${isCurrent ? 'transparent' : 'var(--border-color)'}`,
                 borderRadius: 'var(--radius-md)',
-                background: isCurrent
-                  ? 'rgba(99, 102, 241, 0.15)'
-                  : isDone
-                  ? 'rgba(16, 185, 129, 0.08)'
-                  : 'rgba(255, 255, 255, 0.02)',
-                border: `1px solid ${
-                  isCurrent
-                    ? 'rgba(99, 102, 241, 0.4)'
-                    : isDone
-                    ? 'rgba(16, 185, 129, 0.2)'
-                    : 'transparent'
-                }`,
-                transition: 'all var(--transition-fast)'
+                boxShadow: isCurrent ? '0 4px 14px 0 rgba(14, 165, 233, 0.39)' : 'none',
+                transform: isCurrent ? 'scale(1.02)' : 'scale(1)',
+                transition: 'all 0.3s ease'
               }}
             >
               <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: isDone
-                  ? 'var(--accent-emerald)'
-                  : isCurrent
-                  ? 'var(--accent-primary)'
-                  : 'rgba(255,255,255,0.05)',
-                color: '#FFFFFF',
-                fontSize: '0.8rem',
-                fontWeight: 700
+                background: isDone ? 'var(--accent-emerald)' : isCurrent ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)',
+                color: (isDone || isCurrent) ? '#FFFFFF' : 'var(--text-muted)',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                borderRadius: '50%',
+                flexShrink: 0,
               }}>
                 {isDone ? <CheckCircle2 size={16} /> : stg.id}
               </div>
 
               <span style={{
-                fontSize: '0.92rem',
-                fontWeight: isCurrent ? 600 : 400,
-                color: isCurrent ? '#FFFFFF' : isDone ? 'var(--accent-emerald)' : 'var(--text-dim)'
+                fontSize: '0.95rem',
+                fontWeight: isCurrent ? 700 : 500,
+                color: isCurrent ? '#FFFFFF' : 'var(--text-main)',
               }}>
                 {stg.label}
               </span>
 
               {isCurrent && (
                 <div style={{ marginLeft: 'auto' }}>
-                  <Loader2 size={16} color="var(--accent-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader2 size={18} color="#FFFFFF" style={{ animation: 'spin 1s linear infinite' }} />
                 </div>
               )}
             </div>
