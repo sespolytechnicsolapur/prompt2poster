@@ -17,11 +17,7 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
         </div>
 
         <h1 style={{
-<<<<<<< HEAD
           fontSize: 'clamp(2.2rem, 6vw, 3.5rem)',
-=======
-          fontSize: '3.5rem',
->>>>>>> e076d304ba2a5ee71d23b04eddb7b9f2f76b8846
           fontWeight: 800,
           lineHeight: '1.1',
           marginBottom: '1.25rem',

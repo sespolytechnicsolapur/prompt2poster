@@ -11,13 +11,33 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 
+// Helper to extract and sanitize all configured Groq API keys (comma-separated support)
+function getGroqApiKeys() {
+  const raw = process.env.GROQ_API_KEY || '';
+  return raw
+    .split(',')
+    .map(k => k.trim())
+    .filter(k => k && k.startsWith('gsk_'));
+}
+
+// Mask key for secure logging (e.g. gsk_2s8...p41y)
+function maskKey(key) {
+  if (!key || key.length < 12) return '***';
+  return `${key.slice(0, 7)}...${key.slice(-4)}`;
+}
+
+let keyCounter = 0;
+
 // Health Check
 app.get('/api/health', (req, res) => {
+  const keys = getGroqApiKeys();
   res.json({
     status: 'ok',
     service: 'Prompt2Poster Evaluation Engine',
     timestamp: new Date().toISOString(),
-    groqKeyConfigured: !!process.env.GROQ_API_KEY
+    groqKeyConfigured: keys.length > 0,
+    groqKeyCount: keys.length,
+    activeKeyRotationIndex: keys.length > 0 ? (keyCounter % keys.length) : 0
   });
 });
 
@@ -174,12 +194,12 @@ app.post('/api/evaluate', async (req, res) => {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const keys = getGroqApiKeys();
     const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
     // If GROQ API KEY is missing, return structured fallback evaluation
-    if (!apiKey || !apiKey.startsWith('gsk_')) {
-      console.warn(`[Prompt2Poster AI Engine] GROQ_API_KEY not set or invalid format. Using local fallback for: ${contestantName}`);
+    if (keys.length === 0) {
+      console.warn(`[Prompt2Poster AI Engine] No valid GROQ_API_KEY configured. Using local fallback for: ${contestantName}`);
       const fallbackResult = generateFallbackEvaluation(topic, contestantName);
       return res.json({
         success: true,
@@ -190,7 +210,7 @@ app.post('/api/evaluate', async (req, res) => {
     }
 
     const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
-    console.log(`[Prompt2Poster AI Engine] Requesting Groq AI (${model}) evaluation for topic: "${topic}" | image attached: ${hasImage}`);
+    console.log(`[Prompt2Poster AI Engine] Requesting Groq AI (${model}) evaluation for topic: "${topic}" | image attached: ${hasImage} | pool size: ${keys.length} key(s)`);
 
     // Prepare content payload for Groq Vision API
     const userContent = [];
@@ -208,40 +228,68 @@ app.post('/api/evaluate', async (req, res) => {
       console.warn('[Prompt2Poster AI Engine] WARNING: No valid image data URL received — model will evaluate without image!');
     }
 
-    // Call Groq API
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userContent }
-        ],
-        temperature: 0.2,
-        max_tokens: 8192,
-        // NOTE: response_format json_object is intentionally omitted —
-        // it conflicts with vision (image) inputs on Groq and produces empty/bad responses.
-        // reasoning_effort:none disables Qwen3 thinking mode so output is pure JSON.
-        reasoning_effort: 'none'
-      })
-    });
+    // Determine starting key index via round-robin
+    const startIdx = keyCounter % keys.length;
+    keyCounter = (keyCounter + 1) % keys.length;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Groq API Error]:', response.status, errorText);
-      // Surface the real error to the client — do NOT silently fake scores
+    let successfulData = null;
+    let keyUsedMask = null;
+    let lastError = null;
+
+    // Iterate through available keys starting from the round-robin index
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const activeIdx = (startIdx + attempt) % keys.length;
+      const currentKey = keys[activeIdx];
+      const masked = maskKey(currentKey);
+
+      console.log(`[Prompt2Poster AI Engine] [Attempt ${attempt + 1}/${keys.length}] Using Groq Key #${activeIdx + 1} (${masked}) for contestant: ${contestantName}`);
+
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: userContent }
+            ],
+            temperature: 0.2,
+            max_tokens: 8192,
+            reasoning_effort: 'none'
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`[Groq API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${response.status}: ${errorText.slice(0, 200)}`);
+          lastError = `HTTP ${response.status}: ${errorText}`;
+          // Continue to next key in pool on error (rate limit, quota, invalid key, etc.)
+          continue;
+        }
+
+        const data = await response.json();
+        successfulData = data;
+        keyUsedMask = masked;
+        break; // Request succeeded!
+      } catch (fetchErr) {
+        console.warn(`[Groq Network Warning] Key #${activeIdx + 1} (${masked}) network error: ${fetchErr.message}`);
+        lastError = fetchErr.message;
+      }
+    }
+
+    if (!successfulData) {
+      console.error(`[Prompt2Poster AI Engine] All ${keys.length} Groq API key(s) failed.`);
       return res.status(502).json({
         success: false,
-        error: `Groq API error (HTTP ${response.status}): ${errorText}`
+        error: `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
       });
     }
 
-    const data = await response.json();
-    const contentText = data.choices[0]?.message?.content;
+    const contentText = successfulData.choices[0]?.message?.content;
 
     if (!contentText) {
       throw new Error('Empty response content from Groq API');
@@ -271,7 +319,8 @@ app.post('/api/evaluate', async (req, res) => {
     return res.json({
       success: true,
       evaluation: parsedResult,
-      source: 'groq-api'
+      source: 'groq-api',
+      keyUsed: keyUsedMask
     });
 
   } catch (error) {
@@ -285,8 +334,11 @@ app.post('/api/evaluate', async (req, res) => {
 });
 
 app.listen(PORT, () => {
+  const keys = getGroqApiKeys();
   console.log(`====================================================`);
   console.log(` Prompt2Poster Backend Engine running on port ${PORT}`);
   console.log(` API Endpoint: http://localhost:${PORT}/api/evaluate`);
+  console.log(` Configured Groq Keys (${keys.length}): ${keys.length > 0 ? keys.map(maskKey).join(', ') : 'None (Fallback Mode)'}`);
+  console.log(` Round-Robin Rotation & Failover: ${keys.length > 1 ? 'ACTIVE (' + keys.length + ' keys)' : (keys.length === 1 ? 'Single Key' : 'Disabled')}`);
   console.log(`====================================================`);
 });
