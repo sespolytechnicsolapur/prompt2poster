@@ -71,6 +71,7 @@ export default function App() {
         toggleTheme={toggleTheme}
       />
 
+<<<<<<< HEAD
       <main
   className="container"
   style={{
@@ -79,6 +80,9 @@ export default function App() {
     paddingBottom: '3.5rem'
   }}
 >
+=======
+      <main className="container" style={{ flex: 1, paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+>>>>>>> e076d304ba2a5ee71d23b04eddb7b9f2f76b8846
         {activePage === 'home' && (
           <Home
             activeTopic={activeTopic}

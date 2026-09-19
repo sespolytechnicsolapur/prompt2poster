@@ -241,6 +241,7 @@ button, input, select, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
 }
+<<<<<<< HEAD
 
 /* =========================================================
    RESPONSIVE NAVBAR
@@ -683,3 +684,5 @@ button {
     padding-bottom: 2.5rem !important;
   }
 }
+=======
+>>>>>>> e076d304ba2a5ee71d23b04eddb7b9f2f76b8846
