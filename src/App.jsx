@@ -9,7 +9,7 @@ import { SubmissionDetails } from './pages/SubmissionDetails';
 import { TopicManagement } from './pages/TopicManagement';
 
 export default function App() {
-  const [activePage, setActivePage] = useState('home'); // 'home' | 'submit' | 'leaderboard' | 'details' | 'organizer'
+  const [activePage, setActivePage] = useState('home');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [activeSubmissionRecord, setActiveSubmissionRecord] = useState(null);
 
@@ -19,7 +19,14 @@ export default function App() {
     loadingTopic,
     loadingLeaderboard,
     refreshLeaderboard,
-    changeTopic
+    changeTopic,
+    // Pool
+    topicPool,
+    loadingPool,
+    poolMode,
+    changePoolMode,
+    addTopic,
+    removeTopic,
   } = useCompetition();
 
   const handleSelectSubmission = (id, record = null) => {
@@ -61,6 +68,8 @@ export default function App() {
           <Submit
             activeTopic={activeTopic}
             loadingTopic={loadingTopic}
+            topicPool={topicPool}
+            poolMode={poolMode}
             onSubmissionSuccess={handleSubmissionSuccess}
           />
         )}
@@ -86,6 +95,12 @@ export default function App() {
           <TopicManagement
             activeTopic={activeTopic}
             onUpdateTopic={changeTopic}
+            topicPool={topicPool}
+            loadingPool={loadingPool}
+            poolMode={poolMode}
+            onChangePoolMode={changePoolMode}
+            onAddTopic={addTopic}
+            onRemoveTopic={removeTopic}
           />
         )}
       </main>
