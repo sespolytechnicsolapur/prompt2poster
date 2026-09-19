@@ -1,6 +1,6 @@
 import React from 'react';
-import { Trophy, ChevronRight, Image as ImageIcon } from 'lucide-react';
-import { formatDate, getRankBadgeColor, getScoreColor } from '../utils/formatters';
+import { ChevronRight } from 'lucide-react';
+import { formatDate } from '../utils/formatters';
 
 export function LeaderboardRow({ submission, rank, onSelect }) {
   const isTopThree = rank <= 3;
@@ -8,33 +8,25 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
   return (
     <tr
       onClick={() => onSelect(submission.id)}
-      style={{
-        cursor: 'pointer',
-        borderBottom: '1px solid var(--border-color)',
-        transition: 'background var(--transition-fast)'
-      }}
-      className="leaderboard-row-hover"
+      className="interactive-row"
     >
-      {/* Rank Column */}
-      <td style={{ padding: '1.125rem 1.25rem', whiteSpace: 'nowrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className={`badge ${getRankBadgeColor(rank)}`} style={{ minWidth: '38px', justifyContent: 'center' }}>
-            {isTopThree && <Trophy size={13} />}
-            #{rank}
-          </span>
-        </div>
+      {/* Rank */}
+      <td style={{ width: '56px', whiteSpace: 'nowrap' }}>
+        <span className={`badge badge-mono ${isTopThree ? (rank === 1 ? 'badge-amber' : 'badge-primary') : ''}`}>
+          #{rank.toString().padStart(2, '0')}
+        </span>
       </td>
 
-      {/* Contestant Name */}
-      <td style={{ padding: '1.125rem 1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+      {/* Contestant */}
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: 'var(--radius-md)',
+            width: '32px',
+            height: '32px',
+            borderRadius: 'var(--radius-xs)',
             overflow: 'hidden',
-            background: '#EEEEEE',
-            border: '2px solid var(--border-color)',
+            backgroundColor: 'var(--bg-surface-hover)',
+            border: '1px solid var(--border-color)',
             flexShrink: 0
           }}>
             <img
@@ -44,21 +36,21 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
             />
           </div>
           <div>
-            <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.02rem' }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
               {submission.contestant_name}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-              Submitted {formatDate(submission.created_at)}
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {formatDate(submission.created_at)}
             </div>
           </div>
         </div>
       </td>
 
       {/* Topic */}
-      <td style={{ padding: '1.125rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+      <td style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
         <span style={{
           display: 'inline-block',
-          maxWidth: '280px',
+          maxWidth: '320px',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis'
@@ -68,34 +60,24 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
       </td>
 
       {/* Score */}
-      <td style={{ padding: '1.125rem 1.25rem', textAlign: 'right' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.25rem' }}>
-          <span style={{
-            fontSize: '1.4rem',
-            fontWeight: 800,
-            fontFamily: 'var(--font-heading)',
-            color: getScoreColor(submission.total_score)
+      <td style={{ textAlign: 'right' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.2rem' }}>
+          <span className="mono-num" style={{
+            fontSize: '1rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)'
           }}>
             {submission.total_score}
           </span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>/ 100</span>
+          <span className="mono-num" style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+            /100
+          </span>
         </div>
       </td>
 
-      {/* View Details Action */}
-      <td style={{ padding: '1.125rem 1.25rem', textAlign: 'center', width: '60px' }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          background: '#EEEEEE',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--accent-primary)'
-        }}>
-          <ChevronRight size={18} />
-        </div>
+      {/* Action */}
+      <td style={{ width: '36px', textAlign: 'center' }}>
+        <ChevronRight size={14} style={{ color: 'var(--text-dim)' }} />
       </td>
     </tr>
   );

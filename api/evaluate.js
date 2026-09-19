@@ -88,6 +88,23 @@ CRITICAL RULES:
 - All reason fields and issues must reference specific, concrete, actually observed poster content.
 `;
 
+// Helper to extract and sanitize all configured Groq API keys (comma-separated support)
+function getGroqApiKeys() {
+  const raw = process.env.GROQ_API_KEY || '';
+  return raw
+    .split(',')
+    .map(k => k.trim())
+    .filter(k => k && k.startsWith('gsk_'));
+}
+
+// Mask key for secure logging
+function maskKey(key) {
+  if (!key || key.length < 12) return '***';
+  return `${key.slice(0, 7)}...${key.slice(-4)}`;
+}
+
+let keyCounter = 0;
+
 export default async function handler(req, res) {
   // Only allow POST
   if (req.method !== 'POST') {
@@ -101,10 +118,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const keys = getGroqApiKeys();
     const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
-    if (!apiKey || !apiKey.startsWith('gsk_')) {
+    if (keys.length === 0) {
       return res.status(500).json({
         success: false,
         error: 'GROQ_API_KEY is not configured in Vercel environment variables.'
@@ -112,7 +129,7 @@ export default async function handler(req, res) {
     }
 
     const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
-    console.log(`[Evaluate] model=${model} topic="${topic}" image=${hasImage}`);
+    console.log(`[Evaluate] model=${model} topic="${topic}" image=${hasImage} poolSize=${keys.length}`);
 
     const userContent = [
       {
@@ -125,35 +142,65 @@ export default async function handler(req, res) {
       userContent.push({ type: 'image_url', image_url: { url: posterDataUrl } });
     }
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userContent }
-        ],
-        temperature: 0.2,
-        max_tokens: 8192,
-        reasoning_effort: 'none'
-      })
-    });
+    // Determine starting key index via round-robin
+    const startIdx = keyCounter % keys.length;
+    keyCounter = (keyCounter + 1) % keys.length;
 
-    if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
-      console.error('[Groq API Error]:', groqResponse.status, errorText);
+    let successfulData = null;
+    let keyUsedMask = null;
+    let lastError = null;
+
+    // Try keys in pool starting from round-robin index
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const activeIdx = (startIdx + attempt) % keys.length;
+      const currentKey = keys[activeIdx];
+      const masked = maskKey(currentKey);
+
+      try {
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentKey}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: userContent }
+            ],
+            temperature: 0.2,
+            max_tokens: 8192,
+            reasoning_effort: 'none'
+          })
+        });
+
+        if (!groqResponse.ok) {
+          const errorText = await groqResponse.text();
+          console.warn(`[Groq API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${groqResponse.status}: ${errorText.slice(0, 200)}`);
+          lastError = `HTTP ${groqResponse.status}: ${errorText}`;
+          continue;
+        }
+
+        const data = await groqResponse.json();
+        successfulData = data;
+        keyUsedMask = masked;
+        break;
+      } catch (fetchErr) {
+        console.warn(`[Groq Network Warning] Key #${activeIdx + 1} (${masked}): ${fetchErr.message}`);
+        lastError = fetchErr.message;
+      }
+    }
+
+    if (!successfulData) {
+      console.error(`[Evaluate] All ${keys.length} Groq API key(s) failed.`);
       return res.status(502).json({
         success: false,
-        error: `Groq API error (HTTP ${groqResponse.status}): ${errorText}`
+        error: `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
       });
     }
 
-    const data = await groqResponse.json();
-    const contentText = data.choices[0]?.message?.content;
+    const contentText = successfulData.choices[0]?.message?.content;
 
     if (!contentText) {
       return res.status(500).json({ success: false, error: 'Empty response from Groq API' });
@@ -176,7 +223,12 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true, evaluation: parsedResult, source: 'groq-api' });
+    return res.status(200).json({
+      success: true,
+      evaluation: parsedResult,
+      source: 'groq-api',
+      keyUsed: keyUsedMask
+    });
 
   } catch (error) {
     console.error('[Evaluate Handler Error]:', error.message);

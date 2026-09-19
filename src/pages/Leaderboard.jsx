@@ -1,45 +1,41 @@
 import React from 'react';
 import { LeaderboardTable } from '../components/LeaderboardTable';
-import { Trophy, Award, RefreshCw } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 
 export function Leaderboard({ leaderboard, loading, onSelectSubmission, onRefresh }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fade-in">
-      {/* Header Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Header */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '1.5rem'
+        gap: '1rem'
       }}>
         <div>
-          <div className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>
-            <Trophy size={13} /> Official Judging Standings
-          </div>
-          <h1 style={{ fontSize: '2.4rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>
-            Live Competition Leaderboard
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+            Leaderboard
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
-            Real-time contestant rankings calculated automatically from transparent 7-criteria AI evaluation.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            Real-time contestant standings compiled across the 7 evaluation benchmarks.
           </p>
         </div>
 
         <button
           onClick={onRefresh}
-          className="btn btn-secondary"
-          style={{ fontSize: '0.88rem' }}
+          className="btn btn-secondary btn-sm"
           disabled={loading}
         >
-          <RefreshCw size={16} className={loading ? 'animate-pulse-glow' : ''} />
-          <span>Refresh Standings</span>
+          <RotateCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          <span>Refresh</span>
         </button>
       </div>
 
       {/* Leaderboard Table Container */}
       {loading ? (
-        <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          Loading real-time Supabase leaderboard records...
+        <div className="surface-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          Loading standings...
         </div>
       ) : (
         <LeaderboardTable

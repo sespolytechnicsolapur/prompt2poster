@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Target, Save, CheckCircle, Settings, Lock, ShieldCheck,
-  Eye, EyeOff, AlertCircle, Plus, Trash2, List, Shuffle,
-  ToggleLeft, ToggleRight, Hash,
+  Lock, Eye, EyeOff, AlertCircle, Plus, Trash2, Shuffle,
+  Check, ToggleLeft, ToggleRight
 } from 'lucide-react';
 
 // ── Password Gate ────────────────────────────────────────────────────────────
@@ -12,7 +11,6 @@ function PasswordGate({ onUnlock }) {
   const [input, setInput]     = useState('');
   const [showPw, setShowPw]   = useState(false);
   const [error, setError]     = useState(false);
-  const [shaking, setShaking] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,43 +18,88 @@ function PasswordGate({ onUnlock }) {
       onUnlock();
     } else {
       setError(true);
-      setShaking(true);
       setInput('');
-      setTimeout(() => setShaking(false), 600);
       setTimeout(() => setError(false), 3000);
     }
   };
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '460px', margin: '4rem auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
-      <div style={{ width: '72px', height: '72px', border: '2px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
-        <Lock size={32} />
+    <div style={{ maxWidth: '380px', margin: '3rem auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+          Organizer Access
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: 0 }}>
+          Enter the administrative password to manage competition topics.
+        </p>
       </div>
-      <div style={{ textAlign: 'center' }}>
-        <div className="badge badge-cyan" style={{ marginBottom: '0.75rem' }}><ShieldCheck size={13} /> Restricted Access</div>
-        <h1 style={{ fontSize: '2.5rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.04em' }}>Organizer Area</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>Enter the organizer password to manage competition topics.</p>
-      </div>
-      <form onSubmit={handleSubmit} className="glass-panel" style={{ width: '100%', padding: '2rem', animation: shaking ? 'shake 0.5s cubic-bezier(.36,.07,.19,.97)' : undefined }}>
-        <div className="form-group" style={{ marginBottom: error ? '0.75rem' : '1.5rem' }}>
-          <label className="form-label"><Lock size={15} color="var(--accent-primary)" /><span>Organizer Password</span></label>
+
+      <form onSubmit={handleSubmit} className="surface-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="form-group">
+          <label className="form-label">
+            <Lock size={13} />
+            <span>Password</span>
+          </label>
           <div style={{ position: 'relative' }}>
-            <input type={showPw ? 'text' : 'password'} placeholder="Enter password..." value={input} onChange={(e) => { setInput(e.target.value); setError(false); }} className="form-input" autoFocus style={{ paddingRight: '3rem', borderColor: error ? 'var(--accent-rose)' : undefined }} />
-            <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', padding: 0, display: 'flex', alignItems: 'center' }} tabIndex={-1} aria-label={showPw ? 'Hide' : 'Show'}>
-              {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+            <input
+              type={showPw ? 'text' : 'password'}
+              placeholder="Enter password..."
+              value={input}
+              onChange={(e) => { setInput(e.target.value); setError(false); }}
+              className="form-input"
+              autoFocus
+              style={{ paddingRight: '2.5rem' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              style={{
+                position: 'absolute',
+                right: '0.65rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              tabIndex={-1}
+              aria-label={showPw ? 'Hide' : 'Show'}
+            >
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </div>
+
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-inverse)', background: 'var(--accent-primary)', border: '2px solid var(--border-color)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1.25rem', fontWeight: 'bold' }}>
-            <AlertCircle size={16} /><span>Incorrect password. Please try again.</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'var(--status-danger)',
+            backgroundColor: 'var(--status-danger-subtle)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.75rem',
+            borderRadius: 'var(--radius-sm)'
+          }}>
+            <AlertCircle size={14} />
+            <span>Incorrect password.</span>
           </div>
         )}
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', fontSize: '1rem' }} disabled={!input.trim()}>
-          <ShieldCheck size={18} /><span>Unlock</span>
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{ width: '100%', padding: '0.55rem' }}
+          disabled={!input.trim()}
+        >
+          <span>Unlock</span>
         </button>
       </form>
-      <style>{`@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}`}</style>
     </div>
   );
 }
@@ -75,8 +118,8 @@ function SingleTopicTab({ activeTopic, onUpdateTopic }) {
     setSuccessMsg(null);
     try {
       await onUpdateTopic(topicTitle, description);
-      setSuccessMsg('Active competition topic updated successfully!');
-      setTimeout(() => setSuccessMsg(null), 4000);
+      setSuccessMsg('Active competition topic updated.');
+      setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err) {
       console.error('Failed to set active topic:', err);
     } finally {
@@ -85,23 +128,61 @@ function SingleTopicTab({ activeTopic, onUpdateTopic }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel" style={{ padding: '2.5rem' }}>
+    <form onSubmit={handleSubmit} className="surface-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="form-group">
-        <label className="form-label"><Target size={16} color="var(--accent-amber)" /><span>Active Competition Topic Title *</span></label>
-        <input type="text" placeholder="e.g. Artificial Intelligence for Ocean Conservation & Marine Life" value={topicTitle} onChange={(e) => setTopicTitle(e.target.value)} className="form-input" required />
+        <label className="form-label">
+          <span>Active Topic Title *</span>
+        </label>
+        <input
+          type="text"
+          placeholder="e.g. Artificial Intelligence for Ocean Conservation"
+          value={topicTitle}
+          onChange={(e) => setTopicTitle(e.target.value)}
+          className="form-input"
+          required
+        />
       </div>
+
       <div className="form-group">
-        <label className="form-label"><span>Topic Description & Judging Directives</span></label>
-        <textarea rows={4} placeholder="Provide context or key visual guidelines for contestants..." value={description} onChange={(e) => setDescription(e.target.value)} className="form-input" style={{ resize: 'vertical' }} />
+        <label className="form-label">
+          <span>Topic Description & Directives</span>
+        </label>
+        <textarea
+          rows={3}
+          placeholder="Provide context or guidelines for contestants and the AI judge..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="form-input"
+          style={{ resize: 'vertical' }}
+        />
       </div>
+
       {successMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--text-inverse)', background: 'var(--accent-emerald)', padding: '0.85rem 1.125rem', border: '2px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
-          <CheckCircle size={18} /><span>{successMsg}</span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: 'var(--status-success)',
+          backgroundColor: 'var(--status-success-subtle)',
+          padding: '0.5rem 0.75rem',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.8125rem',
+          border: '1px solid rgba(16, 185, 129, 0.2)'
+        }}>
+          <Check size={14} />
+          <span>{successMsg}</span>
         </div>
       )}
-      <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', fontSize: '1rem' }} disabled={isSaving || !topicTitle.trim()}>
-        <Save size={18} /><span>{isSaving ? 'Updating Topic...' : 'Save & Publish Active Topic'}</span>
-      </button>
+
+      <div>
+        <button
+          type="submit"
+          className="btn btn-primary btn-sm"
+          disabled={isSaving || !topicTitle.trim()}
+        >
+          <span>{isSaving ? 'Updating...' : 'Publish Active Topic'}</span>
+        </button>
+      </div>
     </form>
   );
 }
@@ -122,7 +203,7 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
       await onAddTopic(newTitle.trim(), newDesc.trim());
       setNewTitle('');
       setNewDesc('');
-      setSuccessMsg('Topic added to pool!');
+      setSuccessMsg('Topic added to pool.');
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err) {
       console.error('Failed to add topic:', err);
@@ -138,57 +219,123 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      {/* Add new topic form */}
-      <form onSubmit={handleAdd} className="glass-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', letterSpacing: '-0.02em' }}>
-          <Plus size={18} /> Add Topic to Pool
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Add Topic Form */}
+      <form onSubmit={handleAdd} className="surface-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          Add Topic to Pool
         </h3>
+
         <div className="form-group">
-          <label className="form-label"><Target size={15} color="var(--accent-amber)" /><span>Topic Title *</span></label>
-          <input type="text" placeholder="e.g. AI in Healthcare: Diagnostics & Precision Medicine" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="form-input" required />
+          <label className="form-label">
+            <span>Topic Title *</span>
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. AI in Healthcare: Precision Medicine"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="form-input"
+            required
+          />
         </div>
+
         <div className="form-group">
-          <label className="form-label"><span>Description (optional)</span></label>
-          <input type="text" placeholder="Brief context for contestants and the AI judge..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="form-input" />
+          <label className="form-label">
+            <span>Description (optional)</span>
+          </label>
+          <input
+            type="text"
+            placeholder="Brief context for contestants and AI judge..."
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+            className="form-input"
+          />
         </div>
+
         {successMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-inverse)', background: 'var(--accent-emerald)', border: '2px solid var(--border-color)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1rem', fontWeight: 'bold' }}>
-            <CheckCircle size={15} /><span>{successMsg}</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'var(--status-success)',
+            backgroundColor: 'var(--status-success-subtle)',
+            padding: '0.45rem 0.75rem',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.75rem'
+          }}>
+            <Check size={13} />
+            <span>{successMsg}</span>
           </div>
         )}
-        <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 1.5rem' }} disabled={isAdding || !newTitle.trim()}>
-          <Plus size={16} /><span>{isAdding ? 'Adding...' : 'Add to Pool'}</span>
-        </button>
+
+        <div>
+          <button
+            type="submit"
+            className="btn btn-secondary btn-sm"
+            disabled={isAdding || !newTitle.trim()}
+          >
+            <Plus size={13} />
+            <span>{isAdding ? 'Adding...' : 'Add to Pool'}</span>
+          </button>
+        </div>
       </form>
 
-      {/* Pool list */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', letterSpacing: '-0.02em' }}>
-            <List size={18} /> Current Pool
+      {/* Pool List */}
+      <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Configured Pool Topics
           </h3>
-          <span className="badge badge-cyan"><Hash size={12} /> {topicPool.length} topic{topicPool.length !== 1 ? 's' : ''}</span>
+          <span className="badge badge-mono">{topicPool.length} topics</span>
         </div>
 
         {loadingPool ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading pool…</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading pool...</p>
         ) : topicPool.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-dim)' }}>
-            <Shuffle size={32} style={{ marginBottom: '0.75rem', opacity: 0.4 }} />
-            <p style={{ fontSize: '0.9rem' }}>No topics in pool yet. Add some above!</p>
-          </div>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.8125rem', textAlign: 'center', margin: '1rem 0' }}>
+            No topics in pool. Add topics above to enable multi-topic assignment.
+          </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {topicPool.map((t, idx) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 1.25rem', background: 'var(--bg-main)', border: '2px solid var(--border-color)' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-inverse)', background: 'var(--text-main)', border: '2px solid var(--border-color)', padding: '0.2rem 0.55rem', minWidth: '2.2rem', textAlign: 'center', flexShrink: 0, marginTop: '2px' }}>{idx + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '1rem', marginBottom: t.description ? '0.25rem' : 0, wordBreak: 'break-word' }}>{t.topic_title}</p>
-                  {t.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, wordBreak: 'break-word' }}>{t.description}</p>}
+              <div
+                key={t.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  padding: '0.65rem 0.85rem',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                  <span className="mono-num" style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>
+                    {(idx + 1).toString().padStart(2, '0')}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {t.topic_title}
+                    </div>
+                    {t.description && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                        {t.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button onClick={() => handleRemove(t.id)} disabled={deletingId === t.id} style={{ background: 'var(--bg-card)', border: '2px solid var(--border-color)', padding: '0.4rem 0.6rem', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', flexShrink: 0, opacity: deletingId === t.id ? 0.5 : 1 }} title="Remove topic">
-                  <Trash2 size={15} />
+
+                <button
+                  onClick={() => handleRemove(t.id)}
+                  disabled={deletingId === t.id}
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--status-danger)', padding: '0.25rem', height: '24px', width: '24px' }}
+                  title="Remove topic"
+                >
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -200,73 +347,76 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
-export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loadingPool, poolMode, onChangePoolMode, onAddTopic, onRemoveTopic }) {
+export function TopicManagement({
+  activeTopic,
+  onUpdateTopic,
+  topicPool,
+  loadingPool,
+  poolMode,
+  onChangePoolMode,
+  onAddTopic,
+  onRemoveTopic
+}) {
   const [unlocked, setUnlocked] = useState(!ORGANIZER_PASSWORD);
-  const [activeTab, setActiveTab] = useState('single'); // 'single' | 'pool'
+  const [activeTab, setActiveTab] = useState('single');
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
 
   const isPool = poolMode === 'pool';
 
-  const tabStyle = (tab) => ({
-    padding: '0.6rem 1.25rem',
-    border: '2px solid',
-    borderColor: activeTab === tab ? 'var(--text-main)' : 'var(--border-color)',
-    background: activeTab === tab ? 'var(--text-main)' : 'transparent',
-    color: activeTab === tab ? 'var(--text-inverse)' : 'var(--text-main)',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.4rem',
-    transition: 'all 0.15s ease',
-  });
-
   return (
-    <div style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fade-in">
+    <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-          <div className="badge badge-cyan"><Settings size={13} /> Organizer Control Panel</div>
-          <div className="badge badge-emerald"><ShieldCheck size={13} /> Authenticated</div>
-        </div>
-        <h1 style={{ fontSize: '3rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Competition Topic Management</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
-          Set a single active topic, or build a pool of topics for random contestant assignment.
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+          Topic Management
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+          Configure the active single topic or maintain a pool for random assignment.
         </p>
       </div>
 
-      {/* Pool Mode Toggle */}
-      <div className="glass-panel" style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Assignment Mode Card */}
+      <div className="surface-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
-          <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.2rem', letterSpacing: '-0.02em' }}>Assignment Mode</p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            Assignment Mode: {isPool ? 'Random Pool' : 'Single Active Topic'}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {isPool
-              ? 'Pool mode — contestants receive a random topic from the pool based on their name.'
-              : 'Single mode — all contestants see the same active topic.'}
-          </p>
+              ? 'Contestants are assigned a topic deterministically from the pool based on their name.'
+              : 'All contestants submit against the single active competition topic.'}
+          </div>
         </div>
+
         <button
           onClick={() => onChangePoolMode(isPool ? 'single' : 'pool')}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1.2rem', border: '2px solid', borderColor: isPool ? 'var(--text-main)' : 'var(--border-color)', background: isPool ? 'var(--text-main)' : 'var(--bg-main)', color: isPool ? 'var(--text-inverse)' : 'var(--text-main)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.1s ease', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+          className="btn btn-secondary btn-sm"
         >
-          {isPool ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-          {isPool ? 'Pool Mode ON' : 'Single Mode'}
+          {isPool ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+          <span>Switch to {isPool ? 'Single Mode' : 'Pool Mode'}</span>
         </button>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.75rem' }}>
-        <button style={tabStyle('single')} onClick={() => setActiveTab('single')}>
-          <Target size={15} /> Single Topic
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+        <button
+          className={`btn btn-sm ${activeTab === 'single' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveTab('single')}
+        >
+          Single Topic
         </button>
-        <button style={tabStyle('pool')} onClick={() => setActiveTab('pool')}>
-          <Shuffle size={15} /> Topic Pool {topicPool.length > 0 && <span style={{ background: activeTab === 'pool' ? 'var(--text-inverse)' : 'var(--text-main)', color: activeTab === 'pool' ? 'var(--text-main)' : 'var(--text-inverse)', padding: '0 0.45rem', fontSize: '0.78rem' }}>{topicPool.length}</span>}
+        <button
+          className={`btn btn-sm ${activeTab === 'pool' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveTab('pool')}
+        >
+          <Shuffle size={12} />
+          <span>Topic Pool</span>
+          {topicPool.length > 0 && <span className="mono-num" style={{ opacity: 0.7 }}>({topicPool.length})</span>}
         </button>
       </div>
 
-      {/* Tab content */}
+      {/* Tab Content */}
       {activeTab === 'single' && <SingleTopicTab activeTopic={activeTopic} onUpdateTopic={onUpdateTopic} />}
       {activeTab === 'pool'   && <TopicPoolTab topicPool={topicPool} loadingPool={loadingPool} onAddTopic={onAddTopic} onRemoveTopic={onRemoveTopic} />}
     </div>

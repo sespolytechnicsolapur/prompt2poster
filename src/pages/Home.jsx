@@ -29,7 +29,7 @@ export function Home({
       }}
       className="animate-fade-in"
     >
-      {/* Hero Section */}
+      {/* HERO SECTION */}
       <section
         style={{
           textAlign: 'center',
@@ -78,7 +78,7 @@ export function Home({
           communication.
         </p>
 
-        {/* Hero CTAs */}
+        {/* HERO BUTTONS */}
         <div
           style={{
             display: 'flex',
@@ -95,9 +95,9 @@ export function Home({
               padding: '0.85rem 2rem'
             }}
           >
-            <Upload size={20} />
-            <span>Submit Your Poster</span>
-            <ArrowRight size={18} />
+            <Upload size={18} />
+            <span>Submit Poster</span>
+            <ArrowRight size={16} />
           </button>
 
           <button
@@ -117,7 +117,7 @@ export function Home({
         </div>
       </section>
 
-      {/* Active Competition Topic Section */}
+      {/* ACTIVE COMPETITION TOPIC */}
       <section>
         <TopicBanner
           topic={activeTopic}
@@ -126,7 +126,7 @@ export function Home({
         />
       </section>
 
-      {/* Official 7 Criteria Grid */}
+      {/* OFFICIAL 7 CRITERIA */}
       <section>
         <div
           style={{
@@ -144,7 +144,7 @@ export function Home({
 
           <h2
             style={{
-              fontSize: '2.5rem',
+              fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
               color: 'var(--text-main)',
               letterSpacing: '-0.04em'
             }}
@@ -175,9 +175,9 @@ export function Home({
           {CRITERIA_DEFINITIONS.map((crit) => (
             <div
               key={crit.key}
-              className="glass-panel"
+              className="surface-card"
               style={{
-                padding: '1.5rem',
+                padding: '1rem 1.125rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between'
@@ -248,7 +248,7 @@ export function Home({
         </div>
       </section>
 
-      {/* Featured Leaderboard Preview */}
+      {/* FEATURED LEADERBOARD */}
       {topThree.length > 0 && (
         <section>
           <div
@@ -272,7 +272,7 @@ export function Home({
 
               <h2
                 style={{
-                  fontSize: '2.5rem',
+                  fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
                   color: 'var(--text-main)',
                   letterSpacing: '-0.04em'
                 }}
@@ -283,8 +283,7 @@ export function Home({
 
             <button
               onClick={() => onNavigate('leaderboard')}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.88rem' }}
+              className="btn btn-secondary btn-sm"
             >
               <span>
                 View Full Leaderboard ({leaderboard.length})
