@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   Upload,
   Trophy,
-  Sliders,
   Layers,
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 
 export function Navbar({
@@ -22,11 +22,11 @@ export function Navbar({
   const navItems = [
     { id: 'home', label: 'Overview', icon: Layers },
     { id: 'submit', label: 'Submit Poster', icon: Upload },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-    { id: 'organizer', label: 'Topics', icon: Sliders },
+    { id: 'leaderboard', label: 'Live Leaderboard', icon: Trophy },
+    { id: 'organizer', label: 'Organizer Topics', icon: Settings }
   ];
 
-  const handleNav = (page) => {
+  const handleNavigation = (page) => {
     setActivePage(page);
     setMobileOpen(false);
   };
@@ -36,81 +36,116 @@ export function Navbar({
       <div className="container">
         <div className="navbar-inner">
 
-          {/* Brand Mark */}
-          <div className="navbar-brand-group" onClick={() => handleNav('home')}>
+          {/* BRAND */}
+          <div
+            className="navbar-brand-group"
+            onClick={() => handleNavigation('home')}
+          >
             <div className="navbar-logo-symbol">
-              <span style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>P2P</span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-mono)'
+                }}
+              >
+                P2P
+              </span>
             </div>
-            <span className="navbar-brand-name">Prompt2Poster</span>
-            <span className="badge badge-mono" style={{ fontSize: '10px', padding: '0.15rem 0.4rem' }}>v1.0</span>
+
+            <div className="navbar-subtitle">
+              AI Evaluation Platform
+            </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="desktop-nav navbar-nav-links">
+          {/* DESKTOP NAVIGATION */}
+          <nav className="desktop-nav">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activePage === item.id;
+
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleNav(item.id)}
-                  className={`nav-link-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavigation(item.id)}
+                  className={`btn ${
+                    isActive ? 'btn-primary' : 'btn-secondary'
+                  } navbar-nav-button`}
                 >
-                  <Icon size={14} strokeWidth={1.75} />
+                  <Icon size={16} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
 
-            <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }} />
+            <div className="navbar-divider" />
 
-            {/* Theme Toggle */}
+            {/* THEME */}
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost btn-sm"
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              style={{ width: '30px', height: '30px', padding: 0 }}
+              className="btn btn-secondary navbar-theme-button"
               aria-label="Toggle theme"
+              title={`Switch to ${
+                theme === 'dark' ? 'light' : 'dark'
+              } mode`}
             >
-              {theme === 'dark' ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
+              {theme === 'dark' ? (
+                <Sun size={18} />
+              ) : (
+                <Moon size={18} />
+              )}
             </button>
           </nav>
 
-          {/* Mobile Actions */}
-          <div className="mobile-toggle-btn" style={{ alignItems: 'center', gap: '0.5rem' }}>
+          {/* MOBILE CONTROLS */}
+          <div className="mobile-nav-controls">
+
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost btn-sm"
-              style={{ width: '32px', height: '32px', padding: 0 }}
+              className="mobile-icon-button"
               aria-label="Toggle theme"
+              title="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+              {theme === 'dark' ? (
+                <Sun size={19} />
+              ) : (
+                <Moon size={19} />
+              )}
             </button>
+
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="btn btn-secondary btn-sm"
-              style={{ width: '32px', height: '32px', padding: 0 }}
+              className="mobile-icon-button"
               aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+              {mobileOpen ? (
+                <X size={22} />
+              ) : (
+                <Menu size={22} />
+              )}
             </button>
+
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="mobile-drawer">
+        <div className="mobile-menu">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
+
             return (
               <button
                 key={item.id}
-                onClick={() => handleNav(item.id)}
-                className={`mobile-drawer-btn ${isActive ? 'active' : ''}`}
+                onClick={() => handleNavigation(item.id)}
+                className={`mobile-menu-item ${
+                  isActive ? 'mobile-menu-active' : ''
+                }`}
               >
-                <Icon size={15} strokeWidth={1.75} />
+                <Icon size={18} />
                 <span>{item.label}</span>
               </button>
             );

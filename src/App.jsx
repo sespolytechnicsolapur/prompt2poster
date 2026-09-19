@@ -16,8 +16,14 @@ export default function App() {
   // Theme State
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('prompt2poster_theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+    if (saved) {
+      return saved;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   });
 
   useEffect(() => {
@@ -26,7 +32,7 @@ export default function App() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const {
@@ -36,7 +42,8 @@ export default function App() {
     loadingLeaderboard,
     refreshLeaderboard,
     changeTopic,
-    // Pool
+
+    // Topic Pool
     topicPool,
     loadingPool,
     poolMode,
@@ -45,50 +52,70 @@ export default function App() {
     removeTopic,
   } = useCompetition();
 
+  // Select a submission
   const handleSelectSubmission = (id, record = null) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(record);
     setActivePage('details');
   };
 
+  // Submission completed successfully
   const handleSubmissionSuccess = (savedRecord) => {
     refreshLeaderboard();
+
     setSelectedSubmissionId(savedRecord.id);
     setActiveSubmissionRecord(savedRecord);
+
     setActivePage('details');
   };
 
+  // Navigation handler
+  const handleNavigation = (page) => {
+    setActivePage(page);
+
+    if (page !== 'details') {
+      setSelectedSubmissionId(null);
+      setActiveSubmissionRecord(null);
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
+      {/* NAVBAR */}
       <Navbar
         activePage={activePage}
-        setActivePage={(page) => {
-          setActivePage(page);
-          if (page !== 'details') setSelectedSubmissionId(null);
-        }}
+        setActivePage={handleNavigation}
         activeTopicTitle={activeTopic?.topic_title}
         theme={theme}
         toggleTheme={toggleTheme}
       />
 
+      {/* MAIN CONTENT */}
       <main
         className="container"
         style={{
           flex: 1,
           paddingTop: '2.5rem',
-          paddingBottom: '3.5rem'
+          paddingBottom: '3.5rem',
         }}
       >
+        {/* HOME */}
         {activePage === 'home' && (
           <Home
             activeTopic={activeTopic}
-            loadingTopic={loadingTopic}
             leaderboard={leaderboard}
             onNavigate={setActivePage}
             onSelectSubmission={handleSelectSubmission}
           />
         )}
 
+        {/* SUBMIT */}
         {activePage === 'submit' && (
           <Submit
             activeTopic={activeTopic}
@@ -99,6 +126,7 @@ export default function App() {
           />
         )}
 
+        {/* LEADERBOARD */}
         {activePage === 'leaderboard' && (
           <Leaderboard
             leaderboard={leaderboard}
@@ -108,14 +136,16 @@ export default function App() {
           />
         )}
 
+        {/* SUBMISSION DETAILS */}
         {activePage === 'details' && (
           <SubmissionDetails
             submissionId={selectedSubmissionId}
             initialRecord={activeSubmissionRecord}
-            onBack={() => setActivePage('leaderboard')}
+            onBack={() => handleNavigation('leaderboard')}
           />
         )}
 
+        {/* ORGANIZER */}
         {activePage === 'organizer' && (
           <TopicManagement
             activeTopic={activeTopic}
@@ -130,6 +160,7 @@ export default function App() {
         )}
       </main>
 
+      {/* FOOTER */}
       <Footer />
     </div>
   );
