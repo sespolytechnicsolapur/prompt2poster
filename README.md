@@ -25,7 +25,7 @@ During competition events, contestants receive a poster topic on-site, design th
 * **Backend Proxy Layer**: Node.js, Express, CORS, Dotenv
 * **Database**: Supabase PostgreSQL
 * **Cloud Storage**: Supabase Storage (`posters` bucket)
-* **AI Evaluation Engine**: Groq API (`llama-3.2-11b-vision-preview` / `qwen-2.5-32b`)
+* **AI Evaluation Engine**: Groq API ('qwen/qwen3.8-27b`)
 
 ---
 
