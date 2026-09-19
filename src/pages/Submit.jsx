@@ -99,7 +99,7 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
     <div style={{ maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fade-in">
       {/* Header */}
       <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: '2.4rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>Contestant Poster Submission</h1>
+        <h1 style={{ fontSize: '3rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.04em' }}>Contestant Poster Submission</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
           Submit your completed poster for automated AI judging against the 7 official competition criteria.
         </p>
@@ -107,7 +107,7 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
 
       {/* Pool mode notice */}
       {isPoolMode && poolHasTopics && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1.25rem', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', color: '#C4B5FD' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: '#FAFAFA', border: '2px solid var(--border-color)', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 'bold' }}>
           <Shuffle size={16} style={{ flexShrink: 0 }} />
           <span>Your topic will be randomly assigned from a pool of {topicPool.length} topics based on your name.</span>
         </div>
@@ -118,7 +118,7 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
         assignedTopic ? (
           <TopicBanner topic={assignedTopic} loading={false} />
         ) : (
-          <div style={{ padding: '1.25rem 1.5rem', background: 'rgba(99,102,241,0.08)', border: '1px dashed rgba(99,102,241,0.3)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>
+          <div style={{ padding: '2rem', background: '#FAFAFA', border: '2px dashed var(--border-color)', color: 'var(--text-main)', fontSize: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
             {poolHasTopics
               ? 'Enter your name (at least 2 characters) to reveal your assigned topic.'
               : 'No topics in the pool yet. Contact an organizer.'}
@@ -135,7 +135,7 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
         <form onSubmit={handleSubmit} className="glass-panel" style={{ padding: '2.5rem' }}>
           {/* Contestant Name */}
           <div className="form-group">
-            <label className="form-label"><User size={16} color="var(--accent-cyan)" /><span>Contestant Name / Team ID *</span></label>
+            <label className="form-label"><User size={16} /><span>Contestant Name / Team ID *</span></label>
             <input
               type="text"
               placeholder="e.g. Alex Mercer / Team Alpha-7"
@@ -154,15 +154,15 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
           {/* Poster upload */}
           <div className="form-group">
             <label className="form-label" style={{ marginBottom: '0.75rem' }}>
-              <Upload size={16} color="var(--accent-primary)" /><span>Upload Poster Image *</span>
+              <Upload size={16} /><span>Upload Poster Image *</span>
             </label>
             <PosterUploader selectedFile={selectedFile} setSelectedFile={setSelectedFile} previewUrl={previewUrl} setPreviewUrl={setPreviewUrl} />
           </div>
 
           {/* Error */}
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--accent-rose)', background: 'rgba(244,63,94,0.12)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(244,63,94,0.3)', marginBottom: '1.5rem' }}>
-              <AlertTriangle size={20} /><span style={{ fontSize: '0.9rem' }}>{error}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-inverse)', background: 'var(--accent-primary)', padding: '1rem', border: '2px solid var(--border-color)', marginBottom: '1.5rem', fontWeight: 'bold' }}>
+              <AlertTriangle size={20} /><span style={{ fontSize: '0.95rem' }}>{error}</span>
             </div>
           )}
 
@@ -171,7 +171,7 @@ export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = '
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ width: '100%', padding: '1rem', fontSize: '1.1rem', borderRadius: 'var(--radius-md)' }}
+              style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
               disabled={
                 !contestantName || !selectedFile ||
                 (isPoolMode && poolHasTopics && (!nameIsLongEnough || !assignedTopic))

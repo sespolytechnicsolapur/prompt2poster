@@ -17,7 +17,7 @@ export function Leaderboard({ leaderboard, loading, onSelectSubmission, onRefres
           <div className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>
             <Trophy size={13} /> Official Judging Standings
           </div>
-          <h1 style={{ fontSize: '2.4rem', color: '#FFFFFF' }}>
+          <h1 style={{ fontSize: '2.4rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>
             Live Competition Leaderboard
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>

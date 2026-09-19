@@ -29,26 +29,26 @@ function PasswordGate({ onUnlock }) {
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '460px', margin: '4rem auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
-      <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(6,182,212,0.15) 100%)', border: '1px solid rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(99,102,241,0.2)' }}>
-        <Lock size={32} color="var(--accent-primary)" />
+      <div style={{ width: '72px', height: '72px', border: '2px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+        <Lock size={32} />
       </div>
       <div style={{ textAlign: 'center' }}>
         <div className="badge badge-cyan" style={{ marginBottom: '0.75rem' }}><ShieldCheck size={13} /> Restricted Access</div>
-        <h1 style={{ fontSize: '1.9rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>Organizer Area</h1>
+        <h1 style={{ fontSize: '2.5rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.04em' }}>Organizer Area</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>Enter the organizer password to manage competition topics.</p>
       </div>
       <form onSubmit={handleSubmit} className="glass-panel" style={{ width: '100%', padding: '2rem', animation: shaking ? 'shake 0.5s cubic-bezier(.36,.07,.19,.97)' : undefined }}>
         <div className="form-group" style={{ marginBottom: error ? '0.75rem' : '1.5rem' }}>
           <label className="form-label"><Lock size={15} color="var(--accent-primary)" /><span>Organizer Password</span></label>
           <div style={{ position: 'relative' }}>
-            <input type={showPw ? 'text' : 'password'} placeholder="Enter password..." value={input} onChange={(e) => { setInput(e.target.value); setError(false); }} className="form-input" autoFocus style={{ paddingRight: '3rem', borderColor: error ? 'var(--accent-rose)' : undefined, boxShadow: error ? '0 0 0 3px rgba(244,63,94,0.2)' : undefined }} />
+            <input type={showPw ? 'text' : 'password'} placeholder="Enter password..." value={input} onChange={(e) => { setInput(e.target.value); setError(false); }} className="form-input" autoFocus style={{ paddingRight: '3rem', borderColor: error ? 'var(--accent-rose)' : undefined }} />
             <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', padding: 0, display: 'flex', alignItems: 'center' }} tabIndex={-1} aria-label={showPw ? 'Hide' : 'Show'}>
               {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
           </div>
         </div>
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-rose)', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.25)', borderRadius: 'var(--radius-md)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-inverse)', background: 'var(--accent-primary)', border: '2px solid var(--border-color)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1.25rem', fontWeight: 'bold' }}>
             <AlertCircle size={16} /><span>Incorrect password. Please try again.</span>
           </div>
         )}
@@ -95,7 +95,7 @@ function SingleTopicTab({ activeTopic, onUpdateTopic }) {
         <textarea rows={4} placeholder="Provide context or key visual guidelines for contestants..." value={description} onChange={(e) => setDescription(e.target.value)} className="form-input" style={{ resize: 'vertical' }} />
       </div>
       {successMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--accent-emerald)', background: 'rgba(16,185,129,0.12)', padding: '0.85rem 1.125rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16,185,129,0.3)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--text-inverse)', background: 'var(--accent-emerald)', padding: '0.85rem 1.125rem', border: '2px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
           <CheckCircle size={18} /><span>{successMsg}</span>
         </div>
       )}
@@ -141,8 +141,8 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Add new topic form */}
       <form onSubmit={handleAdd} className="glass-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Plus size={18} color="var(--accent-emerald)" /> Add Topic to Pool
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', letterSpacing: '-0.02em' }}>
+          <Plus size={18} /> Add Topic to Pool
         </h3>
         <div className="form-group">
           <label className="form-label"><Target size={15} color="var(--accent-amber)" /><span>Topic Title *</span></label>
@@ -153,7 +153,7 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
           <input type="text" placeholder="Brief context for contestants and the AI judge..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="form-input" />
         </div>
         {successMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-emerald)', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 'var(--radius-md)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-inverse)', background: 'var(--accent-emerald)', border: '2px solid var(--border-color)', padding: '0.65rem 0.9rem', fontSize: '0.875rem', marginBottom: '1rem', fontWeight: 'bold' }}>
             <CheckCircle size={15} /><span>{successMsg}</span>
           </div>
         )}
@@ -165,8 +165,8 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
       {/* Pool list */}
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <List size={18} color="var(--accent-cyan)" /> Current Pool
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', letterSpacing: '-0.02em' }}>
+            <List size={18} /> Current Pool
           </h3>
           <span className="badge badge-cyan"><Hash size={12} /> {topicPool.length} topic{topicPool.length !== 1 ? 's' : ''}</span>
         </div>
@@ -181,13 +181,13 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {topicPool.map((t, idx) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-cyan)', background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: '6px', padding: '0.2rem 0.55rem', minWidth: '2rem', textAlign: 'center', flexShrink: 0, marginTop: '2px' }}>{idx + 1}</span>
+              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 1.25rem', background: 'var(--bg-main)', border: '2px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-inverse)', background: 'var(--text-main)', border: '2px solid var(--border-color)', padding: '0.2rem 0.55rem', minWidth: '2.2rem', textAlign: 'center', flexShrink: 0, marginTop: '2px' }}>{idx + 1}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem', marginBottom: t.description ? '0.25rem' : 0, wordBreak: 'break-word' }}>{t.topic_title}</p>
-                  {t.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5, wordBreak: 'break-word' }}>{t.description}</p>}
+                  <p style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '1rem', marginBottom: t.description ? '0.25rem' : 0, wordBreak: 'break-word' }}>{t.topic_title}</p>
+                  {t.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, wordBreak: 'break-word' }}>{t.description}</p>}
                 </div>
-                <button onClick={() => handleRemove(t.id)} disabled={deletingId === t.id} style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.25)', borderRadius: 'var(--radius-sm)', padding: '0.4rem 0.6rem', cursor: 'pointer', color: 'var(--accent-rose)', display: 'flex', alignItems: 'center', flexShrink: 0, opacity: deletingId === t.id ? 0.5 : 1 }} title="Remove topic">
+                <button onClick={() => handleRemove(t.id)} disabled={deletingId === t.id} style={{ background: 'var(--bg-card)', border: '2px solid var(--border-color)', padding: '0.4rem 0.6rem', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', flexShrink: 0, opacity: deletingId === t.id ? 0.5 : 1 }} title="Remove topic">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -210,11 +210,10 @@ export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loading
 
   const tabStyle = (tab) => ({
     padding: '0.6rem 1.25rem',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid',
-    borderColor: activeTab === tab ? 'rgba(99,102,241,0.5)' : 'var(--border-color)',
-    background: activeTab === tab ? 'rgba(99,102,241,0.15)' : 'transparent',
-    color: activeTab === tab ? '#818CF8' : 'var(--text-muted)',
+    border: '2px solid',
+    borderColor: activeTab === tab ? 'var(--text-main)' : 'var(--border-color)',
+    background: activeTab === tab ? 'var(--text-main)' : 'transparent',
+    color: activeTab === tab ? 'var(--text-inverse)' : 'var(--text-main)',
     cursor: 'pointer',
     fontSize: '0.9rem',
     fontWeight: 600,
@@ -232,7 +231,7 @@ export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loading
           <div className="badge badge-cyan"><Settings size={13} /> Organizer Control Panel</div>
           <div className="badge badge-emerald"><ShieldCheck size={13} /> Authenticated</div>
         </div>
-        <h1 style={{ fontSize: '2.3rem', color: '#FFFFFF' }}>Competition Topic Management</h1>
+        <h1 style={{ fontSize: '3rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Competition Topic Management</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
           Set a single active topic, or build a pool of topics for random contestant assignment.
         </p>
@@ -241,8 +240,8 @@ export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loading
       {/* Pool Mode Toggle */}
       <div className="glass-panel" style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <p style={{ fontWeight: 600, fontSize: '0.95rem', color: '#fff', marginBottom: '0.2rem' }}>Assignment Mode</p>
-          <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>
+          <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.2rem', letterSpacing: '-0.02em' }}>Assignment Mode</p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             {isPool
               ? 'Pool mode — contestants receive a random topic from the pool based on their name.'
               : 'Single mode — all contestants see the same active topic.'}
@@ -250,10 +249,10 @@ export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loading
         </div>
         <button
           onClick={() => onChangePoolMode(isPool ? 'single' : 'pool')}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-md)', border: '1px solid', borderColor: isPool ? 'rgba(139,92,246,0.4)' : 'var(--border-color)', background: isPool ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.04)', color: isPool ? '#A78BFA' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', transition: 'all 0.2s ease' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1.2rem', border: '2px solid', borderColor: isPool ? 'var(--text-main)' : 'var(--border-color)', background: isPool ? 'var(--text-main)' : 'var(--bg-main)', color: isPool ? 'var(--text-inverse)' : 'var(--text-main)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.1s ease', textTransform: 'uppercase', letterSpacing: '0.05em' }}
         >
           {isPool ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-          {isPool ? 'Pool Mode ON' : 'Single Topic Mode'}
+          {isPool ? 'Pool Mode ON' : 'Single Mode'}
         </button>
       </div>
 
@@ -263,7 +262,7 @@ export function TopicManagement({ activeTopic, onUpdateTopic, topicPool, loading
           <Target size={15} /> Single Topic
         </button>
         <button style={tabStyle('pool')} onClick={() => setActiveTab('pool')}>
-          <Shuffle size={15} /> Topic Pool {topicPool.length > 0 && <span style={{ background: 'rgba(99,102,241,0.2)', borderRadius: '99px', padding: '0 0.45rem', fontSize: '0.78rem' }}>{topicPool.length}</span>}
+          <Shuffle size={15} /> Topic Pool {topicPool.length > 0 && <span style={{ background: activeTab === 'pool' ? 'var(--text-inverse)' : 'var(--text-main)', color: activeTab === 'pool' ? 'var(--text-main)' : 'var(--text-inverse)', padding: '0 0.45rem', fontSize: '0.78rem' }}>{topicPool.length}</span>}
         </button>
       </div>
 
