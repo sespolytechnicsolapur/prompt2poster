@@ -1,63 +1,56 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 export function IssueList({ issues = [] }) {
   if (!issues || issues.length === 0) {
     return (
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--accent-emerald)' }}>
-          <CheckCircle size={20} />
-          <h4 style={{ fontSize: '1rem', color: 'var(--text-main)' }}>No Critical Issues Identified</h4>
+      <div className="surface-card" style={{ padding: '1rem 1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-success)' }}>
+          <CheckCircle size={15} />
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            No Critical Issues Identified
+          </span>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '0.5rem' }}>
-          The AI judge found no major visual hierarchy or readability issues in this submission.
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', margin: 0 }}>
+          Visual hierarchy, typography contrast, and alignment meet competition benchmarks.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel" style={{ padding: '1.75rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-        <AlertTriangle size={20} color="var(--accent-amber)" />
-        <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>
-          AI Identified Poster Issues ({issues.length})
+    <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
+        <AlertCircle size={15} style={{ color: 'var(--status-warning)' }} />
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          Identified Critique Points ({issues.length})
         </h3>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {issues.map((issue, idx) => (
           <div
             key={idx}
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '0.85rem',
-              padding: '0.85rem 1.125rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-main)',
-              border: '1px solid var(--border-color)',
-              boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+              gap: '0.65rem',
+              padding: '0.6rem 0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--bg-surface-subtle)',
+              border: '1px solid var(--border-subtle)'
             }}
           >
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: 'var(--accent-primary)',
-              color: 'var(--text-inverse)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.78rem',
-              fontWeight: 700,
+            <span className="mono-num" style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--text-muted)',
               flexShrink: 0,
-              marginTop: '0.1rem',
-              boxShadow: '0 4px 14px 0 rgba(14, 165, 233, 0.39)'
+              marginTop: '0.05rem'
             }}>
-              {idx + 1}
-            </div>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.55' }}>
+              {(idx + 1).toString().padStart(2, '0')}
+            </span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: '1.45' }}>
               {issue}
             </span>
           </div>

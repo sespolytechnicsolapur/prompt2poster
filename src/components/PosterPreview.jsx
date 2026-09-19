@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Maximize2, Image as ImageIcon } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 
 export function PosterPreview({ src, alt, contestantName }) {
   const [isZoomed, setIsZoomed] = useState(false);
@@ -7,31 +7,30 @@ export function PosterPreview({ src, alt, contestantName }) {
   return (
     <>
       <div 
-        className="glass-panel"
+        className="surface-card"
         style={{
-          padding: '0.75rem',
+          padding: '0.5rem',
           position: 'relative',
-          overflow: 'hidden',
           cursor: 'pointer'
         }}
         onClick={() => setIsZoomed(true)}
       >
         <div style={{
           position: 'relative',
-          borderRadius: 'var(--radius-md)',
+          borderRadius: 'var(--radius-sm)',
           overflow: 'hidden',
-          background: '#EEEEEE',
+          backgroundColor: 'var(--bg-surface-subtle)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          maxHeight: '520px'
+          maxHeight: '480px'
         }}>
           <img
             src={src}
             alt={alt || 'Submitted Poster'}
             style={{
               maxWidth: '100%',
-              maxHeight: '520px',
+              maxHeight: '480px',
               objectFit: 'contain',
               display: 'block'
             }}
@@ -39,21 +38,20 @@ export function PosterPreview({ src, alt, contestantName }) {
 
           <div style={{
             position: 'absolute',
-            bottom: '1rem',
-            right: '1rem',
-            background: '#000000',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.4rem 0.75rem',
+            bottom: '0.75rem',
+            right: '0.75rem',
+            backgroundColor: 'rgba(9, 9, 11, 0.85)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.25rem 0.5rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            fontSize: '0.78rem',
+            gap: '0.35rem',
+            fontSize: '0.6875rem',
             color: '#FFFFFF'
           }}>
-            <Maximize2 size={13} />
-            <span>Click to Expand</span>
+            <Maximize2 size={11} />
+            <span>Expand</span>
           </div>
         </div>
       </div>
@@ -66,34 +64,56 @@ export function PosterPreview({ src, alt, contestantName }) {
             position: 'fixed',
             inset: 0,
             zIndex: 999,
-            background: 'var(--bg-card)',
-            backdropFilter: 'blur(12px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem'
+            padding: '1.5rem'
           }}
         >
-          <div style={{ maxWidth: '90vw', maxHeight: '90vh', position: 'relative' }}>
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '92vw',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '0.75rem',
+              color: '#FFFFFF'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                {contestantName ? `${contestantName} — Poster View` : 'Poster Full View'}
+              </span>
+              <button
+                onClick={() => setIsZoomed(false)}
+                className="btn btn-ghost btn-sm"
+                style={{ color: '#FFFFFF', padding: '0.25rem 0.5rem' }}
+                aria-label="Close full view"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
             <img
               src={src}
-              alt={alt}
+              alt={alt || 'Full size poster'}
               style={{
                 maxWidth: '90vw',
-                maxHeight: '85vh',
+                maxHeight: '84vh',
                 objectFit: 'contain',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-overlay)'
               }}
             />
-            <div style={{
-              textAlign: 'center',
-              color: 'var(--text-main)',
-              fontSize: '0.9rem',
-              marginTop: '0.75rem'
-            }}>
-              Poster Submission by <strong style={{ color: 'var(--text-main)' }}>{contestantName}</strong> (Click anywhere to close)
-            </div>
           </div>
         </div>
       )}

@@ -1,95 +1,93 @@
 import React from 'react';
-import { Upload, Cpu, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
+import { Upload, Cpu, Check, ShieldCheck, Loader2 } from 'lucide-react';
 
 export function EvaluationLoader({ currentStage = 1 }) {
   const stages = [
-    { id: 1, label: 'Uploading poster to Supabase Storage', icon: Upload },
-    { id: 2, label: 'Querying Groq AI & Qwen 3.8 / Vision model', icon: Cpu },
-    { id: 3, label: 'Analyzing 7 visual criteria & identifying issues', icon: CheckCircle2 },
-    { id: 4, label: 'Validating mathematical score integrity & saving', icon: ShieldCheck }
+    { id: 1, label: 'Uploading poster image artifact', desc: 'Supabase Storage Bucket' },
+    { id: 2, label: 'Executing Groq multimodal vision analysis', desc: 'qwen/qwen3.8-27b vision engine' },
+    { id: 3, label: 'Evaluating 7 design criteria and visual critique', desc: 'Objective design audit synthesis' },
+    { id: 4, label: 'Validating mathematical score integrity', desc: '100-point ledger balance check' }
   ];
 
   return (
-    <div className="glass-panel" style={{
-      padding: '3rem 2.5rem',
-      textAlign: 'center',
-      maxWidth: '620px',
+    <div className="surface-card" style={{
+      padding: '2rem 1.75rem',
+      maxWidth: '520px',
       margin: '0 auto',
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
     }}>
-      <div style={{
-        width: '72px',
-        height: '72px',
-        background: 'rgba(14, 165, 233, 0.1)',
-        border: '2px solid rgba(14, 165, 233, 0.2)',
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: '0 auto 1.5rem auto'
-      }}>
-        <Loader2 size={36} color="var(--accent-primary)" style={{ animation: 'spin 1.5s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+        <Loader2 size={18} className="mono-num" style={{ animation: 'spin 1.2s linear infinite', color: 'var(--accent-primary)', flexShrink: 0 }} />
+        <div>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Evaluation In Progress
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+            Benchmarking design against 7 standardized criteria
+          </p>
+        </div>
       </div>
 
-      <h3 style={{ fontSize: '1.8rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
-        AI Judge Evaluating Poster
-      </h3>
-      <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '2.5rem', fontWeight: 500 }}>
-        Evaluating submission against official 7 criteria (Score /100)
-      </p>
-
       {/* Progress Stages */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'left' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {stages.map((stg) => {
-          const Icon = stg.icon;
           const isDone = stg.id < currentStage;
           const isCurrent = stg.id === currentStage;
 
           return (
-              <div
+            <div
               key={stg.id}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1rem',
-                padding: '1rem 1.25rem',
-                background: isCurrent ? 'var(--accent-primary)' : isDone ? 'var(--bg-main)' : 'rgba(255,255,255,0.5)',
-                border: `1px solid ${isCurrent ? 'transparent' : 'var(--border-color)'}`,
-                borderRadius: 'var(--radius-md)',
-                boxShadow: isCurrent ? '0 4px 14px 0 rgba(14, 165, 233, 0.39)' : 'none',
-                transform: isCurrent ? 'scale(1.02)' : 'scale(1)',
-                transition: 'all 0.3s ease'
+                gap: '0.75rem',
+                padding: '0.65rem 0.85rem',
+                backgroundColor: isCurrent ? 'var(--bg-surface-subtle)' : 'transparent',
+                border: `1px solid ${isCurrent ? 'var(--border-strong)' : 'transparent'}`,
+                borderRadius: 'var(--radius-sm)',
+                transition: 'all var(--transition-fast)'
               }}
             >
               <div style={{
-                width: '32px',
-                height: '32px',
+                width: '20px',
+                height: '20px',
+                borderRadius: 'var(--radius-xs)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: isDone ? 'var(--accent-emerald)' : isCurrent ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)',
-                color: (isDone || isCurrent) ? '#FFFFFF' : 'var(--text-muted)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                borderRadius: '50%',
+                fontSize: '0.75rem',
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: isDone ? 'var(--status-success-subtle)' : isCurrent ? 'var(--accent-primary-subtle)' : 'var(--bg-surface-hover)',
+                color: isDone ? 'var(--status-success)' : isCurrent ? 'var(--accent-primary)' : 'var(--text-dim)',
                 flexShrink: 0,
               }}>
-                {isDone ? <CheckCircle2 size={16} /> : stg.id}
+                {isDone ? <Check size={12} strokeWidth={2.5} /> : stg.id}
               </div>
 
-              <span style={{
-                fontSize: '0.95rem',
-                fontWeight: isCurrent ? 700 : 500,
-                color: isCurrent ? '#FFFFFF' : 'var(--text-main)',
-              }}>
-                {stg.label}
-              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: isCurrent ? 600 : 500,
+                  color: isCurrent ? 'var(--text-primary)' : isDone ? 'var(--text-secondary)' : 'var(--text-dim)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {stg.label}
+                </div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                  {stg.desc}
+                </div>
+              </div>
 
               {isCurrent && (
-                <div style={{ marginLeft: 'auto' }}>
-                  <Loader2 size={18} color="#FFFFFF" style={{ animation: 'spin 1s linear infinite' }} />
-                </div>
+                <span className="badge badge-mono badge-primary" style={{ fontSize: '0.6875rem' }}>
+                  Active
+                </span>
+              )}
+              {isDone && (
+                <span className="badge badge-mono badge-success" style={{ fontSize: '0.6875rem' }}>
+                  Done
+                </span>
               )}
             </div>
           );

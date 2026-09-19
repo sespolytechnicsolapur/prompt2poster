@@ -1,126 +1,107 @@
 import React from 'react';
 import { CRITERIA_DEFINITIONS } from '../utils/scoreValidation';
-import { getScoreColor } from '../utils/formatters';
-import { Award } from 'lucide-react';
 
 export function ScoreBreakdown({ evaluation, totalScore }) {
   if (!evaluation) return null;
 
   return (
-    <div className="glass-panel" style={{ padding: '2rem' }}>
+    <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
       {/* Header */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'baseline',
         justifyContent: 'space-between',
+        paddingBottom: '1rem',
+        marginBottom: '1rem',
+        borderBottom: '1px solid var(--border-color)',
         flexWrap: 'wrap',
-        gap: '1.5rem',
-        paddingBottom: '1.5rem',
-        marginBottom: '1.75rem',
-        borderBottom: '1px solid var(--border-color)'
+        gap: '0.75rem'
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)', marginBottom: '0.25rem' }}>
-            <Award size={18} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Transparent AI Evaluation
-            </span>
-          </div>
-          <h3 style={{ fontSize: '1.6rem', color: 'var(--text-main)', fontWeight: 800, letterSpacing: '-0.03em' }}>Official Criteria Score Breakdown</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Criteria Score Breakdown
+          </h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Evaluated against 7 weighted visual benchmarks
+          </span>
         </div>
 
-        {/* Total Score Badge */}
+        {/* Total Score Ledger Badge */}
         <div style={{
           display: 'flex',
           alignItems: 'baseline',
-          gap: '0.5rem',
-          background: 'var(--bg-input)',
-          padding: '0.75rem 1.5rem',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-color)',
-          boxShadow: 'var(--shadow-sm)'
+          gap: '0.35rem',
+          backgroundColor: 'var(--bg-surface-subtle)',
+          padding: '0.35rem 0.75rem',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border-color)'
         }}>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 700 }}>TOTAL:</span>
-          <span style={{
-            fontSize: '2.5rem',
-            fontWeight: 800,
-            fontFamily: 'var(--font-heading)',
-            color: getScoreColor(totalScore),
-            textShadow: '0 2px 10px rgba(0,0,0,0.05)'
+          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Total
+          </span>
+          <span className="mono-num" style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)'
           }}>
             {totalScore}
           </span>
-          <span style={{ fontSize: '1.1rem', color: 'var(--text-dim)', fontWeight: 700 }}>/ 100</span>
+          <span className="mono-num" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+            /100
+          </span>
         </div>
       </div>
 
-      {/* 7 Criteria Rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* 7 Criteria Ledger List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
         {CRITERIA_DEFINITIONS.map((crit) => {
           const itemData = evaluation[crit.key];
-          if (!itemData) return null;
-
-          const score = itemData.score;
+          const score = itemData?.score ?? 0;
           const maxScore = crit.maxScore;
-          const percent = Math.min(100, Math.round((score / maxScore) * 100));
-          const scorePercent = (score / maxScore) * 100;
-          const dynamicColor = getScoreColor(scorePercent);
+          const percentage = Math.round((score / maxScore) * 100);
+          const reason = itemData?.reason || 'No specific reasoning provided.';
 
           return (
             <div
               key={crit.key}
               style={{
-                background: 'var(--bg-card)',
-                padding: '1.25rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+                padding: '0.75rem',
+                backgroundColor: 'var(--bg-surface-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-subtle)'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem' }}>
+              {/* Row Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {crit.label}
                 </span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 800, color: dynamicColor }}>
-                    {score}
-                  </span>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600 }}>
-                    / {maxScore}
-                  </span>
-                </div>
+
+                <span className="mono-num" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {score} <span style={{ color: 'var(--text-dim)', fontWeight: 400 }}>/ {maxScore}</span>
+                </span>
               </div>
 
-              {/* Progress Meter Bar */}
-              <div style={{
-                height: '8px',
-                width: '100%',
-                background: 'var(--border-color)',
-                borderRadius: '999px',
-                marginBottom: '0.85rem',
-                overflow: 'hidden'
+              {/* Discrete Slim Meter */}
+              <div className="score-track" style={{ marginBottom: '0.5rem' }}>
+                <div
+                  className="score-fill"
+                  style={{
+                    width: `${percentage}%`,
+                    backgroundColor: percentage >= 80 ? 'var(--status-success)' : percentage >= 60 ? 'var(--accent-primary)' : 'var(--status-warning)'
+                  }}
+                />
+              </div>
+
+              {/* Rationale description */}
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.45',
+                margin: 0
               }}>
-                <div style={{
-                  height: '100%',
-                  width: `${percent}%`,
-                  background: dynamicColor,
-                  borderRadius: '999px',
-                  transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: `0 0 10px ${dynamicColor}40`
-                }} />
-              </div>
-
-              {/* Reasoning */}
-              {itemData.reason && (
-                <p style={{
-                  fontSize: '0.95rem',
-                  color: 'var(--text-muted)',
-                  lineHeight: '1.6',
-                  margin: 0
-                }}>
-                  {itemData.reason}
-                </p>
-              )}
+                {reason}
+              </p>
             </div>
           );
         })}

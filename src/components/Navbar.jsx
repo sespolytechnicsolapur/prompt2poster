@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Upload,
   Trophy,
-  Settings,
-  LayoutDashboard,
+  Sliders,
+  Layers,
   Sun,
   Moon,
   Menu,
@@ -18,134 +17,104 @@ export function Navbar({
   theme,
   toggleTheme
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: LayoutDashboard },
+    { id: 'home', label: 'Overview', icon: Layers },
     { id: 'submit', label: 'Submit Poster', icon: Upload },
-    { id: 'leaderboard', label: 'Live Leaderboard', icon: Trophy },
-    { id: 'organizer', label: 'Organizer Topics', icon: Settings },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    { id: 'organizer', label: 'Topics', icon: Sliders },
   ];
 
-  const handleNavigation = (page) => {
+  const handleNav = (page) => {
     setActivePage(page);
-    setMenuOpen(false);
+    setMobileOpen(false);
   };
 
   return (
     <header className="site-navbar">
-      <div className="container navbar-container">
+      <div className="container">
+        <div className="navbar-inner">
 
-        {/* LOGO */}
-        <div
-          className="navbar-brand"
-          onClick={() => handleNavigation('home')}
-        >
-          <div className="navbar-logo">
-            <Sparkles size={22} color="#FFFFFF" />
+          {/* Brand Mark */}
+          <div className="navbar-brand-group" onClick={() => handleNav('home')}>
+            <div className="navbar-logo-symbol">
+              <span style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>P2P</span>
+            </div>
+            <span className="navbar-brand-name">Prompt2Poster</span>
+            <span className="badge badge-mono" style={{ fontSize: '10px', padding: '0.15rem 0.4rem' }}>v1.0</span>
           </div>
 
-          <div className="navbar-brand-text">
-            <div className="navbar-title">
-              Prompt2Poster
-            </div>
+          {/* Desktop Navigation */}
+          <nav className="desktop-nav navbar-nav-links">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activePage === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNav(item.id)}
+                  className={`nav-link-btn ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={14} strokeWidth={1.75} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
 
-            <div className="navbar-subtitle">
-              AI Evaluation Platform
-            </div>
+            <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }} />
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="btn btn-ghost btn-sm"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              style={{ width: '30px', height: '30px', padding: 0 }}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
+            </button>
+          </nav>
+
+          {/* Mobile Actions */}
+          <div className="mobile-toggle-btn" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              onClick={toggleTheme}
+              className="btn btn-ghost btn-sm"
+              style={{ width: '32px', height: '32px', padding: 0 }}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="btn btn-secondary btn-sm"
+              style={{ width: '32px', height: '32px', padding: 0 }}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
-        </div>
-
-        {/* DESKTOP NAVIGATION */}
-        <nav className="desktop-nav">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.id;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigation(item.id)}
-                className={`btn ${
-                  isActive ? 'btn-primary' : 'btn-secondary'
-                } navbar-nav-button`}
-              >
-                <Icon size={16} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-
-          <div className="navbar-divider" />
-
-          <button
-            onClick={toggleTheme}
-            className="btn btn-secondary navbar-theme-button"
-            title={`Switch to ${
-              theme === 'dark' ? 'light' : 'dark'
-            } mode`}
-          >
-            {theme === 'dark' ? (
-              <Sun size={18} />
-            ) : (
-              <Moon size={18} />
-            )}
-          </button>
-        </nav>
-
-        {/* MOBILE CONTROLS */}
-        <div className="mobile-nav-controls">
-
-          {/* Theme */}
-          <button
-            onClick={toggleTheme}
-            className="mobile-icon-button"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? (
-              <Sun size={19} />
-            ) : (
-              <Moon size={19} />
-            )}
-          </button>
-
-          {/* Menu */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="mobile-icon-button"
-            aria-label="Open menu"
-          >
-            {menuOpen ? (
-              <X size={22} />
-            ) : (
-              <Menu size={22} />
-            )}
-          </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
-      {menuOpen && (
-        <div className="mobile-menu">
-
+      {/* Mobile Drawer */}
+      {mobileOpen && (
+        <div className="mobile-drawer">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
-
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavigation(item.id)}
-                className={`mobile-menu-item ${
-                  isActive ? 'mobile-menu-active' : ''
-                }`}
+                onClick={() => handleNav(item.id)}
+                className={`mobile-drawer-btn ${isActive ? 'active' : ''}`}
               >
-                <Icon size={19} />
+                <Icon size={15} strokeWidth={1.75} />
                 <span>{item.label}</span>
               </button>
             );
           })}
-
         </div>
       )}
     </header>

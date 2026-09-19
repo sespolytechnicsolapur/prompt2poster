@@ -1,31 +1,34 @@
 import React from 'react';
-import { Trophy, ChevronRight } from 'lucide-react';
-import { formatDate, getScoreColor } from '../utils/formatters';
+import { ChevronRight } from 'lucide-react';
+import { formatDate } from '../utils/formatters';
 
 export function SubmissionCard({ submission, rank, onSelect }) {
+  const isTopThree = rank && rank <= 3;
+
   return (
     <div
-      className="glass-panel"
+      className="surface-card surface-card-interactive"
       onClick={() => onSelect(submission.id)}
       style={{
-        padding: '1.25rem',
+        padding: '1rem',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
+        gap: '0.85rem'
       }}
     >
       <div>
         {/* Poster Thumbnail */}
         <div style={{
           width: '100%',
-          height: '220px',
+          height: '180px',
           overflow: 'hidden',
-          background: 'var(--bg-main)',
-          marginBottom: '1rem',
+          backgroundColor: 'var(--bg-surface-subtle)',
+          marginBottom: '0.85rem',
           position: 'relative',
           border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-md)'
+          borderRadius: 'var(--radius-sm)'
         }}>
           <img
             src={submission.poster_url}
@@ -36,29 +39,34 @@ export function SubmissionCard({ submission, rank, onSelect }) {
           {rank && (
             <div style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              background: 'rgba(0, 0, 0, 0.7)',
-              backdropFilter: 'blur(8px)',
-              padding: '0.3rem 0.65rem',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem'
+              top: '0.5rem',
+              left: '0.5rem'
             }}>
-              <Trophy size={12} color="#FFFFFF" />
-              Rank #{rank}
+              <span className={`badge badge-mono ${isTopThree ? (rank === 1 ? 'badge-amber' : 'badge-primary') : ''}`}>
+                #{rank.toString().padStart(2, '0')}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Contestant Details */}
-        <h4 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.25rem', fontWeight: 700 }}>
-          {submission.contestant_name}
-        </h4>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+        {/* Contestant Meta */}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.2rem' }}>
+          <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            {submission.contestant_name}
+          </h4>
+          <span className="mono-num" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            {formatDate(submission.created_at)}
+          </span>
+        </div>
+
+        <p style={{
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary)',
+          margin: 0,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
           {submission.topic}
         </p>
       </div>
@@ -68,26 +76,32 @@ export function SubmissionCard({ submission, rank, onSelect }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: '0.85rem',
-        borderTop: '1px solid var(--border-color)'
+        paddingTop: '0.65rem',
+        borderTop: '1px solid var(--border-subtle)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-          <span style={{
-            fontSize: '1.5rem',
-            fontWeight: 800,
-            fontFamily: 'var(--font-heading)',
-            color: getScoreColor(submission.total_score),
-            textShadow: '0 2px 10px rgba(0,0,0,0.05)'
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
+          <span className="mono-num" style={{
+            fontSize: '1.15rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)'
           }}>
             {submission.total_score}
           </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 700 }}>/ 100</span>
+          <span className="mono-num" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+            /100
+          </span>
         </div>
 
-        <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
-          <span>View Details</span>
-          <ChevronRight size={14} />
-        </button>
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          color: 'var(--text-secondary)'
+        }}>
+          Inspect <ChevronRight size={13} />
+        </span>
       </div>
     </div>
   );

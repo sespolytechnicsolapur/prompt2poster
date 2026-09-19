@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaderboardRow } from './LeaderboardRow';
-import { Search, Trophy } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,101 +12,84 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
 
   if (!submissions || submissions.length === 0) {
     return (
-      <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          background: 'var(--accent-primary)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 1.25rem auto',
-          boxShadow: '0 4px 14px 0 rgba(14, 165, 233, 0.39)'
-        }}>
-          <Trophy size={32} color="var(--text-inverse)" />
-        </div>
-        <h3 style={{ fontSize: '1.8rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.02em', fontWeight: 800 }}>
+      <div className="surface-card" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
           No Submissions Yet
         </h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '420px', margin: '0 auto', fontWeight: 500 }}>
-          Be the first contestant to submit your poster to the AI evaluation system!
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', maxWidth: '360px', margin: '0 auto' }}>
+          When contestants submit their poster designs, scores will be automatically compiled into this live leaderboard.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel" style={{ overflow: 'hidden' }}>
-      {/* Table Header */}
+    <div className="surface-card" style={{ overflow: 'hidden' }}>
+      {/* Table Controls */}
       <div style={{
-        padding: '1.25rem 1.5rem',
+        padding: '0.85rem 1.25rem',
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '1rem'
+        gap: '0.75rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <Trophy size={20} color="var(--accent-primary)" />
-          <h3 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: 800, letterSpacing: '-0.02em' }}>Live Contestant Rankings</h3>
-          <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>
-            {submissions.length} Contestants
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Standings
+          </h3>
+          <span className="badge badge-mono" style={{ fontSize: '0.6875rem' }}>
+            {submissions.length} entries
           </span>
         </div>
 
         {/* Search Input */}
-        <div style={{ position: 'relative', width: '280px' }}>
-          <Search size={16} color="#555555" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+        <div style={{ position: 'relative', width: '220px' }}>
+          <Search size={13} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search contestant or topic..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="form-input"
-            style={{ paddingLeft: '2.5rem', paddingTop: '0.55rem', paddingBottom: '0.55rem', fontSize: '0.85rem' }}
+            style={{ paddingLeft: '1.85rem', paddingTop: '0.35rem', paddingBottom: '0.35rem', fontSize: '0.8125rem' }}
           />
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Ledger */}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <table className="ledger-table">
           <thead>
-            <tr style={{
-              background: 'var(--bg-main)',
-              color: 'var(--text-muted)',
-              fontSize: '0.78rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              borderBottom: '1px solid var(--border-color)'
-            }}>
-              <th style={{ padding: '0.85rem 1.25rem' }}>Rank</th>
-              <th style={{ padding: '0.85rem 1.25rem' }}>Contestant</th>
-              <th style={{ padding: '0.85rem 1.25rem' }}>Competition Topic</th>
-              <th style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>Total Score</th>
-              <th style={{ padding: '0.85rem 1.25rem', textAlign: 'center' }}>Details</th>
+            <tr>
+              <th style={{ width: '56px' }}>Rank</th>
+              <th>Contestant</th>
+              <th>Topic</th>
+              <th style={{ textAlign: 'right' }}>Score</th>
+              <th style={{ width: '36px' }}></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((item, index) => (
-              <LeaderboardRow
-                key={item.id}
-                submission={item}
-                rank={index + 1}
-                onSelect={onSelectSubmission}
-              />
-            ))}
+            {filtered.length > 0 ? (
+              filtered.map((sub, index) => (
+                <LeaderboardRow
+                  key={sub.id}
+                  submission={sub}
+                  rank={index + 1}
+                  onSelect={onSelectSubmission}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                  No submissions matching "{searchTerm}"
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
-
-      <style>{`
-        .leaderboard-row-hover:hover {
-          background: var(--bg-card-hover) !important;
-        }
-      `}</style>
     </div>
   );
 }
