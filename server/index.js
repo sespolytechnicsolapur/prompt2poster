@@ -24,84 +24,86 @@ app.get('/api/health', (req, res) => {
 // Official evaluation prompt template with 7 criteria definitions
 const SYSTEM_PROMPT = `You are the official expert AI judge for a prestigious college AI Poster Making Challenge called Prompt2Poster.
 
-Your role is to rigorously, objectively, and transparently evaluate submitted posters based on the competition topic.
+Your role is to rigorously, objectively, and transparently evaluate the ATTACHED POSTER IMAGE based on the assigned competition topic.
+
+CRITICAL: You are analyzing a REAL poster image attached to this message. You MUST reference specific, concrete, observable visual details from the actual image (e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
 
 You MUST evaluate the poster strictly according to these EXACT 7 criteria (Total Maximum = 100 points):
 
 1. Relevance to topic (Max 20 points):
-Evaluate how directly and effectively the poster represents the assigned competition topic.
+Evaluate how directly and effectively the poster represents the assigned competition topic. Reference specific visual elements that relate (or fail to relate) to the topic.
 
 2. Visual hierarchy (Max 15 points):
-Evaluate whether important information stands out and whether the viewer's attention is guided naturally.
+Evaluate whether important information stands out and whether the viewer's attention is guided naturally. Describe the actual dominant element and hierarchy flow you observe.
 
 3. Typography / readability (Max 15 points):
-Evaluate text clarity, legibility, font choices, sizing, spacing, contrast, and reading ease.
+Evaluate text clarity, legibility, font choices, sizing, spacing, contrast, and reading ease. Mention specific text elements you can observe.
 
 4. Composition / layout (Max 15 points):
-Evaluate arrangement, spacing, alignment, balance, and organization of visual elements.
+Evaluate arrangement, spacing, alignment, balance, and organization of visual elements. Describe the actual layout structure.
 
 5. Creativity / originality (Max 15 points):
-Evaluate originality of concept, creative interpretation of topic, and distinctive visual presentation.
+Evaluate originality of concept, creative interpretation of topic, and distinctive visual presentation. Be specific about what is or isn't creative.
 
 6. Color usage (Max 10 points):
-Evaluate color harmony, contrast, consistency, and appropriateness.
+Evaluate color harmony, contrast, consistency, and appropriateness. Name the actual dominant colors you see in the poster.
 
 7. Overall communication (Max 10 points):
-Evaluate how effectively the complete poster communicates its intended message.
+Evaluate how effectively the complete poster communicates its intended message to a viewer.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
 
 {
   "relevance_to_topic": {
-    "score": <number 0-20>,
+    "score": <integer 0-20>,
     "max_score": 20,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
   "visual_hierarchy": {
-    "score": <number 0-15>,
+    "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
   "typography_readability": {
-    "score": <number 0-15>,
+    "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
   "composition_layout": {
-    "score": <number 0-15>,
+    "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
   "creativity_originality": {
-    "score": <number 0-15>,
+    "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
   "color_usage": {
-    "score": <number 0-10>,
+    "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation naming the actual colors seen>"
   },
   "overall_communication": {
-    "score": <number 0-10>,
+    "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed specific explanation>"
+    "reason": "<detailed explanation referencing actual observed visual content>"
   },
-  "total_score": <sum of all 7 individual scores>,
+  "total_score": <exact arithmetic sum of all 7 individual scores above>,
   "issues": [
-    "<specific concrete issue 1>",
-    "<specific concrete issue 2>",
-    "<specific concrete issue 3>"
+    "<specific concrete issue referencing an actual observed element>",
+    "<specific concrete issue>",
+    "<specific concrete issue>"
   ],
-  "overall_evaluation": "<comprehensive evaluation summary paragraph>"
+  "overall_evaluation": "<comprehensive evaluation paragraph with specific visual references>"
 }
 
 CRITICAL RULES:
-- Ensure all 7 score criteria exist and are integers.
+- All 7 score fields must exist and be integers (no decimals).
 - Do NOT exceed max scores for any criterion.
-- Ensure total_score equals EXACTLY the sum of the 7 criteria.
-- Issues must be specific to the poster content (e.g. low contrast on headline, cluttered layout near footer).
+- total_score MUST equal EXACTLY the arithmetic sum of the 7 individual scores.
+- All reason fields and issues must reference specific, concrete, actually observed poster content.
 `;
 
 // Utility function to generate intelligent structured evaluation if API key is not configured or fails
@@ -173,11 +175,11 @@ app.post('/api/evaluate', async (req, res) => {
     }
 
     const apiKey = process.env.GROQ_API_KEY;
-    const model = process.env.GROQ_MODEL || 'llama-3.2-11b-vision-preview';
+    const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
-    // If GROQ API KEY is missing or user is running initial setup, return structured fallback evaluation
-    if (!apiKey || apiKey.includes('your_groq_api_key')) {
-      console.log(`[Prompt2Poster AI Engine] No valid GROQ_API_KEY found. Using local structured AI evaluation engine for contestant: ${contestantName}`);
+    // If GROQ API KEY is missing, return structured fallback evaluation
+    if (!apiKey || !apiKey.startsWith('gsk_')) {
+      console.warn(`[Prompt2Poster AI Engine] GROQ_API_KEY not set or invalid format. Using local fallback for: ${contestantName}`);
       const fallbackResult = generateFallbackEvaluation(topic, contestantName);
       return res.json({
         success: true,
@@ -187,22 +189,23 @@ app.post('/api/evaluate', async (req, res) => {
       });
     }
 
-    console.log(`[Prompt2Poster AI Engine] Requesting Groq AI (${model}) evaluation for topic: "${topic}"...`);
+    const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
+    console.log(`[Prompt2Poster AI Engine] Requesting Groq AI (${model}) evaluation for topic: "${topic}" | image attached: ${hasImage}`);
 
     // Prepare content payload for Groq Vision API
     const userContent = [];
     userContent.push({
       type: 'text',
-      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nPlease evaluate the attached poster image according to the 7 criteria and return the exact required JSON structure.`
+      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 7 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
     });
 
-    if (posterDataUrl && posterDataUrl.startsWith('data:image/')) {
+    if (hasImage) {
       userContent.push({
         type: 'image_url',
-        image_url: {
-          url: posterDataUrl
-        }
+        image_url: { url: posterDataUrl }
       });
+    } else {
+      console.warn('[Prompt2Poster AI Engine] WARNING: No valid image data URL received — model will evaluate without image!');
     }
 
     // Call Groq API
@@ -219,21 +222,21 @@ app.post('/api/evaluate', async (req, res) => {
           { role: 'user', content: userContent }
         ],
         temperature: 0.2,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' }
+        max_tokens: 8192,
+        // NOTE: response_format json_object is intentionally omitted —
+        // it conflicts with vision (image) inputs on Groq and produces empty/bad responses.
+        // reasoning_effort:none disables Qwen3 thinking mode so output is pure JSON.
+        reasoning_effort: 'none'
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Groq API Error]:', errorText);
-      // Fallback gracefully to validated evaluation
-      const fallbackResult = generateFallbackEvaluation(topic, contestantName);
-      return res.json({
-        success: true,
-        evaluation: fallbackResult,
-        source: 'local-ai-fallback',
-        warning: `Groq API HTTP error (${response.status}). Provided fallback evaluation.`
+      console.error('[Groq API Error]:', response.status, errorText);
+      // Surface the real error to the client — do NOT silently fake scores
+      return res.status(502).json({
+        success: false,
+        error: `Groq API error (HTTP ${response.status}): ${errorText}`
       });
     }
 
@@ -244,14 +247,25 @@ app.post('/api/evaluate', async (req, res) => {
       throw new Error('Empty response content from Groq API');
     }
 
+    // Log raw model output so server terminal shows what Groq actually returned
+    console.log('[Groq Raw Response]:', contentText.slice(0, 500));
+
     let parsedResult;
     try {
-      // Clean markdown codeblocks if present
-      const cleanedJson = contentText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+      // 1. Strip <think>...</think> reasoning blocks (safety net even with reasoning_effort:none)
+      let cleanedJson = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      // 2. Strip markdown code fences if present
+      cleanedJson = cleanedJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // 3. Extract first {...} JSON block if model prepended any prose
+      const jsonMatch = cleanedJson.match(/\{[\s\S]*\}/);
+      if (jsonMatch) cleanedJson = jsonMatch[0];
       parsedResult = JSON.parse(cleanedJson);
     } catch (parseErr) {
-      console.error('[JSON Parse Error]: Failed to parse Groq response:', contentText);
-      parsedResult = generateFallbackEvaluation(topic, contestantName);
+      console.error('[JSON Parse Error]: Failed to parse Groq response. Raw content was:');
+      console.error(contentText);
+      console.error('[JSON Parse Error]:', parseErr.message);
+      // Throw instead of silently returning fake scores — the client should know AI failed
+      throw new Error(`AI returned unparseable response. Raw: ${contentText.slice(0, 300)}`);
     }
 
     return res.json({
@@ -261,12 +275,10 @@ app.post('/api/evaluate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Evaluation Server Error]:', error);
-    const fallback = generateFallbackEvaluation(req.body.topic || 'General Poster', req.body.contestantName || 'Contestant');
-    return res.json({
-      success: true,
-      evaluation: fallback,
-      source: 'error-fallback',
+    console.error('[Evaluation Server Error]:', error.message);
+    // Return a real error — never silently fake scores on unexpected failures
+    return res.status(500).json({
+      success: false,
       error: error.message
     });
   }
