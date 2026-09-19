@@ -26,11 +26,7 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
-<<<<<<< HEAD
     "concurrently": "^9.2.4",
-=======
-    "concurrently": "^9.0.1",
->>>>>>> e076d304ba2a5ee71d23b04eddb7b9f2f76b8846
     "vite": "^5.4.9"
   }
 }
