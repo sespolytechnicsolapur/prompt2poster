@@ -33,7 +33,7 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
           lineHeight: '1.6',
           marginBottom: '1.5rem'
         }}>
-          Prompt2Poster benchmarks competition submissions against 7 standardized design criteria using Groq vision models. Every score is mathematically verified and published with full audit transparency.
+          Prompt2Poster benchmarks competition submissions against 7 standardized design criteria using advanced multimodal vision models. Every score is mathematically verified and published with full audit transparency.
         </p>
 
         {/* Primary Actions */}

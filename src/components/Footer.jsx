@@ -37,11 +37,11 @@ export function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Cpu size={13} />
-                <span>Groq Vision Engine (qwen3.8-27b)</span>
+                <span>Multimodal Vision Evaluation Engine</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Database size={13} />
-                <span>Supabase PostgreSQL & Cloud Storage</span>
+                <span>Cloud Storage & Competition Database</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <ShieldCheck size={13} />

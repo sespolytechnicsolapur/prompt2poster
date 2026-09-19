@@ -3,8 +3,8 @@ import { Upload, Cpu, Check, ShieldCheck, Loader2 } from 'lucide-react';
 
 export function EvaluationLoader({ currentStage = 1 }) {
   const stages = [
-    { id: 1, label: 'Uploading poster image artifact', desc: 'Supabase Storage Bucket' },
-    { id: 2, label: 'Executing Groq multimodal vision analysis', desc: 'qwen/qwen3.8-27b vision engine' },
+    { id: 1, label: 'Uploading poster image artifact', desc: 'Secure cloud storage' },
+    { id: 2, label: 'Executing multimodal vision analysis', desc: 'Automated design & composition analysis' },
     { id: 3, label: 'Evaluating 7 design criteria and visual critique', desc: 'Objective design audit synthesis' },
     { id: 4, label: 'Validating mathematical score integrity', desc: '100-point ledger balance check' }
   ];
