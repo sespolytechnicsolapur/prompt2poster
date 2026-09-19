@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaderboardRow } from './LeaderboardRow';
-import { Search, Trophy, Layers } from 'lucide-react';
+import { Search, Trophy } from 'lucide-react';
 
 export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,19 +16,20 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
         <div style={{
           width: '64px',
           height: '64px',
+          background: 'var(--accent-primary)',
           borderRadius: '50%',
-          background: 'rgba(99, 102, 241, 0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 1.25rem auto'
+          margin: '0 auto 1.25rem auto',
+          boxShadow: '0 4px 14px 0 rgba(14, 165, 233, 0.39)'
         }}>
-          <Trophy size={32} color="var(--accent-primary)" />
+          <Trophy size={32} color="var(--text-inverse)" />
         </div>
-        <h3 style={{ fontSize: '1.25rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>
+        <h3 style={{ fontSize: '1.8rem', color: 'var(--text-main)', marginBottom: '0.5rem', letterSpacing: '-0.02em', fontWeight: 800 }}>
           No Submissions Yet
         </h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '420px', margin: '0 auto', fontWeight: 500 }}>
           Be the first contestant to submit your poster to the AI evaluation system!
         </p>
       </div>
@@ -37,7 +38,7 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
 
   return (
     <div className="glass-panel" style={{ overflow: 'hidden' }}>
-      {/* Table Header Filter */}
+      {/* Table Header */}
       <div style={{
         padding: '1.25rem 1.5rem',
         borderBottom: '1px solid var(--border-color)',
@@ -48,8 +49,8 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
         gap: '1rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <Trophy size={20} color="var(--accent-cyan)" />
-          <h3 style={{ fontSize: '1.15rem', color: '#FFFFFF' }}>Live Contestant Rankings</h3>
+          <Trophy size={20} color="var(--accent-primary)" />
+          <h3 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: 800, letterSpacing: '-0.02em' }}>Live Contestant Rankings</h3>
           <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>
             {submissions.length} Contestants
           </span>
@@ -57,7 +58,7 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
 
         {/* Search Input */}
         <div style={{ position: 'relative', width: '280px' }}>
-          <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={16} color="#555555" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             placeholder="Search contestant or topic..."
@@ -69,16 +70,16 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
         </div>
       </div>
 
-      {/* Table Structure */}
+      {/* Table */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{
-              background: 'rgba(15, 23, 42, 0.8)',
-              color: 'var(--text-dim)',
+              background: 'var(--bg-main)',
+              color: 'var(--text-muted)',
               fontSize: '0.78rem',
               textTransform: 'uppercase',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.08em',
               borderBottom: '1px solid var(--border-color)'
             }}>
               <th style={{ padding: '0.85rem 1.25rem' }}>Rank</th>
@@ -103,7 +104,7 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
 
       <style>{`
         .leaderboard-row-hover:hover {
-          background: rgba(99, 102, 241, 0.08) !important;
+          background: var(--bg-card-hover) !important;
         }
       `}</style>
     </div>

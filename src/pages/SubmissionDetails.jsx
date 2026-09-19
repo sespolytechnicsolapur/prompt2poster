@@ -32,7 +32,7 @@ export function SubmissionDetails({ submissionId, onBack, initialRecord }) {
   if (!submission) {
     return (
       <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
-        <h3 style={{ color: '#FFFFFF', marginBottom: '1rem' }}>Submission Not Found</h3>
+        <h3 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1.5rem' }}>Submission Not Found</h3>
         <button onClick={onBack} className="btn btn-secondary">
           <ArrowLeft size={16} />
           <span>Return to Leaderboard</span>
@@ -75,22 +75,23 @@ export function SubmissionDetails({ submissionId, onBack, initialRecord }) {
                 </span>
               </div>
 
-              <h1 style={{ fontSize: '2.3rem', color: '#FFFFFF', marginBottom: '0.35rem' }}>
+              <h1 style={{ fontSize: '3rem', color: 'var(--text-main)', marginBottom: '0.35rem', letterSpacing: '-0.02em' }}>
                 {submission.contestant_name}
               </h1>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                <Target size={16} color="var(--accent-cyan)" />
-                <span>Topic: <strong style={{ color: '#FFFFFF' }}>{submission.topic}</strong></span>
+                <Target size={16} />
+                <span>Topic: <strong style={{ color: 'var(--text-main)' }}>{submission.topic}</strong></span>
               </div>
             </div>
 
             {/* Score Highlight Box */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
-              border: '1px solid var(--border-color-glow)',
-              padding: '1rem 2rem',
+              background: 'var(--bg-main)',
+              border: '1px solid var(--border-color)',
               borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-sm)',
+              padding: '1.5rem 2rem',
               textAlign: 'center'
             }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
@@ -101,12 +102,12 @@ export function SubmissionDetails({ submissionId, onBack, initialRecord }) {
                 fontWeight: 800,
                 fontFamily: 'var(--font-heading)',
                 lineHeight: '1',
-                color: getScoreColor(submission.total_score),
+                color: 'var(--accent-primary)',
                 margin: '0.25rem 0'
               }}>
                 {submission.total_score}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>out of 100 Points</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>out of 100 Points</div>
             </div>
           </div>
         </div>
@@ -122,7 +123,7 @@ export function SubmissionDetails({ submissionId, onBack, initialRecord }) {
         {/* Left Column: Poster Image Display */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.15rem', color: '#FFFFFF', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontSize: '1.3rem', color: 'var(--text-main)', marginBottom: '0.75rem', fontWeight: 700 }}>
               Submitted Competition Poster
             </h3>
             <PosterPreview
@@ -140,12 +141,12 @@ export function SubmissionDetails({ submissionId, onBack, initialRecord }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Overall AI Summary Card */}
           {submission.overall_evaluation && (
-            <div className="glass-panel" style={{ padding: '1.75rem', background: 'rgba(99, 102, 241, 0.08)' }}>
+            <div className="glass-panel" style={{ padding: '1.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
                 <Cpu size={20} color="var(--accent-primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#FFFFFF' }}>AI Judge Executive Summary</h3>
+                <h3 style={{ fontSize: '1.3rem', color: 'var(--text-main)', fontWeight: 700 }}>AI Judge Executive Summary</h3>
               </div>
-              <p style={{ fontSize: '0.94rem', color: '#CBD5E1', lineHeight: '1.65' }}>
+              <p style={{ fontSize: '1rem', color: 'var(--text-muted)', lineHeight: '1.65' }}>
                 {submission.overall_evaluation}
               </p>
             </div>

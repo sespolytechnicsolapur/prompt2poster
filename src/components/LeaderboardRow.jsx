@@ -33,8 +33,8 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
             height: '42px',
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
-            background: '#040711',
-            border: '1px solid var(--border-color)',
+            background: '#EEEEEE',
+            border: '2px solid var(--border-color)',
             flexShrink: 0
           }}>
             <img
@@ -44,7 +44,7 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
             />
           </div>
           <div>
-            <div style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '1.02rem' }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.02rem' }}>
               {submission.contestant_name}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
@@ -88,7 +88,7 @@ export function LeaderboardRow({ submission, rank, onSelect }) {
           width: '32px',
           height: '32px',
           borderRadius: '50%',
-          background: 'rgba(255,255,255,0.04)',
+          background: '#EEEEEE',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',

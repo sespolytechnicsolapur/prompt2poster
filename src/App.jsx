@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCompetition } from './hooks/useCompetition';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -12,6 +12,22 @@ export default function App() {
   const [activePage, setActivePage] = useState('home');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [activeSubmissionRecord, setActiveSubmissionRecord] = useState(null);
+
+  // Theme State
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('prompt2poster_theme');
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('prompt2poster_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   const {
     activeTopic,
@@ -51,6 +67,8 @@ export default function App() {
           if (page !== 'details') setSelectedSubmissionId(null);
         }}
         activeTopicTitle={activeTopic?.topic_title}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       <main className="container" style={{ flex: 1, paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>

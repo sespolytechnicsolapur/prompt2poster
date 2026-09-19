@@ -66,11 +66,11 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
           onDrop={handleDrop}
           onClick={() => fileInputRef.current && fileInputRef.current.click()}
           style={{
-            border: `2px dashed ${isDragging ? 'var(--accent-cyan)' : 'var(--border-color)'}`,
-            borderRadius: 'var(--radius-lg)',
+            border: `2px ${isDragging ? 'solid' : 'dashed'} var(--border-color)`,
+            borderRadius: '0',
             padding: '3.5rem 2rem',
             textAlign: 'center',
-            background: isDragging ? 'rgba(6, 182, 212, 0.08)' : 'rgba(15, 23, 42, 0.5)',
+            background: isDragging ? 'var(--bg-card-hover)' : 'var(--bg-input)',
             cursor: 'pointer',
             transition: 'all var(--transition-fast)'
           }}
@@ -78,17 +78,17 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
           <div style={{
             width: '64px',
             height: '64px',
-            borderRadius: '50%',
-            background: 'rgba(99, 102, 241, 0.15)',
+            borderRadius: '0',
+            background: 'var(--text-main)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 1.25rem auto'
           }}>
-            <UploadCloud size={32} color="var(--accent-primary)" />
+            <UploadCloud size={32} color="var(--text-inverse)" />
           </div>
 
-          <h3 style={{ fontSize: '1.15rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             Click to upload poster image
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1rem' }}>
@@ -100,10 +100,11 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
             gap: '1rem',
             fontSize: '0.78rem',
             color: 'var(--text-dim)',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--bg-card)',
             padding: '0.4rem 1rem',
-            borderRadius: '9999px',
-            border: '1px solid var(--border-color)'
+            borderRadius: '0',
+            border: '2px solid var(--border-color)',
+            fontWeight: 'bold'
           }}>
             <span>PNG, JPG, WEBP</span>
             <span>•</span>
@@ -120,10 +121,10 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
               right: '1rem',
               width: '32px',
               height: '32px',
-              borderRadius: '50%',
-              background: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: '#EF4444',
+              borderRadius: '0',
+              background: 'var(--accent-primary)',
+              border: '2px solid var(--border-color)',
+              color: 'var(--text-inverse)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -139,10 +140,10 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
             <div style={{
               width: '120px',
               height: '150px',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: '0',
               overflow: 'hidden',
-              background: '#000000',
-              border: '1px solid var(--border-color)',
+              background: 'var(--bg-main)',
+              border: '2px solid var(--border-color)',
               flexShrink: 0
             }}>
               <img
@@ -153,11 +154,11 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-emerald)', marginBottom: '0.35rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                 <CheckCircle size={16} />
-                <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>Poster Selected Ready for AI Judging</span>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase' }}>Poster Selected Ready for AI Judging</span>
               </div>
-              <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '0.25rem' }}>
+              <h4 style={{ color: 'var(--text-main)', fontSize: '1.2rem', marginBottom: '0.25rem', fontWeight: 'bold' }}>
                 {selectedFile?.name || 'Uploaded Poster'}
               </h4>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
@@ -180,12 +181,13 @@ export function PosterUploader({ selectedFile, setSelectedFile, previewUrl, setP
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          color: 'var(--accent-rose)',
-          fontSize: '0.88rem',
-          background: 'rgba(244, 63, 94, 0.1)',
+          color: 'var(--text-inverse)',
+          fontSize: '0.9rem',
+          background: 'var(--accent-primary)',
           padding: '0.75rem 1rem',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid rgba(244, 63, 94, 0.2)'
+          borderRadius: '0',
+          border: '2px solid var(--border-color)',
+          fontWeight: 'bold'
         }}>
           <AlertTriangle size={16} />
           <span>{error}</span>

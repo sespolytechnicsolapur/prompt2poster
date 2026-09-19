@@ -17,14 +17,12 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
         </div>
 
         <h1 style={{
-          fontSize: '3.2rem',
+          fontSize: '3.5rem',
           fontWeight: 800,
-          lineHeight: '1.15',
+          lineHeight: '1.1',
           marginBottom: '1.25rem',
-          letterSpacing: '-0.03em',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          letterSpacing: '-0.04em',
+          color: 'var(--text-main)',
           maxWidth: '900px',
           margin: '0 auto 1.25rem auto'
         }}>
@@ -81,7 +79,7 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
             <ShieldCheck size={14} />
             Official Standard
           </div>
-          <h2 style={{ fontSize: '2rem', color: '#FFFFFF' }}>
+          <h2 style={{ fontSize: '2.5rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>
             The 7 Official AI Judging Criteria
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.4rem' }}>
@@ -107,7 +105,7 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <h4 style={{ fontSize: '1.05rem', color: '#FFFFFF' }}>{crit.label}</h4>
+                  <h4 style={{ fontSize: '1.1rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{crit.label}</h4>
                   <span className="badge badge-emerald" style={{ fontSize: '0.78rem' }}>
                     Max {crit.maxScore} Pts
                   </span>
@@ -135,7 +133,7 @@ export function Home({ activeTopic, loadingTopic, leaderboard, onNavigate, onSel
               <div className="badge badge-gold" style={{ marginBottom: '0.35rem' }}>
                 <Trophy size={13} /> Top Contestants
               </div>
-              <h2 style={{ fontSize: '1.8rem', color: '#FFFFFF' }}>Leading Competition Entries</h2>
+              <h2 style={{ fontSize: '2.5rem', color: 'var(--text-main)', letterSpacing: '-0.04em' }}>Leading Competition Entries</h2>
             </div>
             <button
               onClick={() => onNavigate('leaderboard')}
