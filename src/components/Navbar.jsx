@@ -16,83 +16,75 @@ export function Navbar({
   leaderboardVisible,
   isAdmin
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close menu when navigating
   const navTo = (page) => {
     setActivePage(page);
-    setIsOpen(false);
+    setMobileOpen(false);
   };
 
   // Condition to show leaderboard link
   const showLeaderboardNav = leaderboardVisible || isAdmin;
 
   return (
-    <nav className="navbar">
+    <header className="site-navbar">
       <div className="container">
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          height: '4rem'
-        }}>
-          {/* Logo & Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{
-              width: '32px', height: '32px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: 'var(--shadow-sm)'
-            }}>
+        <div className="navbar-inner">
+          {/* LOGO & BRAND */}
+          <div className="navbar-brand-group">
+            <div className="navbar-logo-symbol">
               <Code size={18} strokeWidth={2.5} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
-                Prompt2Poster
-              </span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                AI Evaluation Engine
-              </span>
+            <div>
+              <div className="navbar-brand-name">Prompt2Poster</div>
+              <div className="navbar-subtitle">AI Evaluation Engine</div>
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="nav-desktop">
+          {/* DESKTOP NAVIGATION */}
+          <nav className="desktop-nav">
             <button
               onClick={() => navTo('home')}
-              className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
+              className={`nav-link-btn ${activePage === 'home' ? 'active' : ''}`}
             >
               Overview
             </button>
             {showLeaderboardNav && (
               <button
                 onClick={() => navTo('leaderboard')}
-                className={`nav-link ${activePage === 'leaderboard' ? 'active' : ''}`}
+                className={`nav-link-btn ${activePage === 'leaderboard' ? 'active' : ''}`}
               >
                 Live Leaderboard
               </button>
             )}
+            
+            <button
+              onClick={() => navTo('organizer')}
+              className={`nav-link-btn ${activePage === 'organizer' ? 'active' : ''}`}
+            >
+              Organizer
+            </button>
 
             {/* Contestant Actions */}
             {contestant ? (
               <>
                 <button
                   onClick={() => navTo('submit')}
-                  className="btn btn-primary btn-sm"
-                  style={{ marginLeft: '0.5rem', padding: '0.45rem 1rem' }}
+                  className="btn btn-primary"
+                  style={{ padding: '0.4rem 1rem', height: '36px', fontSize: '0.875rem' }}
                 >
                   Submit Poster
                 </button>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  marginLeft: '0.75rem', paddingLeft: '0.75rem',
-                  borderLeft: '1px solid var(--border-color)'
+                  marginLeft: '0.25rem'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500 }}>
                     <User size={14} />
                     <span>{contestant.name.split(' ')[0]}</span>
                   </div>
-                  <button onClick={onLogout} className="btn btn-ghost btn-sm" style={{ padding: '0.35rem', color: 'var(--text-muted)' }} title="Logout">
+                  <button onClick={onLogout} className="btn btn-ghost" style={{ padding: '0.35rem', color: 'var(--text-muted)' }} title="Logout">
                     <LogOut size={14} />
                   </button>
                 </div>
@@ -100,93 +92,97 @@ export function Navbar({
             ) : (
               <button
                 onClick={() => navTo('login')}
-                className="btn btn-secondary btn-sm"
-                style={{ marginLeft: '0.5rem', padding: '0.45rem 1rem' }}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 1rem', height: '36px', fontSize: '0.875rem' }}
               >
                 <LogIn size={14} />
                 <span>Login to Submit</span>
               </button>
             )}
 
-            <div style={{ width: '1px', height: '1.25rem', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }} />
+            <div className="navbar-divider" />
 
+            {/* THEME */}
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost btn-sm"
-              style={{ padding: '0.4rem', color: 'var(--text-secondary)' }}
+              className="btn btn-secondary navbar-theme-button"
               aria-label="Toggle theme"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="nav-mobile" style={{ display: 'none', alignItems: 'center', gap: '0.5rem' }}>
-             <button
-              onClick={toggleTheme}
-              className="btn btn-ghost"
-              style={{ padding: '0.4rem', color: 'var(--text-secondary)' }}
-            >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+          </nav>
+
+          {/* MOBILE CONTROLS */}
+          <div className="mobile-nav-controls">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="btn btn-ghost"
-              style={{ padding: '0.4rem', color: 'var(--text-primary)' }}
+              onClick={toggleTheme}
+              className="mobile-icon-button"
+              aria-label="Toggle theme"
+              title="Toggle theme"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+            </button>
+
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="mobile-icon-button"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Dropdown */}
-      {isOpen && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0,
-          backgroundColor: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--border-color)',
-          padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem',
-          zIndex: 50,
-          boxShadow: 'var(--shadow-md)'
-        }}>
+      {/* MOBILE MENU */}
+      {mobileOpen && (
+        <div className="mobile-menu">
           <button
             onClick={() => navTo('home')}
-            className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
-            style={{ width: '100%', justifyContent: 'flex-start', padding: '0.75rem' }}
+            className={`mobile-menu-item ${activePage === 'home' ? 'mobile-menu-active' : ''}`}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
           >
             Overview
           </button>
           {showLeaderboardNav && (
             <button
               onClick={() => navTo('leaderboard')}
-              className={`nav-link ${activePage === 'leaderboard' ? 'active' : ''}`}
-              style={{ width: '100%', justifyContent: 'flex-start', padding: '0.75rem' }}
+              className={`mobile-menu-item ${activePage === 'leaderboard' ? 'mobile-menu-active' : ''}`}
+              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
             >
               Live Leaderboard
             </button>
           )}
 
+          <button
+            onClick={() => navTo('organizer')}
+            className={`mobile-menu-item ${activePage === 'organizer' ? 'mobile-menu-active' : ''}`}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
+          >
+            Organizer
+          </button>
+
           <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '0.5rem 0' }} />
 
           {contestant ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                 <User size={16} />
                 <span>Logged in as <strong>{contestant.name}</strong></span>
               </div>
               <button
                 onClick={() => navTo('submit')}
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}
+                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', justifyContent: 'center' }}
               >
                 Submit Poster
               </button>
               <button
-                onClick={() => { onLogout(); setIsOpen(false); }}
+                onClick={() => { onLogout(); setMobileOpen(false); }}
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '0.75rem' }}
+                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', justifyContent: 'center' }}
               >
                 <LogOut size={16} />
                 <span>Logout</span>
@@ -196,7 +192,7 @@ export function Navbar({
              <button
               onClick={() => navTo('login')}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem' }}
+              style={{ width: '100%', padding: '0.75rem', justifyContent: 'center' }}
             >
               <LogIn size={16} />
               <span>Login to Submit</span>
@@ -204,6 +200,6 @@ export function Navbar({
           )}
         </div>
       )}
-    </nav>
+    </header>
   );
 }

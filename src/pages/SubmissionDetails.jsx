@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Maximize2, X, Download, ShieldAlert, FileText, History, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, Maximize2, X, Download, ShieldAlert, FileText, History, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { ScoreBreakdown } from '../components/ScoreBreakdown';
 import { fetchSubmissionById } from '../services/submissionService';
 import { formatDate } from '../utils/formatters';

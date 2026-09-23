@@ -32,7 +32,9 @@ app.use(express.json({ limit: '25mb' }));
 // ── In-Memory Stores (mirrored to localStorage on the client) ────────────────
 // These provide a server-side source of truth for features that need it.
 // In production with Supabase, these are backed by the database.
-let contestantStore = [];              // [{name, user_id, unique_id}]
+let contestantStore = [
+  { name: 'Test Contestant', user_id: 'TEST-123', unique_id: 'secret123' }
+];
 let leaderboardVisible = true;
 let topicVisible = true;
 

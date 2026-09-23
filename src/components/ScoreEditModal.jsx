@@ -73,14 +73,27 @@ export function ScoreEditModal({
     setError(null);
 
     try {
-      // If we have a re-evaluation result, use that full evaluation
-      // Otherwise, build one from the manual scores
-      const evaluationToSave = reEvalResult || buildEvaluationFromScores(scores, evaluation);
+      let evaluationToSave = reEvalResult;
+      
+      const parsedNewTotal = Number(newTotal);
+      // If the user changed the total score input but hasn't run the AI re-evaluate yet, auto-run it!
+      if (!reEvalResult && !isNaN(parsedNewTotal) && parsedNewTotal !== submission?.total_score) {
+        setIsReEvaluating(true);
+        evaluationToSave = await onReEvaluate(parsedNewTotal);
+        setIsReEvaluating(false);
+      }
+
+      // If we don't have an AI re-evaluation, build one from the manual sub-scores
+      if (!evaluationToSave) {
+        evaluationToSave = buildEvaluationFromScores(scores, evaluation);
+      }
+
       await onSave(evaluationToSave);
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to save scores');
       setIsSaving(false);
+      setIsReEvaluating(false);
     }
   };
 
