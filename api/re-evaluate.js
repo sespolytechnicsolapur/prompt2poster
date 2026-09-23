@@ -32,44 +32,47 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
   "relevance_to_topic": {
     "score": <integer 0-20>,
     "max_score": 20,
-    "reason": "<detailed explanation matching the target score's extremity>"
+    "reason": "<strictly 1-2 sentence explanation matching the target score's extremity>"
   },
   "visual_hierarchy": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "typography_readability": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "composition_layout": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "creativity_originality": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "color_usage": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "overall_communication": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation>"
+    "reason": "<strictly 1-2 sentence explanation>"
   },
   "total_score": <exact arithmetic sum of all 7 individual scores above>,
   "issues": [
     "<specific concrete issue referencing an actual observed element>"
   ],
-  "overall_evaluation": "<comprehensive evaluation paragraph>"
+  "overall_evaluation": "<brief 2-3 sentence evaluation paragraph>"
 }
+
+CRITICAL RULES:
+- VERY IMPORTANT: Keep ALL reasons extremely concise (maximum 2 sentences) to prevent token truncation!
 `;
 
 // Helper to extract and sanitize all configured Groq API keys (comma-separated support)
@@ -153,7 +156,7 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 700,
+            max_tokens: 950,
             reasoning_effort: 'none'
           })
         });

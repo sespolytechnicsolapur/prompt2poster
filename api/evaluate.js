@@ -40,45 +40,44 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
   "relevance_to_topic": {
     "score": <integer 0-20>,
     "max_score": 20,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "visual_hierarchy": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "typography_readability": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "composition_layout": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "creativity_originality": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "color_usage": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation naming the actual colors seen>"
+    "reason": "<strictly 1-2 sentence explanation naming the actual colors seen>"
   },
   "overall_communication": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "total_score": <exact arithmetic sum of all 7 individual scores above>,
   "issues": [
     "<specific concrete issue referencing an actual observed element>",
-    "<specific concrete issue>",
     "<specific concrete issue>"
   ],
-  "overall_evaluation": "<comprehensive evaluation paragraph with specific visual references>"
+  "overall_evaluation": "<brief 2-3 sentence evaluation paragraph with specific visual references>"
 }
 
 CRITICAL RULES:
@@ -86,6 +85,7 @@ CRITICAL RULES:
 - Do NOT exceed max scores for any criterion.
 - total_score MUST equal EXACTLY the arithmetic sum of the 7 individual scores.
 - All reason fields and issues must reference specific, concrete, actually observed poster content.
+- VERY IMPORTANT: Keep ALL reasons extremely concise (maximum 2 sentences) to prevent token truncation!
 `;
 
 // Helper to extract and sanitize all configured Groq API keys (comma-separated support)
@@ -170,7 +170,7 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 700,
+            max_tokens: 950,
             reasoning_effort: 'none'
           })
         });
