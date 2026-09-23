@@ -125,6 +125,7 @@ export default function App() {
         onLogout={handleLogoutClick}
         leaderboardVisible={leaderboardVisible}
         isAdmin={isAdmin}
+        setIsAdmin={setIsAdmin}
       />
 
       {/* MAIN CONTENT */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Code, Sun, Moon, LogOut, LogIn, User } from 'lucide-react';
+import { Menu, X, Code, Sun, Moon, LogOut, LogIn, User, Lock } from 'lucide-react';
 
 /**
  * Main application navigation.
@@ -14,7 +14,8 @@ export function Navbar({
   contestant,
   onLogout,
   leaderboardVisible,
-  isAdmin
+  isAdmin,
+  setIsAdmin
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -59,12 +60,27 @@ export function Navbar({
               </button>
             )}
             
-            <button
-              onClick={() => navTo('organizer')}
-              className={`nav-link-btn ${activePage === 'organizer' ? 'active' : ''}`}
-            >
-              Organizer
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button
+                onClick={() => navTo('organizer')}
+                className={`nav-link-btn ${activePage === 'organizer' ? 'active' : ''}`}
+              >
+                Organizer
+              </button>
+              {isAdmin && (
+                <button 
+                  onClick={() => {
+                    if (setIsAdmin) setIsAdmin(false);
+                    if (activePage === 'organizer') navTo('home');
+                  }} 
+                  className="btn btn-ghost" 
+                  style={{ padding: '0.35rem', color: 'var(--status-danger)' }} 
+                  title="Lock Admin Session"
+                >
+                  <Lock size={14} />
+                </button>
+              )}
+            </div>
 
             {/* Contestant Actions */}
             {contestant ? (
