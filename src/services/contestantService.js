@@ -70,7 +70,7 @@ export async function uploadContestantExcel(file, adminPassword) {
   return {
     success: true,
     count: contestants.length,
-    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id }))
+    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id }))
   };
 }
 

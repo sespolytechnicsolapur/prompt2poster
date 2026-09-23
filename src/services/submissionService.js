@@ -213,7 +213,7 @@ function lsSetSubmissions(list) { lsSet(LS_SUBMISSIONS, list); }
  */
 export async function saveSubmission(submissionData) {
   const {
-    contestantName, topic, posterStoragePath, posterUrl,
+    contestantName, topic, posterFile,
     evaluation, aiPromptUsed = '', submittedByUserId = ''
   } = submissionData;
 
@@ -232,6 +232,7 @@ export async function saveSubmission(submissionData) {
     creativity_originality_score: evaluation.creativity_originality.score,
     color_usage_score:            evaluation.color_usage.score,
     overall_communication_score:  evaluation.overall_communication.score,
+    prompt_authenticity_score:    evaluation.prompt_authenticity.score,
     total_score:        evaluation.total_score,
     evaluation_reasoning: evaluation,
     issues:             evaluation.issues || [],
@@ -246,13 +247,39 @@ export async function saveSubmission(submissionData) {
   localList.unshift(record);
   lsSetSubmissions(localList);
 
+  let storagePath = 'local-only';
+  let finalPosterUrl = '';
+
   if (isSupabaseConfigured && supabase) {
+    if (posterFile) {
+      const fileExt = posterFile.name.split('.').pop();
+      const fileName = `${submittedByUserId}_${Date.now()}.${fileExt}`;
+      const filePath = `submissions/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('posters')
+        .upload(filePath, posterFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('[Storage Upload Error]:', uploadError);
+      } else {
+        storagePath = filePath;
+        const { data: publicUrlData } = supabase.storage
+          .from('posters')
+          .getPublicUrl(filePath);
+        finalPosterUrl = publicUrlData.publicUrl;
+      }
+    }
+
     try {
       const dbPayload = {
         contestant_name:              record.contestant_name,
         topic:                        record.topic,
-        poster_storage_path:          record.poster_storage_path || 'local-only',
-        poster_url:                   record.poster_url || '',
+        poster_storage_path:          storagePath,
+        poster_url:                   finalPosterUrl,
         submitted_by_user_id:         record.submitted_by_user_id,
         ai_prompt_used:               record.ai_prompt_used,
         relevance_to_topic_score:     record.relevance_to_topic_score,
@@ -262,6 +289,7 @@ export async function saveSubmission(submissionData) {
         creativity_originality_score: record.creativity_originality_score,
         color_usage_score:            record.color_usage_score,
         overall_communication_score:  record.overall_communication_score,
+        prompt_authenticity_score:    record.prompt_authenticity_score,
         total_score:                  record.total_score,
         evaluation_reasoning:         record.evaluation_reasoning,
         issues:                       record.issues,
@@ -426,6 +454,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
     entry.creativity_originality_score = updatedEvaluation.creativity_originality.score;
     entry.color_usage_score            = updatedEvaluation.color_usage.score;
     entry.overall_communication_score  = updatedEvaluation.overall_communication.score;
+    entry.prompt_authenticity_score    = updatedEvaluation.prompt_authenticity.score;
     entry.total_score                  = updatedEvaluation.total_score;
     entry.evaluation_reasoning         = updatedEvaluation;
     entry.issues                       = updatedEvaluation.issues || [];
@@ -455,6 +484,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
           creativity_originality_score: updatedEvaluation.creativity_originality.score,
           color_usage_score:            updatedEvaluation.color_usage.score,
           overall_communication_score:  updatedEvaluation.overall_communication.score,
+          prompt_authenticity_score:    updatedEvaluation.prompt_authenticity.score,
           total_score:                  updatedEvaluation.total_score,
           evaluation_reasoning:         updatedEvaluation,
           issues:                       updatedEvaluation.issues || [],

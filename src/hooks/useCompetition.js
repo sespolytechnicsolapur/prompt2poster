@@ -13,6 +13,7 @@ import {
   fetchTopicVisibility,
   setTopicVisibility,
 } from '../services/submissionService';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { getLoggedInContestant, logoutContestant } from '../services/authService';
 
 /**
@@ -101,6 +102,37 @@ export function useCompetition() {
     loadPool();
     loadVisibility();
   }, [loadTopic, loadLeaderboard, loadPool, loadVisibility]);
+
+  // ── Supabase Realtime Subscriptions ─────────────────────────────────────
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const channel = supabase.channel('public:realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'submissions' },
+        () => {
+          console.log('[Realtime] Submissions table changed, reloading leaderboard...');
+          loadLeaderboard();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'topics' },
+        () => {
+          console.log('[Realtime] Topics table changed, reloading topic & visibility...');
+          loadTopic();
+          loadVisibility();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadLeaderboard, loadTopic, loadVisibility]);
 
   // ── Topic Mutators ──────────────────────────────────────────────────────
   const changeTopic = async (title, description) => {

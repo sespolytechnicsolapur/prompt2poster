@@ -154,6 +154,7 @@ export default function App() {
             contestant={contestant}
             topicVisible={topicVisible}
             isAdmin={isAdmin}
+            leaderboard={leaderboard}
           />
         )}
 

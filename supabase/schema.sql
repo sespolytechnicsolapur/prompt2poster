@@ -65,11 +65,12 @@ CREATE TABLE IF NOT EXISTS submissions (
   -- 7 Official AI Evaluation Criteria scores
   relevance_to_topic_score     INTEGER NOT NULL CHECK (relevance_to_topic_score     BETWEEN 0 AND 20),
   visual_hierarchy_score       INTEGER NOT NULL CHECK (visual_hierarchy_score       BETWEEN 0 AND 15),
-  typography_readability_score INTEGER NOT NULL CHECK (typography_readability_score BETWEEN 0 AND 15),
+  typography_readability_score INTEGER NOT NULL CHECK (typography_readability_score BETWEEN 0 AND 10),
   composition_layout_score     INTEGER NOT NULL CHECK (composition_layout_score     BETWEEN 0 AND 15),
   creativity_originality_score INTEGER NOT NULL CHECK (creativity_originality_score BETWEEN 0 AND 15),
   color_usage_score            INTEGER NOT NULL CHECK (color_usage_score            BETWEEN 0 AND 10),
-  overall_communication_score  INTEGER NOT NULL CHECK (overall_communication_score  BETWEEN 0 AND 10),
+  overall_communication_score  INTEGER NOT NULL CHECK (overall_communication_score  BETWEEN 0 AND 5),
+  prompt_authenticity_score    INTEGER NOT NULL CHECK (prompt_authenticity_score    BETWEEN 0 AND 10),
 
   -- Calculated total (must equal sum of 7 criteria above, max 100)
   total_score INTEGER NOT NULL CHECK (total_score BETWEEN 0 AND 100),

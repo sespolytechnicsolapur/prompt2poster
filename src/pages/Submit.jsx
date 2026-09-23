@@ -15,7 +15,8 @@ export function Submit({
   onSubmissionSuccess,
   contestant,
   topicVisible,
-  isAdmin
+  isAdmin,
+  leaderboard
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl]     = useState(null);
@@ -23,6 +24,11 @@ export function Submit({
   const [isSubmitted, setIsSubmitted]   = useState(false);
   const [error, setError]               = useState(null);
   const [aiPromptUsed, setAiPromptUsed] = useState('');
+
+  // Check if contestant already submitted based on leaderboard data
+  const hasAlreadySubmitted = leaderboard && contestant 
+    ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id)
+    : false;
 
   const fileInputRef = useRef(null);
 
@@ -84,13 +90,12 @@ export function Submit({
         contestantName: contestant.name
       });
 
-      // 2. Save submission to DB (mock storage for now)
+      // 2. Save submission to DB
       await saveSubmission({
         contestantName: contestant.name,
         submittedByUserId: contestant.user_id,
         topic: finalTopicTitle,
-        posterStoragePath: 'local-only', // Would upload to Supabase storage here
-        posterUrl: previewUrl,
+        posterFile: selectedFile,
         aiPromptUsed: aiPromptUsed.trim(),
         evaluation
       });
@@ -109,7 +114,7 @@ export function Submit({
   // Determine if contestant can see the topic
   const showTopic = topicVisible || isAdmin;
 
-  if (isSubmitted) {
+  if (isSubmitted || hasAlreadySubmitted) {
     return (
       <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
         <div style={{
@@ -121,23 +126,12 @@ export function Submit({
           <CheckCircle2 size={32} />
         </div>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-          Successfully Submitted!
+          {hasAlreadySubmitted ? 'You Have Already Submitted!' : 'Successfully Submitted!'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem' }}>
           Your poster has been securely uploaded and the AI evaluation is complete. 
           The detailed results and final scores will be announced by the organizers later.
         </p>
-        <button 
-          className="btn btn-secondary"
-          onClick={() => {
-            setIsSubmitted(false);
-            clearSelection();
-            setAiPromptUsed('');
-          }}
-          style={{ padding: '0.75rem 1.5rem' }}
-        >
-          Submit Another Design
-        </button>
       </div>
     );
   }
