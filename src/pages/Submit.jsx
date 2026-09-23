@@ -20,6 +20,7 @@ export function Submit({
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl]     = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted]   = useState(false);
   const [error, setError]               = useState(null);
   const [aiPromptUsed, setAiPromptUsed] = useState('');
 
@@ -84,7 +85,7 @@ export function Submit({
       });
 
       // 2. Save submission to DB (mock storage for now)
-      const record = await saveSubmission({
+      await saveSubmission({
         contestantName: contestant.name,
         submittedByUserId: contestant.user_id,
         topic: finalTopicTitle,
@@ -95,7 +96,7 @@ export function Submit({
       });
 
       console.log(`[Submit] Evaluation complete via ${source}`);
-      if (onSubmissionSuccess) onSubmissionSuccess(record);
+      setIsSubmitted(true);
 
     } catch (err) {
       console.error('[Submit Error]', err);
@@ -108,6 +109,39 @@ export function Submit({
   // Determine if contestant can see the topic
   const showTopic = topicVisible || isAdmin;
 
+  if (isSubmitted) {
+    return (
+      <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '50%',
+          backgroundColor: 'var(--status-success-subtle)', color: 'var(--status-success)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 1.5rem auto'
+        }}>
+          <CheckCircle2 size={32} />
+        </div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+          Successfully Submitted!
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+          Your poster has been securely uploaded and the AI evaluation is complete. 
+          The detailed results and final scores will be announced by the organizers later.
+        </p>
+        <button 
+          className="btn btn-secondary"
+          onClick={() => {
+            setIsSubmitted(false);
+            clearSelection();
+            setAiPromptUsed('');
+          }}
+          style={{ padding: '0.75rem 1.5rem' }}
+        >
+          Submit Another Design
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ textAlign: 'center' }}>
@@ -115,7 +149,7 @@ export function Submit({
           Submit Your Poster
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '500px', margin: '0 auto' }}>
-          Upload your design for immediate AI evaluation and scoring.
+          Upload your design for AI evaluation and scoring.
         </p>
       </div>
 
@@ -314,7 +348,7 @@ export function Submit({
             ) : (
               <>
                 <Send size={18} />
-                <span>Submit for Evaluation</span>
+                <span>Submit Design</span>
               </>
             )}
           </button>

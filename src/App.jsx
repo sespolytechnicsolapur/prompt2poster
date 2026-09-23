@@ -93,6 +93,25 @@ export default function App() {
     setActivePage('details');
   };
 
+  // Global Login Wall
+  if (!contestant && !isAdmin) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-default)' }}>
+        <main className="container" style={{ flex: 1, paddingTop: '4rem', paddingBottom: '3.5rem' }}>
+          <Login onLoginSuccess={(data) => {
+            if (data.isAdmin) {
+              handleOrganizerAccess();
+              setActivePage('organizer');
+            } else {
+              handleLoginSuccess(data);
+            }
+          }} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* NAVBAR */}
@@ -122,11 +141,6 @@ export default function App() {
             topicVisible={topicVisible}
             isAdmin={isAdmin}
           />
-        )}
-
-        {/* LOGIN */}
-        {activePage === 'login' && (
-          <Login onLoginSuccess={handleLoginSuccess} />
         )}
 
         {/* SUBMIT */}

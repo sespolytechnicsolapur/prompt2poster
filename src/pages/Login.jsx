@@ -154,6 +154,26 @@ export function Login({ onLoginSuccess }) {
       }}>
         Your Unique ID was provided at the competition venue. Contact an organizer if you need assistance.
       </p>
+
+      {/* Organizer Access Toggle */}
+      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+        <button 
+          onClick={() => {
+            const pwd = prompt("Enter Organizer Password:");
+            if (pwd === import.meta.env.VITE_ORGANIZER_PASSWORD) {
+              if (onLoginSuccess) onLoginSuccess({ name: 'Admin', user_id: 'ADMIN', isAdmin: true });
+            } else if (pwd) {
+              alert("Incorrect password.");
+            }
+          }}
+          style={{
+            background: 'none', border: 'none', color: 'var(--accent-primary)',
+            fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline'
+          }}
+        >
+          Organizer Access
+        </button>
+      </div>
     </div>
   );
 }
