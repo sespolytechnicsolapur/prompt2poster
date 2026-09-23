@@ -36,7 +36,16 @@ export function useCompetition() {
 
   // ── Auth State ────────────────────────────────────────────────────────────
   const [contestant, setContestant]             = useState(() => getLoggedInContestant());
-  const [isAdmin, setIsAdmin]                   = useState(false);
+  const [isAdmin, setIsAdminState]              = useState(() => sessionStorage.getItem('prompt2poster_admin') === 'true');
+
+  const setIsAdmin = (value) => {
+    if (value) {
+      sessionStorage.setItem('prompt2poster_admin', 'true');
+    } else {
+      sessionStorage.removeItem('prompt2poster_admin');
+    }
+    setIsAdminState(value);
+  };
 
   // ── Visibility State ──────────────────────────────────────────────────────
   const [leaderboardVisible, setLeaderboardVisibleState] = useState(true);
