@@ -349,15 +349,26 @@ export function TopicManagement({
   topicVisible,
   onToggleLeaderboard,
   onToggleTopic,
-  onViewDetails
+  onViewDetails,
+  isAdmin,
+  setIsAdmin
 }) {
-  const [unlocked, setUnlocked] = useState(!ORGANIZER_PASSWORD);
+  const [unlocked, setUnlocked] = useState(isAdmin || !ORGANIZER_PASSWORD);
   const [activeTab, setActiveTab] = useState('topics');
-  const [adminPassword, setAdminPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState(isAdmin ? ORGANIZER_PASSWORD : '');
+
+  // Sync unlocked state if isAdmin changes externally
+  useEffect(() => {
+    if (isAdmin) {
+      setUnlocked(true);
+      setAdminPassword(ORGANIZER_PASSWORD);
+    }
+  }, [isAdmin]);
 
   const handleUnlock = () => {
     setUnlocked(true);
     setAdminPassword(ORGANIZER_PASSWORD);
+    if (setIsAdmin) setIsAdmin(true);
   };
 
   if (!unlocked) return <PasswordGate onUnlock={handleUnlock} />;

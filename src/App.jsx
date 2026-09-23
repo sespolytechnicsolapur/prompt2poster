@@ -196,6 +196,8 @@ export default function App() {
             onToggleLeaderboard={(v) => toggleLeaderboardVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             onToggleTopic={(v) => toggleTopicVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             onViewDetails={handleViewDetails}
+            isAdmin={isAdmin}
+            setIsAdmin={setIsAdmin}
           />
         )}
       </main>
