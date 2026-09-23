@@ -136,7 +136,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
+    const hasImage = !!(posterDataUrl && (posterDataUrl.startsWith('data:image/') || posterDataUrl.startsWith('http')));
     console.log(`[Evaluate] model=${model} topic="${topic}" image=${hasImage} poolSize=${keys.length}`);
 
     const userContent = [
