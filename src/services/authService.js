@@ -1,3 +1,5 @@
+import { supabase, isSupabaseConfigured } from './supabase';
+
 /**
  * Prompt2Poster — Authentication Service
  *
@@ -15,16 +17,19 @@ const SESSION_KEY = 'prompt2poster_contestant_session';
  * @throws {Error} On invalid credentials or network failure
  */
 export async function loginContestant(userId, uniqueId) {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: userId.trim(), uniqueId: uniqueId.trim() })
-  });
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured. Check environment variables.');
+  }
 
-  const data = await response.json();
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('name, user_id')
+    .eq('user_id', userId.trim())
+    .eq('unique_id', uniqueId.trim())
+    .single();
 
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Login failed');
+  if (error || !data) {
+    throw new Error('Invalid credentials. Check your User ID and Unique ID.');
   }
 
   // Persist session

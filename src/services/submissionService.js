@@ -477,15 +477,17 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
 // VISIBILITY CONTROLS
 // ══════════════════════════════════════════════════════════════════════════════
 
+const ORGANIZER_PASSWORD = import.meta.env.VITE_ORGANIZER_PASSWORD;
+
 /**
  * Fetch current leaderboard visibility state.
  * @returns {Promise<boolean>}
  */
 export async function fetchLeaderboardVisibility() {
+  if (!isSupabaseConfigured || !supabase) return true;
   try {
-    const res = await fetch('/api/leaderboard-visibility');
-    const data = await res.json();
-    return data.visible !== false;
+    const { data } = await supabase.from('topics').select('leaderboard_visible').eq('is_active', true).single();
+    return data?.leaderboard_visible ?? true;
   } catch {
     return true;
   }
@@ -498,14 +500,13 @@ export async function fetchLeaderboardVisibility() {
  * @returns {Promise<boolean>} New visibility state
  */
 export async function setLeaderboardVisibility(visible, adminPassword) {
-  const res = await fetch('/api/leaderboard-visibility', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ visible, adminPassword })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update leaderboard visibility');
-  return data.visible;
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ leaderboard_visible: visible }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return visible;
 }
 
 /**
@@ -513,10 +514,10 @@ export async function setLeaderboardVisibility(visible, adminPassword) {
  * @returns {Promise<boolean>}
  */
 export async function fetchTopicVisibility() {
+  if (!isSupabaseConfigured || !supabase) return true;
   try {
-    const res = await fetch('/api/topic-visibility');
-    const data = await res.json();
-    return data.visible !== false;
+    const { data } = await supabase.from('topics').select('topic_visible').eq('is_active', true).single();
+    return data?.topic_visible ?? true;
   } catch {
     return true;
   }
@@ -529,12 +530,11 @@ export async function fetchTopicVisibility() {
  * @returns {Promise<boolean>} New visibility state
  */
 export async function setTopicVisibility(visible, adminPassword) {
-  const res = await fetch('/api/topic-visibility', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ visible, adminPassword })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update topic visibility');
-  return data.visible;
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ topic_visible: visible }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return visible;
 }
