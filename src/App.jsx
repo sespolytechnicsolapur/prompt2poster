@@ -99,7 +99,7 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-default)' }}>
         <main className="container" style={{ flex: 1, paddingTop: '4rem', paddingBottom: '3.5rem' }}>
           <Login onLoginSuccess={(data) => {
-            if (data.isAdmin) {
+            if (data?.isAdmin) {
               handleOrganizerAccess();
               setActivePage('organizer');
             } else {

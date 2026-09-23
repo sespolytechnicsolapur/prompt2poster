@@ -33,8 +33,8 @@ export async function loginContestant(userId, uniqueId) {
   }
 
   // Persist session
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data.contestant));
-  return data.contestant;
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  return data;
 }
 
 /**
