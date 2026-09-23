@@ -211,6 +211,37 @@ function lsSetSubmissions(list) { lsSet(LS_SUBMISSIONS, list); }
  * @param {Object} submissionData - Submission payload
  * @returns {Promise<Object>} Saved submission record
  */
+export async function uploadPosterImage(posterFile, userId) {
+  if (!isSupabaseConfigured || !supabase || !posterFile) {
+    return { path: null, url: null };
+  }
+  const fileExt = posterFile.name.split('.').pop();
+  const fileName = `${userId}_${Date.now()}.${fileExt}`;
+  const filePath = `submissions/${fileName}`;
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('posters')
+    .upload(filePath, posterFile, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (uploadError) {
+    console.error('[Storage Upload Error]:', uploadError);
+    return { path: null, url: null, error: uploadError };
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('posters')
+    .getPublicUrl(filePath);
+
+  return { path: filePath, url: publicUrlData.publicUrl };
+}
+
+/**
+ * Saves a new submission locally and to Supabase (if configured).
+ * @param {Object} submissionData
+ */
 export async function saveSubmission(submissionData) {
   const {
     contestantName, topic, posterFile,
@@ -252,25 +283,17 @@ export async function saveSubmission(submissionData) {
 
   if (isSupabaseConfigured && supabase) {
     if (posterFile) {
-      const fileExt = posterFile.name.split('.').pop();
-      const fileName = `${submittedByUserId}_${Date.now()}.${fileExt}`;
-      const filePath = `submissions/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('posters')
-        .upload(filePath, posterFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('[Storage Upload Error]:', uploadError);
+      if (typeof posterFile === 'string' && posterFile.startsWith('https://')) {
+        // If it's already a URL, just use it (already uploaded)
+        finalPosterUrl = posterFile;
+        storagePath = 'already_uploaded';
       } else {
-        storagePath = filePath;
-        const { data: publicUrlData } = supabase.storage
-          .from('posters')
-          .getPublicUrl(filePath);
-        finalPosterUrl = publicUrlData.publicUrl;
+        // Fallback upload if it wasn't uploaded beforehand
+        const uploadResult = await uploadPosterImage(posterFile, submittedByUserId);
+        if (uploadResult.url) {
+          storagePath = uploadResult.path;
+          finalPosterUrl = uploadResult.url;
+        }
       }
     }
 

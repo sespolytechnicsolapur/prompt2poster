@@ -14,7 +14,8 @@ export async function evaluatePosterWithAI({ posterDataUrl, topic, contestantNam
     });
 
     if (!response.ok) {
-      throw new Error(`Evaluation API returned status ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Evaluation API returned status ${response.status}`);
     }
 
     const data = await response.json();
