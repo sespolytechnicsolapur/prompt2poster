@@ -12,6 +12,8 @@ const DEFAULT_TOPIC = {
   topic_title: 'AI for Renewable Energy & Climate Action',
   description: 'Design an impactful poster illustrating how Artificial Intelligence can revolutionize solar, wind, and smart grid systems to combat climate change.',
   is_active: true,
+  leaderboard_visible: true,
+  topic_visible: true,
   created_at: new Date().toISOString(),
 };
 
@@ -29,10 +31,13 @@ function lsSet(key, value) {
   }
 }
 
-// ── Topic (single active) ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// TOPIC (single active)
+// ══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Fetch the current active competition topic.
+ * @returns {Promise<Object>} The active topic record
  */
 export async function fetchActiveTopic() {
   if (isSupabaseConfigured && supabase) {
@@ -53,6 +58,9 @@ export async function fetchActiveTopic() {
 
 /**
  * Update or create the single active competition topic.
+ * @param {string} topicTitle - New topic title
+ * @param {string} [description=''] - Topic description
+ * @returns {Promise<Object>} The updated topic record
  */
 export async function updateActiveTopic(topicTitle, description = '') {
   const newTopic = {
@@ -60,6 +68,8 @@ export async function updateActiveTopic(topicTitle, description = '') {
     topic_title: topicTitle.trim(),
     description: description.trim(),
     is_active: true,
+    leaderboard_visible: true,
+    topic_visible: true,
     created_at: new Date().toISOString(),
   };
 
@@ -83,7 +93,9 @@ export async function updateActiveTopic(topicTitle, description = '') {
   return newTopic;
 }
 
-// ── Topic Pool ────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// TOPIC POOL
+// ══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Fetch all topics in the organizer pool.
@@ -105,6 +117,9 @@ export async function fetchTopicPool() {
 
 /**
  * Add a topic to the pool.
+ * @param {string} topicTitle - Topic title
+ * @param {string} [description=''] - Topic description
+ * @returns {Promise<Object>} The added topic entry
  */
 export async function addTopicToPool(topicTitle, description = '') {
   const entry = {
@@ -142,6 +157,7 @@ export async function addTopicToPool(topicTitle, description = '') {
 
 /**
  * Remove a topic from the pool by id.
+ * @param {string} id - Topic ID to remove
  */
 export async function removeTopicFromPool(id) {
   const pool = lsGet(LS_POOL, []).filter(t => t.id !== id);
@@ -156,22 +172,26 @@ export async function removeTopicFromPool(id) {
 }
 
 /**
- * Get / set pool mode ('single' | 'pool').
+ * Get current pool mode.
+ * @returns {'single' | 'pool'}
  */
 export function getPoolMode() { return lsGet(LS_POOL_MODE, 'single'); }
+
+/**
+ * Set pool mode.
+ * @param {'single' | 'pool'} mode
+ */
 export function setPoolMode(mode) { lsSet(LS_POOL_MODE, mode); }
 
 /**
  * Pick a topic from the pool pseudo-randomly seeded by contestant name.
  * Same name always gets the same topic for the session.
- * Falls back to null if pool is empty.
- * @param {Array} pool
- * @param {string} seed
- * @returns {Object|null}
+ * @param {Array} pool - Topic pool array
+ * @param {string} seed - Contestant name as seed
+ * @returns {Object|null} Selected topic or null
  */
 export function pickRandomTopic(pool, seed = '') {
   if (!pool || pool.length === 0) return null;
-  // Simple deterministic hash
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
     h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
@@ -179,25 +199,32 @@ export function pickRandomTopic(pool, seed = '') {
   return pool[Math.abs(h) % pool.length];
 }
 
-// ── Submissions ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBMISSIONS
+// ══════════════════════════════════════════════════════════════════════════════
 
 function lsGetSubmissions() { return lsGet(LS_SUBMISSIONS, []); }
 function lsSetSubmissions(list) { lsSet(LS_SUBMISSIONS, list); }
 
 /**
  * Save a new submission + AI evaluation.
- * Throws on DB failure (instead of silently swallowing errors).
+ * @param {Object} submissionData - Submission payload
+ * @returns {Promise<Object>} Saved submission record
  */
 export async function saveSubmission(submissionData) {
-  const { contestantName, topic, posterStoragePath, posterUrl, evaluation } = submissionData;
+  const {
+    contestantName, topic, posterStoragePath, posterUrl,
+    evaluation, aiPromptUsed = '', submittedByUserId = ''
+  } = submissionData;
 
   const record = {
     id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     contestant_name: contestantName,
     topic,
     poster_storage_path: posterStoragePath,
-    // Only persist a real https:// URL — never base64
     poster_url: (posterUrl && posterUrl.startsWith('https://')) ? posterUrl : null,
+    submitted_by_user_id: submittedByUserId,
+    ai_prompt_used: aiPromptUsed,
     relevance_to_topic_score:     evaluation.relevance_to_topic.score,
     visual_hierarchy_score:       evaluation.visual_hierarchy.score,
     typography_readability_score: evaluation.typography_readability.score,
@@ -209,6 +236,8 @@ export async function saveSubmission(submissionData) {
     evaluation_reasoning: evaluation,
     issues:             evaluation.issues || [],
     overall_evaluation: evaluation.overall_evaluation,
+    is_hidden: false,
+    score_edit_log: [],
     created_at: new Date().toISOString(),
   };
 
@@ -224,6 +253,8 @@ export async function saveSubmission(submissionData) {
         topic:                        record.topic,
         poster_storage_path:          record.poster_storage_path || 'local-only',
         poster_url:                   record.poster_url || '',
+        submitted_by_user_id:         record.submitted_by_user_id,
+        ai_prompt_used:               record.ai_prompt_used,
         relevance_to_topic_score:     record.relevance_to_topic_score,
         visual_hierarchy_score:       record.visual_hierarchy_score,
         typography_readability_score: record.typography_readability_score,
@@ -235,6 +266,8 @@ export async function saveSubmission(submissionData) {
         evaluation_reasoning:         record.evaluation_reasoning,
         issues:                       record.issues,
         overall_evaluation:           record.overall_evaluation,
+        is_hidden:                    false,
+        score_edit_log:               [],
       };
 
       const { data, error } = await supabase
@@ -244,14 +277,11 @@ export async function saveSubmission(submissionData) {
         .single();
 
       if (error) {
-        // Surface the real DB error instead of swallowing it
         console.error('[saveSubmission DB Error]:', error.message, error.details);
-        // Still return the local record so the UI can proceed
         return record;
       }
 
       if (data) {
-        // Update local record with real DB id
         localList[0] = { ...record, id: data.id };
         lsSetSubmissions(localList);
         return data;
@@ -266,24 +296,38 @@ export async function saveSubmission(submissionData) {
 
 /**
  * Fetch all submissions for the leaderboard, sorted by total_score desc.
+ * @param {Object} [options={}]
+ * @param {boolean} [options.includeHidden=false] - Whether to include hidden entries
+ * @returns {Promise<Array>} Sorted submissions
  */
-export async function fetchLeaderboard() {
+export async function fetchLeaderboard({ includeHidden = false } = {}) {
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('submissions')
         .select('*')
         .order('total_score', { ascending: false })
         .order('created_at', { ascending: true });
+
+      if (!includeHidden) {
+        query = query.eq('is_hidden', false);
+      }
+
+      const { data, error } = await query;
       if (!error && data && data.length > 0) return data;
       if (error) console.warn('[fetchLeaderboard]', error.message);
     } catch (err) { console.warn('[fetchLeaderboard]', err.message); }
   }
-  return lsGetSubmissions().sort((a, b) => b.total_score - a.total_score);
+
+  const all = lsGetSubmissions().sort((a, b) => b.total_score - a.total_score);
+  if (includeHidden) return all;
+  return all.filter(s => !s.is_hidden);
 }
 
 /**
  * Fetch a single submission by ID.
+ * @param {string} id - Submission ID
+ * @returns {Promise<Object|null>} Submission record or null
  */
 export async function fetchSubmissionById(id) {
   if (isSupabaseConfigured && supabase) {
@@ -298,4 +342,199 @@ export async function fetchSubmissionById(id) {
     } catch (err) { console.warn('[fetchSubmissionById]', err.message); }
   }
   return lsGetSubmissions().find(item => item.id === id) || null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN SUBMISSION OPERATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Permanently delete a submission.
+ * @param {string} id - Submission ID to delete
+ */
+export async function deleteSubmission(id) {
+  // Remove from localStorage
+  const list = lsGetSubmissions().filter(s => s.id !== id);
+  lsSetSubmissions(list);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase.from('submissions').delete().eq('id', id);
+      if (error) console.error('[deleteSubmission DB Error]:', error.message);
+    } catch (err) { console.error('[deleteSubmission DB Error]:', err.message); }
+  }
+}
+
+/**
+ * Toggle a submission's hidden status.
+ * @param {string} id - Submission ID
+ * @param {boolean} isHidden - New hidden state
+ * @returns {Promise<Object|null>} Updated record
+ */
+export async function toggleSubmissionVisibility(id, isHidden) {
+  // Update localStorage
+  const list = lsGetSubmissions();
+  const idx = list.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    list[idx].is_hidden = isHidden;
+    lsSetSubmissions(list);
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .update({ is_hidden: isHidden })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) console.error('[toggleVisibility DB Error]:', error.message);
+      if (data) return data;
+    } catch (err) { console.error('[toggleVisibility DB Error]:', err.message); }
+  }
+
+  return idx !== -1 ? list[idx] : null;
+}
+
+/**
+ * Update submission scores and reasoning after admin edit or AI re-evaluation.
+ * Appends an entry to the score_edit_log.
+ *
+ * @param {string} id - Submission ID
+ * @param {Object} updatedEvaluation - New evaluation data from AI re-evaluation
+ * @param {Object} previousScores - Previous scores for the change log
+ * @returns {Promise<Object|null>} Updated record
+ */
+export async function updateSubmissionScores(id, updatedEvaluation, previousScores) {
+  const editLogEntry = {
+    timestamp: new Date().toISOString(),
+    previous_total: previousScores.total_score,
+    new_total: updatedEvaluation.total_score,
+    previous_scores: previousScores,
+    action: 'admin_score_edit',
+  };
+
+  // Update localStorage
+  const list = lsGetSubmissions();
+  const idx = list.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    const entry = list[idx];
+    entry.relevance_to_topic_score     = updatedEvaluation.relevance_to_topic.score;
+    entry.visual_hierarchy_score       = updatedEvaluation.visual_hierarchy.score;
+    entry.typography_readability_score  = updatedEvaluation.typography_readability.score;
+    entry.composition_layout_score     = updatedEvaluation.composition_layout.score;
+    entry.creativity_originality_score = updatedEvaluation.creativity_originality.score;
+    entry.color_usage_score            = updatedEvaluation.color_usage.score;
+    entry.overall_communication_score  = updatedEvaluation.overall_communication.score;
+    entry.total_score                  = updatedEvaluation.total_score;
+    entry.evaluation_reasoning         = updatedEvaluation;
+    entry.issues                       = updatedEvaluation.issues || [];
+    entry.overall_evaluation           = updatedEvaluation.overall_evaluation;
+    entry.score_edit_log = [...(entry.score_edit_log || []), editLogEntry];
+    lsSetSubmissions(list);
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      // First fetch current edit log
+      const { data: current } = await supabase
+        .from('submissions')
+        .select('score_edit_log')
+        .eq('id', id)
+        .single();
+
+      const existingLog = current?.score_edit_log || [];
+
+      const { data, error } = await supabase
+        .from('submissions')
+        .update({
+          relevance_to_topic_score:     updatedEvaluation.relevance_to_topic.score,
+          visual_hierarchy_score:       updatedEvaluation.visual_hierarchy.score,
+          typography_readability_score: updatedEvaluation.typography_readability.score,
+          composition_layout_score:     updatedEvaluation.composition_layout.score,
+          creativity_originality_score: updatedEvaluation.creativity_originality.score,
+          color_usage_score:            updatedEvaluation.color_usage.score,
+          overall_communication_score:  updatedEvaluation.overall_communication.score,
+          total_score:                  updatedEvaluation.total_score,
+          evaluation_reasoning:         updatedEvaluation,
+          issues:                       updatedEvaluation.issues || [],
+          overall_evaluation:           updatedEvaluation.overall_evaluation,
+          score_edit_log:               [...existingLog, editLogEntry],
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) console.error('[updateScores DB Error]:', error.message);
+      if (data) return data;
+    } catch (err) { console.error('[updateScores DB Error]:', err.message); }
+  }
+
+  return idx !== -1 ? list[idx] : null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISIBILITY CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch current leaderboard visibility state.
+ * @returns {Promise<boolean>}
+ */
+export async function fetchLeaderboardVisibility() {
+  try {
+    const res = await fetch('/api/leaderboard-visibility');
+    const data = await res.json();
+    return data.visible !== false;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Set leaderboard visibility (admin only).
+ * @param {boolean} visible
+ * @param {string} adminPassword
+ * @returns {Promise<boolean>} New visibility state
+ */
+export async function setLeaderboardVisibility(visible, adminPassword) {
+  const res = await fetch('/api/leaderboard-visibility', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ visible, adminPassword })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update leaderboard visibility');
+  return data.visible;
+}
+
+/**
+ * Fetch current topic visibility state.
+ * @returns {Promise<boolean>}
+ */
+export async function fetchTopicVisibility() {
+  try {
+    const res = await fetch('/api/topic-visibility');
+    const data = await res.json();
+    return data.visible !== false;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Set topic visibility (admin only).
+ * @param {boolean} visible
+ * @param {string} adminPassword
+ * @returns {Promise<boolean>} New visibility state
+ */
+export async function setTopicVisibility(visible, adminPassword) {
+  const res = await fetch('/api/topic-visibility', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ visible, adminPassword })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update topic visibility');
+  return data.visible;
 }

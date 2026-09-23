@@ -7,23 +7,18 @@ import { Submit } from './pages/Submit';
 import { Leaderboard } from './pages/Leaderboard';
 import { SubmissionDetails } from './pages/SubmissionDetails';
 import { TopicManagement } from './pages/TopicManagement';
+import { Login } from './pages/Login';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [activeSubmissionRecord, setActiveSubmissionRecord] = useState(null);
 
-  // Theme State
+  // ── Theme State ─────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('prompt2poster_theme');
-
-    if (saved) {
-      return saved;
-    }
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
@@ -31,62 +26,75 @@ export default function App() {
     localStorage.setItem('prompt2poster_theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
 
+  // ── Competition State (hook) ────────────────────────────────────────────
   const {
-    activeTopic,
-    leaderboard,
-    loadingTopic,
-    loadingLeaderboard,
-    refreshLeaderboard,
-    changeTopic,
+    activeTopic, loadingTopic, changeTopic,
 
-    // Topic Pool
-    topicPool,
-    loadingPool,
-    poolMode,
-    changePoolMode,
-    addTopic,
-    removeTopic,
+    topicPool, loadingPool, poolMode,
+    changePoolMode, addTopic, removeTopic,
+
+    leaderboard, loadingLeaderboard, refreshLeaderboard,
+
+    contestant, isAdmin, setIsAdmin,
+    handleLogin, handleLogout,
+
+    leaderboardVisible, topicVisible,
+    toggleLeaderboardVisibility, toggleTopicVisibility,
   } = useCompetition();
 
-  // Select a submission
+  // ── Navigation ──────────────────────────────────────────────────────────
   const handleSelectSubmission = (id, record = null) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(record);
     setActivePage('details');
   };
 
-  // Submission completed successfully
   const handleSubmissionSuccess = (savedRecord) => {
     refreshLeaderboard();
-
     setSelectedSubmissionId(savedRecord.id);
     setActiveSubmissionRecord(savedRecord);
-
     setActivePage('details');
   };
 
-  // Navigation handler
   const handleNavigation = (page) => {
+    // Guard: Submit page requires login
+    if (page === 'submit' && !contestant) {
+      setActivePage('login');
+      return;
+    }
     setActivePage(page);
-
     if (page !== 'details') {
       setSelectedSubmissionId(null);
       setActiveSubmissionRecord(null);
     }
   };
 
+  const handleLoginSuccess = (contestantData) => {
+    handleLogin(contestantData);
+    setActivePage('submit');
+  };
+
+  const handleLogoutClick = () => {
+    handleLogout();
+    setActivePage('home');
+  };
+
+  // When admin unlocks the organizer panel, set isAdmin
+  const handleOrganizerAccess = () => {
+    setIsAdmin(true);
+  };
+
+  // ── View a submission from the admin panel ──────────────────────────────
+  const handleViewDetails = (id) => {
+    setSelectedSubmissionId(id);
+    setActiveSubmissionRecord(null);
+    setActivePage('details');
+  };
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-      }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* NAVBAR */}
       <Navbar
         activePage={activePage}
@@ -94,25 +102,31 @@ export default function App() {
         activeTopicTitle={activeTopic?.topic_title}
         theme={theme}
         toggleTheme={toggleTheme}
+        contestant={contestant}
+        onLogout={handleLogoutClick}
+        leaderboardVisible={leaderboardVisible}
+        isAdmin={isAdmin}
       />
 
       {/* MAIN CONTENT */}
-      <main
-        className="container"
-        style={{
-          flex: 1,
-          paddingTop: '2.5rem',
-          paddingBottom: '3.5rem',
-        }}
-      >
+      <main className="container" style={{ flex: 1, paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+
         {/* HOME */}
         {activePage === 'home' && (
           <Home
             activeTopic={activeTopic}
             leaderboard={leaderboard}
-            onNavigate={setActivePage}
+            onNavigate={handleNavigation}
             onSelectSubmission={handleSelectSubmission}
+            leaderboardVisible={leaderboardVisible}
+            topicVisible={topicVisible}
+            isAdmin={isAdmin}
           />
+        )}
+
+        {/* LOGIN */}
+        {activePage === 'login' && (
+          <Login onLoginSuccess={handleLoginSuccess} />
         )}
 
         {/* SUBMIT */}
@@ -123,6 +137,9 @@ export default function App() {
             topicPool={topicPool}
             poolMode={poolMode}
             onSubmissionSuccess={handleSubmissionSuccess}
+            contestant={contestant}
+            topicVisible={topicVisible}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -133,6 +150,8 @@ export default function App() {
             loading={loadingLeaderboard}
             onSelectSubmission={handleSelectSubmission}
             onRefresh={refreshLeaderboard}
+            leaderboardVisible={leaderboardVisible}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -142,6 +161,7 @@ export default function App() {
             submissionId={selectedSubmissionId}
             initialRecord={activeSubmissionRecord}
             onBack={() => handleNavigation('leaderboard')}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -156,6 +176,11 @@ export default function App() {
             onChangePoolMode={changePoolMode}
             onAddTopic={addTopic}
             onRemoveTopic={removeTopic}
+            leaderboardVisible={leaderboardVisible}
+            topicVisible={topicVisible}
+            onToggleLeaderboard={(v) => toggleLeaderboardVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            onToggleTopic={(v) => toggleTopicVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            onViewDetails={handleViewDetails}
           />
         )}
       </main>

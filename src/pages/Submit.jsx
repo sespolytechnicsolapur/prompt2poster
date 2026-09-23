@@ -1,210 +1,326 @@
-import React, { useState, useEffect } from 'react';
-import { TopicBanner } from '../components/TopicBanner';
-import { PosterUploader } from '../components/PosterUploader';
-import { EvaluationLoader } from '../components/EvaluationLoader';
-import { validateContestantName, validatePosterFile } from '../utils/validation';
-import { uploadPoster } from '../services/storageService';
+import React, { useState, useRef } from 'react';
+import { Upload, X, Send, Image as ImageIcon, Loader2, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { evaluatePosterWithAI } from '../services/evaluationService';
 import { saveSubmission, pickRandomTopic } from '../services/submissionService';
-import { User, AlertCircle, ArrowRight, Shuffle } from 'lucide-react';
 
-export function Submit({ activeTopic, loadingTopic, topicPool = [], poolMode = 'single', onSubmissionSuccess }) {
-  const [contestantName, setContestantName] = useState('');
-  const [selectedFile, setSelectedFile]     = useState(null);
-  const [previewUrl, setPreviewUrl]         = useState(null);
-  const [isSubmitting, setIsSubmitting]     = useState(false);
-  const [currentStage, setCurrentStage]     = useState(1);
-  const [error, setError]                   = useState(null);
+/**
+ * Poster Submission Page
+ * Only accessible to logged-in contestants.
+ */
+export function Submit({
+  activeTopic,
+  loadingTopic,
+  topicPool,
+  poolMode,
+  onSubmissionSuccess,
+  contestant,
+  topicVisible,
+  isAdmin
+}) {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl]     = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError]               = useState(null);
+  const [aiPromptUsed, setAiPromptUsed] = useState('');
 
-  const [assignedTopic, setAssignedTopic] = useState(null);
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (poolMode === 'pool' && topicPool.length > 0) {
-      const trimmed = contestantName.trim();
-      if (trimmed.length >= 2) {
-        setAssignedTopic(pickRandomTopic(topicPool, trimmed));
-      } else {
-        setAssignedTopic(null);
-      }
-    } else {
-      setAssignedTopic(activeTopic);
+  // Determine the topic for this contestant
+  let assignedTopic = activeTopic;
+  if (poolMode === 'pool' && contestant) {
+    assignedTopic = pickRandomTopic(topicPool, contestant.name) || activeTopic;
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, WebP)');
+      return;
     }
-  }, [contestantName, poolMode, topicPool, activeTopic]);
-
-  const effectiveTopic = poolMode === 'pool' ? assignedTopic : activeTopic;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    const nameVal = validateContestantName(contestantName);
-    if (!nameVal.isValid) { setError(nameVal.error); return; }
-
-    const fileVal = validatePosterFile(selectedFile);
-    if (!fileVal.isValid) { setError(fileVal.error); return; }
-
-    if (!effectiveTopic || !effectiveTopic.topic_title) {
-      setError(
-        poolMode === 'pool'
-          ? 'No topic could be assigned from the pool. Please contact an organizer.'
-          : 'Active competition topic is missing. Please contact an organizer.'
-      );
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be less than 10MB');
       return;
     }
 
+    setSelectedFile(file);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => setPreviewUrl(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const clearSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFile || !previewUrl) {
+      setError('Please select a poster image to submit');
+      return;
+    }
+    if (!contestant) {
+      setError('You must be logged in to submit');
+      return;
+    }
+
+    const finalTopicTitle = assignedTopic?.topic_title || 'Unassigned Topic';
+
     setIsSubmitting(true);
+    setError(null);
+
     try {
-      setCurrentStage(1);
-      const storageResult = await uploadPoster(selectedFile, nameVal.trimmedName);
-
-      setCurrentStage(2);
-      const evalResult = await evaluatePosterWithAI({
-        posterDataUrl:  storageResult.dataUrl,
-        topic:          effectiveTopic.topic_title,
-        contestantName: nameVal.trimmedName,
+      // 1. Evaluate with AI
+      const { evaluation, source } = await evaluatePosterWithAI({
+        posterDataUrl: previewUrl,
+        topic: finalTopicTitle,
+        contestantName: contestant.name
       });
 
-      setCurrentStage(3);
-      await new Promise(r => setTimeout(r, 600));
-
-      setCurrentStage(4);
-      const savedRecord = await saveSubmission({
-        contestantName:    nameVal.trimmedName,
-        topic:             effectiveTopic.topic_title,
-        posterStoragePath: storageResult.storagePath,
-        posterUrl:         storageResult.publicUrl,
-        evaluation:        evalResult.evaluation,
+      // 2. Save submission to DB (mock storage for now)
+      const record = await saveSubmission({
+        contestantName: contestant.name,
+        submittedByUserId: contestant.user_id,
+        topic: finalTopicTitle,
+        posterStoragePath: 'local-only', // Would upload to Supabase storage here
+        posterUrl: previewUrl,
+        aiPromptUsed: aiPromptUsed.trim(),
+        evaluation
       });
 
-      await new Promise(r => setTimeout(r, 500));
-      setIsSubmitting(false);
-      if (onSubmissionSuccess) onSubmissionSuccess(savedRecord);
+      console.log(`[Submit] Evaluation complete via ${source}`);
+      if (onSubmissionSuccess) onSubmissionSuccess(record);
 
     } catch (err) {
-      console.error('Submission error:', err);
-      setError(err.message || 'Submission failed. Please check backend AI endpoint connection.');
+      console.error('[Submit Error]', err);
+      setError(err.message || 'An error occurred during evaluation. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isPoolMode    = poolMode === 'pool';
-  const poolHasTopics = topicPool.length > 0;
-  const nameIsLongEnough = contestantName.trim().length >= 2;
+  // Determine if contestant can see the topic
+  const showTopic = topicVisible || isAdmin;
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-          Submit Poster
+    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
+          Submit Your Poster
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          Upload your completed poster design for automated scoring across the 7 competition criteria.
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '500px', margin: '0 auto' }}>
+          Upload your design for immediate AI evaluation and scoring.
         </p>
       </div>
 
-      {/* Pool mode notice */}
-      {isPoolMode && poolHasTopics && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          backgroundColor: 'var(--bg-surface-subtle)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-md)',
-          fontSize: '0.8125rem',
-          color: 'var(--text-secondary)'
-        }}>
-          <Shuffle size={14} style={{ flexShrink: 0 }} />
-          <span>Random topic assignment is active based on contestant name.</span>
-        </div>
-      )}
+      <div className="surface-card" style={{ padding: '2rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-      {/* Topic card */}
-      {isPoolMode ? (
-        assignedTopic ? (
-          <TopicBanner topic={assignedTopic} loading={false} />
-        ) : (
-          <div className="surface-card" style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            {poolHasTopics
-              ? 'Enter your name (at least 2 characters) to receive your assigned topic.'
-              : 'No topics configured in the pool. Contact an event organizer.'}
-          </div>
-        )
-      ) : (
-        <TopicBanner topic={activeTopic} loading={loadingTopic} />
-      )}
+          {/* 1. Topic Assignment Section */}
+          <div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>1</span>
+              Your Assigned Topic
+            </h2>
 
-      {/* Submission Form / Evaluation Loader */}
-      {isSubmitting ? (
-        <EvaluationLoader currentStage={currentStage} />
-      ) : (
-        <form onSubmit={handleSubmit} className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Contestant Name */}
-          <div className="form-group">
-            <label className="form-label">
-              <User size={14} />
-              <span>Contestant Name or Team Identifier</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Maya Lin / Team Orion"
-              value={contestantName}
-              onChange={(e) => setContestantName(e.target.value)}
-              className="form-input"
-              required
-            />
+            {loadingTopic ? (
+              <div style={{ padding: '1.5rem', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 0.5rem auto' }} />
+                Loading assignment...
+              </div>
+            ) : showTopic ? (
+              <div style={{ padding: '1.5rem', backgroundColor: 'var(--accent-primary-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)', flexShrink: 0, boxShadow: 'var(--shadow-sm)' }}>
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--accent-primary)', margin: '0 0 0.5rem 0' }}>
+                      {assignedTopic?.topic_title || 'No active topic'}
+                    </h3>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '0.875rem', margin: 0, lineHeight: 1.6, opacity: 0.9 }}>
+                      {assignedTopic?.description || 'Design a poster based on this topic.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+               <div style={{ padding: '1.5rem', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-strong)', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+                  Topic Hidden
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+                  The competition topic will be revealed shortly by the organizers.
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Poster Upload */}
-          <div className="form-group">
-            <label className="form-label">
-              <span>Poster Image</span>
-            </label>
-            <PosterUploader
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-              previewUrl={previewUrl}
-              setPreviewUrl={setPreviewUrl}
-            />
+          {/* 2. Contestant Details */}
+          <div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>2</span>
+              Submission Details
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="form-group">
+                <label className="form-label">Contestant Name</label>
+                <input
+                  type="text"
+                  value={contestant?.name || ''}
+                  className="form-input"
+                  disabled
+                  style={{ backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-secondary)' }}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
+                  Autofilled from your login credentials.
+                </span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">AI Prompt Used (Optional)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Paste the prompt you used to generate this poster (e.g. Midjourney, DALL-E)..."
+                  value={aiPromptUsed}
+                  onChange={(e) => setAiPromptUsed(e.target.value)}
+                  className="form-input"
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Error Notice */}
+          {/* 3. File Upload */}
+          <div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>3</span>
+              Upload Design
+            </h2>
+
+            {!previewUrl ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: '2px dashed var(--border-strong)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  transition: 'all var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--accent-primary-subtle)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-strong)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-surface-subtle)';
+                }}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                />
+                <div style={{
+                  width: '64px', height: '64px', borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 1rem auto',
+                  color: 'var(--accent-primary)',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <Upload size={28} />
+                </div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+                  Click to upload poster
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+                  PNG, JPG or WebP (max. 10MB)
+                </p>
+              </div>
+            ) : (
+              <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface-subtle)' }}>
+                <img
+                  src={previewUrl}
+                  alt="Poster preview"
+                  style={{ width: '100%', maxHeight: '600px', objectFit: 'contain', display: 'block' }}
+                />
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  style={{
+                    position: 'absolute', top: '1rem', right: '1rem',
+                    backgroundColor: 'rgba(0,0,0,0.6)', color: 'white',
+                    border: 'none', borderRadius: '50%',
+                    width: '36px', height: '36px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', backdropFilter: 'blur(4px)'
+                  }}
+                  title="Remove image"
+                >
+                  <X size={18} />
+                </button>
+                <div style={{
+                  position: 'absolute', bottom: '0', left: '0', right: '0',
+                  padding: '1rem', background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white'
+                }}>
+                  <ImageIcon size={16} />
+                  <span style={{ fontSize: '0.875rem', fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {selectedFile.name}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {error && (
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'var(--status-danger)',
-              backgroundColor: 'var(--status-danger-subtle)',
-              padding: '0.65rem 0.85rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              fontSize: '0.8125rem'
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+              color: 'var(--status-danger)', backgroundColor: 'var(--status-danger-subtle)',
+              padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)'
             }}>
-              <AlertCircle size={15} style={{ flexShrink: 0 }} />
-              <span>{error}</span>
+              <AlertCircle size={20} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{error}</span>
             </div>
           )}
 
-          {/* Submit Action */}
-          <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.65rem 1rem' }}
-              disabled={
-                !contestantName || !selectedFile ||
-                (isPoolMode && poolHasTopics && (!nameIsLongEnough || !assignedTopic))
-              }
-            >
-              <span>Submit for Evaluation</span>
-              <ArrowRight size={15} />
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting || !selectedFile || (!showTopic)}
+            style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '1rem' }}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                <span>AI is evaluating your poster...</span>
+              </>
+            ) : (
+              <>
+                <Send size={18} />
+                <span>Submit for Evaluation</span>
+              </>
+            )}
+          </button>
         </form>
-      )}
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

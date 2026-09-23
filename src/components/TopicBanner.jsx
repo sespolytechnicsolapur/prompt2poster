@@ -1,77 +1,89 @@
 import React from 'react';
-import { Sliders, AlertCircle } from 'lucide-react';
+import { Target, FileText, Lock } from 'lucide-react';
 
-export function TopicBanner({ topic, loading, onManageClick }) {
-  if (loading) {
+export function TopicBanner({ topicTitle, description, topicVisible, isAdmin }) {
+  // If topic is hidden and user is not an admin, show a placeholder
+  if (!topicVisible && !isAdmin) {
     return (
-      <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading active competition topic...</div>
-      </div>
-    );
-  }
-
-  if (!topic) {
-    return (
-      <div className="surface-card" style={{ padding: '1.25rem 1.5rem', borderLeft: '3px solid var(--status-warning)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-warning)', marginBottom: '0.25rem' }}>
-          <AlertCircle size={16} />
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>No Active Competition Topic</h3>
+      <div className="surface-card" style={{
+        padding: '2rem',
+        display: 'flex', alignItems: 'center', gap: '1.5rem',
+        border: '1px dashed var(--border-strong)',
+        backgroundColor: 'var(--bg-surface-subtle)'
+      }}>
+        <div style={{
+          width: '56px', height: '56px', borderRadius: 'var(--radius-lg)',
+          backgroundColor: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text-muted)', flexShrink: 0, boxShadow: 'var(--shadow-sm)'
+        }}>
+          <Lock size={24} />
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-          An event organizer must configure an active competition topic before posters can be submitted.
-        </p>
+        <div>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+            Competition Topic Hidden
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', margin: 0, lineHeight: '1.6' }}>
+            The topic will be revealed shortly by the organizers.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 500px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-            <span style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--status-success)',
-              display: 'inline-block'
-            }} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Active Prompt
-            </span>
-          </div>
+    <div className="surface-card" style={{
+      padding: '2rem',
+      display: 'flex', alignItems: 'flex-start', gap: '1.5rem',
+      position: 'relative', overflow: 'hidden'
+    }}>
+      {/* Decorative gradient blur */}
+      <div style={{
+        position: 'absolute', top: '-50px', right: '-50px',
+        width: '150px', height: '150px', borderRadius: '50%',
+        background: 'var(--accent-primary)',
+        filter: 'blur(80px)', opacity: 0.1, zIndex: 0
+      }} />
 
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-            marginBottom: '0.4rem'
+      <div style={{
+        width: '56px', height: '56px', borderRadius: 'var(--radius-lg)',
+        background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-subtle) 100%)',
+        border: '1px solid var(--border-color)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: 'var(--accent-primary)', flexShrink: 0,
+        boxShadow: 'var(--shadow-md)', zIndex: 1
+      }}>
+        <Target size={28} />
+      </div>
+
+      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.05em',
+            textTransform: 'uppercase', color: 'var(--text-muted)',
+            display: 'flex', alignItems: 'center', gap: '0.25rem'
           }}>
-            {topic.topic_title}
-          </h2>
-
-          {topic.description && (
-            <p style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              lineHeight: '1.5',
-              maxWidth: '820px'
-            }}>
-              {topic.description}
-            </p>
+            <FileText size={12} />
+            <span>Active Topic</span>
+          </div>
+          {isAdmin && !topicVisible && (
+             <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--status-danger)' }}>
+               (HIDDEN FROM CONTESTANTS)
+             </span>
           )}
         </div>
-
-        {onManageClick && (
-          <button
-            onClick={onManageClick}
-            className="btn btn-secondary btn-sm"
-            title="Configure active topic in organizer panel"
-          >
-            <Sliders size={13} />
-            <span>Configure Prompt</span>
-          </button>
+        <h2 style={{
+          fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)',
+          letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2
+        }}>
+          {topicTitle || 'No active topic set'}
+        </h2>
+        {description && (
+          <p style={{
+            color: 'var(--text-secondary)', fontSize: '0.9375rem',
+            margin: '0.25rem 0 0 0', lineHeight: '1.6', maxWidth: '800px'
+          }}>
+            {description}
+          </p>
         )}
       </div>
     </div>

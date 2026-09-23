@@ -8,19 +8,42 @@ import {
   removeTopicFromPool,
   getPoolMode,
   setPoolMode,
+  fetchLeaderboardVisibility,
+  setLeaderboardVisibility,
+  fetchTopicVisibility,
+  setTopicVisibility,
 } from '../services/submissionService';
+import { getLoggedInContestant, logoutContestant } from '../services/authService';
 
+/**
+ * Central hook managing all competition state:
+ * topics, leaderboard, pool, auth, and visibility controls.
+ */
 export function useCompetition() {
+  // ── Topic State ───────────────────────────────────────────────────────────
   const [activeTopic, setActiveTopic]           = useState(null);
-  const [leaderboard, setLeaderboard]           = useState([]);
-  const [topicPool, setTopicPool]               = useState([]);
-  const [poolMode, setPoolModeState]            = useState(() => getPoolMode()); // 'single' | 'pool'
   const [loadingTopic, setLoadingTopic]         = useState(true);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
-  const [loadingPool, setLoadingPool]           = useState(true);
-  const [error, setError]                       = useState(null);
 
-  // ── Loaders ────────────────────────────────────────────────────────────────
+  // ── Leaderboard State ─────────────────────────────────────────────────────
+  const [leaderboard, setLeaderboard]           = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+
+  // ── Topic Pool State ──────────────────────────────────────────────────────
+  const [topicPool, setTopicPool]               = useState([]);
+  const [poolMode, setPoolModeState]            = useState(() => getPoolMode());
+  const [loadingPool, setLoadingPool]           = useState(true);
+
+  // ── Auth State ────────────────────────────────────────────────────────────
+  const [contestant, setContestant]             = useState(() => getLoggedInContestant());
+  const [isAdmin, setIsAdmin]                   = useState(false);
+
+  // ── Visibility State ──────────────────────────────────────────────────────
+  const [leaderboardVisible, setLeaderboardVisibleState] = useState(true);
+  const [topicVisible, setTopicVisibleState]             = useState(true);
+
+  const [error, setError] = useState(null);
+
+  // ── Loaders ─────────────────────────────────────────────────────────────
   const loadTopic = useCallback(async () => {
     setLoadingTopic(true);
     try {
@@ -37,14 +60,14 @@ export function useCompetition() {
   const loadLeaderboard = useCallback(async () => {
     setLoadingLeaderboard(true);
     try {
-      const list = await fetchLeaderboard();
+      const list = await fetchLeaderboard({ includeHidden: isAdmin });
       setLeaderboard(list);
     } catch (err) {
       console.error('Failed to load leaderboard:', err);
     } finally {
       setLoadingLeaderboard(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   const loadPool = useCallback(async () => {
     setLoadingPool(true);
@@ -58,19 +81,35 @@ export function useCompetition() {
     }
   }, []);
 
+  const loadVisibility = useCallback(async () => {
+    try {
+      const [lbVisible, tVisible] = await Promise.all([
+        fetchLeaderboardVisibility(),
+        fetchTopicVisibility(),
+      ]);
+      setLeaderboardVisibleState(lbVisible);
+      setTopicVisibleState(tVisible);
+    } catch (err) {
+      console.error('Failed to load visibility settings:', err);
+    }
+  }, []);
+
+  // ── Initial Load ────────────────────────────────────────────────────────
   useEffect(() => {
     loadTopic();
     loadLeaderboard();
     loadPool();
-  }, [loadTopic, loadLeaderboard, loadPool]);
+    loadVisibility();
+  }, [loadTopic, loadLeaderboard, loadPool, loadVisibility]);
 
-  // ── Mutators ───────────────────────────────────────────────────────────────
+  // ── Topic Mutators ──────────────────────────────────────────────────────
   const changeTopic = async (title, description) => {
     const updated = await updateActiveTopic(title, description);
     setActiveTopic(updated);
     return updated;
   };
 
+  // ── Pool Mutators ───────────────────────────────────────────────────────
   const addTopic = async (title, description) => {
     const entry = await addTopicToPool(title, description);
     setTopicPool(prev => [...prev, entry]);
@@ -85,6 +124,35 @@ export function useCompetition() {
   const changePoolMode = (mode) => {
     setPoolMode(mode);
     setPoolModeState(mode);
+  };
+
+  // ── Auth Mutators ───────────────────────────────────────────────────────
+  const handleLogin = (contestantData) => {
+    setContestant(contestantData);
+  };
+
+  const handleLogout = () => {
+    logoutContestant();
+    setContestant(null);
+  };
+
+  // ── Visibility Mutators ─────────────────────────────────────────────────
+  const toggleLeaderboardVisibility = async (visible, adminPassword) => {
+    try {
+      const result = await setLeaderboardVisibility(visible, adminPassword);
+      setLeaderboardVisibleState(result);
+    } catch (err) {
+      console.error('Failed to toggle leaderboard visibility:', err);
+    }
+  };
+
+  const toggleTopicVisibility = async (visible, adminPassword) => {
+    try {
+      const result = await setTopicVisibility(visible, adminPassword);
+      setTopicVisibleState(result);
+    } catch (err) {
+      console.error('Failed to toggle topic visibility:', err);
+    }
   };
 
   return {
@@ -107,6 +175,20 @@ export function useCompetition() {
     leaderboard,
     loadingLeaderboard,
     refreshLeaderboard: loadLeaderboard,
+
+    // Auth
+    contestant,
+    isAdmin,
+    setIsAdmin,
+    handleLogin,
+    handleLogout,
+
+    // Visibility
+    leaderboardVisible,
+    topicVisible,
+    toggleLeaderboardVisibility,
+    toggleTopicVisibility,
+    refreshVisibility: loadVisibility,
 
     error,
   };

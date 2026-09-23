@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS topics (
   topic_title TEXT NOT NULL,
   description TEXT,
   is_active BOOLEAN DEFAULT false,
+  leaderboard_visible BOOLEAN DEFAULT true,
+  topic_visible BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -31,7 +33,21 @@ CREATE TABLE IF NOT EXISTS topic_pool (
 );
 
 -- ============================================================
--- 3. Submissions table
+-- 3. Contestants table (login credentials from Excel import)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS contestants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  user_id TEXT NOT NULL UNIQUE,
+  unique_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contestants_user_id
+  ON contestants (user_id);
+
+-- ============================================================
+-- 4. Submissions table
 -- ============================================================
 CREATE TABLE IF NOT EXISTS submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,6 +55,12 @@ CREATE TABLE IF NOT EXISTS submissions (
   topic TEXT NOT NULL,
   poster_storage_path TEXT NOT NULL DEFAULT 'local-only',
   poster_url TEXT NOT NULL DEFAULT '',
+
+  -- Contestant login link
+  submitted_by_user_id TEXT DEFAULT '',
+
+  -- AI Prompt used by contestant to generate the poster
+  ai_prompt_used TEXT DEFAULT '',
 
   -- 7 Official AI Evaluation Criteria scores
   relevance_to_topic_score     INTEGER NOT NULL CHECK (relevance_to_topic_score     BETWEEN 0 AND 20),
@@ -57,6 +79,10 @@ CREATE TABLE IF NOT EXISTS submissions (
   issues               TEXT[] DEFAULT '{}',
   overall_evaluation   TEXT NOT NULL DEFAULT '',
 
+  -- Admin controls
+  is_hidden BOOLEAN DEFAULT false,
+  score_edit_log JSONB DEFAULT '[]',
+
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -64,18 +90,23 @@ CREATE TABLE IF NOT EXISTS submissions (
 CREATE INDEX IF NOT EXISTS idx_submissions_total_score
   ON submissions (total_score DESC, created_at ASC);
 
+-- Index for filtering hidden entries
+CREATE INDEX IF NOT EXISTS idx_submissions_hidden
+  ON submissions (is_hidden, total_score DESC);
+
 -- ============================================================
--- 4. Row Level Security
+-- 5. Row Level Security
 -- ============================================================
-ALTER TABLE topics     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE topic_pool ENABLE ROW LEVEL SECURITY;
+ALTER TABLE topics      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE topic_pool  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contestants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
 
 -- Topics policies
 DROP POLICY IF EXISTS "Allow public read access to topics"     ON topics;
-DROP POLICY IF EXISTS "Allow public insert/update to topics"   ON topics;
-CREATE POLICY "Allow public read access to topics"   ON topics FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to topics"  ON topics FOR ALL    USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow public write access to topics"    ON topics;
+CREATE POLICY "Allow public read access to topics"  ON topics FOR SELECT USING (true);
+CREATE POLICY "Allow public write access to topics" ON topics FOR ALL    USING (true) WITH CHECK (true);
 
 -- Topic Pool policies
 DROP POLICY IF EXISTS "Allow public read access to topic_pool"  ON topic_pool;
@@ -83,14 +114,24 @@ DROP POLICY IF EXISTS "Allow public write access to topic_pool" ON topic_pool;
 CREATE POLICY "Allow public read access to topic_pool"  ON topic_pool FOR SELECT USING (true);
 CREATE POLICY "Allow public write access to topic_pool" ON topic_pool FOR ALL    USING (true) WITH CHECK (true);
 
--- Submissions policies
-DROP POLICY IF EXISTS "Allow public read access to submissions" ON submissions;
-DROP POLICY IF EXISTS "Allow public insert to submissions"      ON submissions;
-CREATE POLICY "Allow public read access to submissions" ON submissions FOR SELECT USING (true);
-CREATE POLICY "Allow public insert to submissions"      ON submissions FOR INSERT WITH CHECK (true);
+-- Contestants policies
+DROP POLICY IF EXISTS "Allow public read access to contestants"  ON contestants;
+DROP POLICY IF EXISTS "Allow public write access to contestants" ON contestants;
+CREATE POLICY "Allow public read access to contestants"  ON contestants FOR SELECT USING (true);
+CREATE POLICY "Allow public write access to contestants" ON contestants FOR ALL    USING (true) WITH CHECK (true);
+
+-- Submissions policies (full CRUD for admin operations)
+DROP POLICY IF EXISTS "Allow public read access to submissions"  ON submissions;
+DROP POLICY IF EXISTS "Allow public insert to submissions"       ON submissions;
+DROP POLICY IF EXISTS "Allow public update to submissions"       ON submissions;
+DROP POLICY IF EXISTS "Allow public delete to submissions"       ON submissions;
+CREATE POLICY "Allow public read access to submissions"  ON submissions FOR SELECT USING (true);
+CREATE POLICY "Allow public insert to submissions"       ON submissions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update to submissions"       ON submissions FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete to submissions"       ON submissions FOR DELETE USING (true);
 
 -- ============================================================
--- 5. Storage Bucket — posters (public)
+-- 6. Storage Bucket — posters (public)
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('posters', 'posters', true)

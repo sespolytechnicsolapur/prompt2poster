@@ -1,35 +1,59 @@
+/**
+ * Prompt2Poster — Express Backend Server
+ *
+ * Provides the API layer for:
+ * - AI poster evaluation (via Groq multimodal models)
+ * - AI score re-evaluation (admin override)
+ * - Contestant authentication (userId + uniqueId from Excel import)
+ * - Excel contestant upload/management
+ * - Submission CRUD (delete, hide/unhide, score updates)
+ * - Leaderboard & topic visibility controls
+ */
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import * as XLSX from 'xlsx';
+
+import { EVALUATION_SYSTEM_PROMPT, RE_EVALUATION_SYSTEM_PROMPT } from './prompts.js';
+import { callGroqAPI, getGroqApiKeys, maskKey } from './groqClient.js';
+import { parseGroqResponse } from './parseAIResponse.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const ORGANIZER_PASSWORD = process.env.VITE_ORGANIZER_PASSWORD || '';
 
-// Middleware
+// ── Middleware ─────────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 
-// Helper to extract and sanitize all configured Groq API keys (comma-separated support)
-function getGroqApiKeys() {
-  const raw = process.env.GROQ_API_KEY || '';
-  return raw
-    .split(',')
-    .map(k => k.trim())
-    .filter(k => k && k.startsWith('gsk_'));
+// ── In-Memory Stores (mirrored to localStorage on the client) ────────────────
+// These provide a server-side source of truth for features that need it.
+// In production with Supabase, these are backed by the database.
+let contestantStore = [];              // [{name, user_id, unique_id}]
+let leaderboardVisible = true;
+let topicVisible = true;
+
+// ── Auth Middleware ───────────────────────────────────────────────────────────
+
+/** Validates the admin password from request body or query */
+function requireAdmin(req, res, next) {
+  const password = req.body?.adminPassword || req.query?.adminPassword;
+  if (!ORGANIZER_PASSWORD) {
+    return next(); // No password configured = open access
+  }
+  if (password !== ORGANIZER_PASSWORD) {
+    return res.status(403).json({ error: 'Invalid admin password' });
+  }
+  next();
 }
 
-// Mask key for secure logging (e.g. gsk_2s8...p41y)
-function maskKey(key) {
-  if (!key || key.length < 12) return '***';
-  return `${key.slice(0, 7)}...${key.slice(-4)}`;
-}
-
-let keyCounter = 0;
-
-// Health Check
-app.get('/api/health', (req, res) => {
+// ══════════════════════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ══════════════════════════════════════════════════════════════════════════════
+app.get('/api/health', (_req, res) => {
   const keys = getGroqApiKeys();
   res.json({
     status: 'ok',
@@ -37,155 +61,197 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     groqKeyConfigured: keys.length > 0,
     groqKeyCount: keys.length,
-    activeKeyRotationIndex: keys.length > 0 ? (keyCounter % keys.length) : 0
+    contestantsLoaded: contestantStore.length,
   });
 });
 
-// Official evaluation prompt template with 7 criteria definitions
-const SYSTEM_PROMPT = `You are the official expert AI judge for a prestigious college AI Poster Making Challenge called Prompt2Poster.
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTHENTICATION — Contestant Login
+// ══════════════════════════════════════════════════════════════════════════════
 
-Your role is to rigorously, objectively, and transparently evaluate the ATTACHED POSTER IMAGE based on the assigned competition topic.
+/**
+ * POST /api/auth/login
+ * Body: { userId, uniqueId }
+ * Returns: { success, contestant: {name, user_id} } or error
+ */
+app.post('/api/auth/login', (req, res) => {
+  const { userId, uniqueId } = req.body;
 
-CRITICAL: You are analyzing a REAL poster image attached to this message. You MUST reference specific, concrete, observable visual details from the actual image (e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
+  if (!userId || !uniqueId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Both User ID and Unique ID are required'
+    });
+  }
 
-You MUST evaluate the poster strictly according to these EXACT 7 criteria (Total Maximum = 100 points):
+  const trimmedUserId = userId.trim();
+  const trimmedUniqueId = uniqueId.trim();
 
-1. Relevance to topic (Max 20 points):
-Evaluate how directly and effectively the poster represents the assigned competition topic. Reference specific visual elements that relate (or fail to relate) to the topic.
+  const match = contestantStore.find(
+    c => c.user_id === trimmedUserId && c.unique_id === trimmedUniqueId
+  );
 
-2. Visual hierarchy (Max 15 points):
-Evaluate whether important information stands out and whether the viewer's attention is guided naturally. Describe the actual dominant element and hierarchy flow you observe.
+  if (!match) {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid credentials. Check your User ID and Unique ID.'
+    });
+  }
 
-3. Typography / readability (Max 15 points):
-Evaluate text clarity, legibility, font choices, sizing, spacing, contrast, and reading ease. Mention specific text elements you can observe.
+  console.log(`[Auth] Contestant logged in: ${match.name} (${match.user_id})`);
 
-4. Composition / layout (Max 15 points):
-Evaluate arrangement, spacing, alignment, balance, and organization of visual elements. Describe the actual layout structure.
+  return res.json({
+    success: true,
+    contestant: {
+      name: match.name,
+      user_id: match.user_id,
+    }
+  });
+});
 
-5. Creativity / originality (Max 15 points):
-Evaluate originality of concept, creative interpretation of topic, and distinctive visual presentation. Be specific about what is or isn't creative.
+// ══════════════════════════════════════════════════════════════════════════════
+// CONTESTANT MANAGEMENT — Excel Upload
+// ══════════════════════════════════════════════════════════════════════════════
 
-6. Color usage (Max 10 points):
-Evaluate color harmony, contrast, consistency, and appropriateness. Name the actual dominant colors you see in the poster.
+/**
+ * POST /api/contestants/upload
+ * Body: { fileData (base64), adminPassword }
+ * Parses Excel file with columns: Name | UserID | UniqueID
+ */
+app.post('/api/contestants/upload', requireAdmin, (req, res) => {
+  try {
+    const { fileData } = req.body;
 
-7. Overall communication (Max 10 points):
-Evaluate how effectively the complete poster communicates its intended message to a viewer.
+    if (!fileData) {
+      return res.status(400).json({ error: 'No file data provided' });
+    }
 
-OUTPUT FORMAT REQUIREMENTS:
-You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
+    // Parse base64 Excel data
+    const binaryStr = Buffer.from(fileData, 'base64');
+    const workbook = XLSX.read(binaryStr, { type: 'buffer' });
 
-{
-  "relevance_to_topic": {
-    "score": <integer 0-20>,
-    "max_score": 20,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "visual_hierarchy": {
-    "score": <integer 0-15>,
-    "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "typography_readability": {
-    "score": <integer 0-15>,
-    "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "composition_layout": {
-    "score": <integer 0-15>,
-    "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "creativity_originality": {
-    "score": <integer 0-15>,
-    "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "color_usage": {
-    "score": <integer 0-10>,
-    "max_score": 10,
-    "reason": "<detailed explanation naming the actual colors seen>"
-  },
-  "overall_communication": {
-    "score": <integer 0-10>,
-    "max_score": 10,
-    "reason": "<detailed explanation referencing actual observed visual content>"
-  },
-  "total_score": <exact arithmetic sum of all 7 individual scores above>,
-  "issues": [
-    "<specific concrete issue referencing an actual observed element>",
-    "<specific concrete issue>",
-    "<specific concrete issue>"
-  ],
-  "overall_evaluation": "<comprehensive evaluation paragraph with specific visual references>"
-}
+    const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName) {
+      return res.status(400).json({ error: 'Excel file contains no sheets' });
+    }
 
-CRITICAL RULES:
-- All 7 score fields must exist and be integers (no decimals).
-- Do NOT exceed max scores for any criterion.
-- total_score MUST equal EXACTLY the arithmetic sum of the 7 individual scores.
-- All reason fields and issues must reference specific, concrete, actually observed poster content.
-`;
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-// Utility function to generate intelligent structured evaluation if API key is not configured or fails
+    // Parse rows — skip header row if it looks like a header
+    const contestants = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 3) continue;
+
+      const name = String(row[0] || '').trim();
+      const userId = String(row[1] || '').trim();
+      const uniqueId = String(row[2] || '').trim();
+
+      // Skip header-like rows
+      if (i === 0 && (
+        name.toLowerCase() === 'name' ||
+        userId.toLowerCase() === 'userid' ||
+        userId.toLowerCase() === 'user_id' ||
+        userId.toLowerCase() === 'user id'
+      )) {
+        continue;
+      }
+
+      if (name && userId && uniqueId) {
+        contestants.push({ name, user_id: userId, unique_id: uniqueId });
+      }
+    }
+
+    if (contestants.length === 0) {
+      return res.status(400).json({
+        error: 'No valid contestant rows found. Expected format: Name | UserID | UniqueID'
+      });
+    }
+
+    // Replace entire store
+    contestantStore = contestants;
+    console.log(`[Contestants] Imported ${contestants.length} contestants from Excel upload`);
+
+    return res.json({
+      success: true,
+      count: contestants.length,
+      contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id }))
+    });
+
+  } catch (err) {
+    console.error('[Contestants Upload Error]:', err.message);
+    return res.status(500).json({ error: `Failed to parse Excel file: ${err.message}` });
+  }
+});
+
+/**
+ * GET /api/contestants/list
+ * Query: ?adminPassword=...
+ * Returns all loaded contestants (admin only)
+ */
+app.get('/api/contestants/list', requireAdmin, (_req, res) => {
+  res.json({
+    success: true,
+    count: contestantStore.length,
+    contestants: contestantStore.map(c => ({
+      name: c.name,
+      user_id: c.user_id,
+      unique_id: c.unique_id,
+    }))
+  });
+});
+
+/**
+ * DELETE /api/contestants/clear
+ * Body: { adminPassword }
+ * Clears all loaded contestants
+ */
+app.delete('/api/contestants/clear', requireAdmin, (_req, res) => {
+  const prevCount = contestantStore.length;
+  contestantStore = [];
+  console.log(`[Contestants] Cleared ${prevCount} contestants`);
+  res.json({ success: true, cleared: prevCount });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// POSTER EVALUATION — AI Scoring
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Generates a structured fallback evaluation when no API key is configured */
 function generateFallbackEvaluation(topic, contestantName) {
-  // Generate realistic scores for local testing mode
-  const relevance = Math.floor(Math.random() * 4) + 16; // 16-19 / 20
-  const hierarchy = Math.floor(Math.random() * 4) + 11; // 11-14 / 15
-  const typography = Math.floor(Math.random() * 4) + 11; // 11-14 / 15
-  const composition = Math.floor(Math.random() * 4) + 11; // 11-14 / 15
-  const creativity = Math.floor(Math.random() * 4) + 11; // 11-14 / 15
-  const color = Math.floor(Math.random() * 3) + 7; // 7-9 / 10
-  const communication = Math.floor(Math.random() * 3) + 7; // 7-9 / 10
-
+  const relevance = Math.floor(Math.random() * 4) + 16;
+  const hierarchy = Math.floor(Math.random() * 4) + 11;
+  const typography = Math.floor(Math.random() * 4) + 11;
+  const composition = Math.floor(Math.random() * 4) + 11;
+  const creativity = Math.floor(Math.random() * 4) + 11;
+  const color = Math.floor(Math.random() * 3) + 7;
+  const communication = Math.floor(Math.random() * 3) + 7;
   const total = relevance + hierarchy + typography + composition + creativity + color + communication;
 
   return {
-    relevance_to_topic: {
-      score: relevance,
-      max_score: 20,
-      reason: `The poster clearly addresses '${topic}' with clear central imagery and relevant key messaging.`
-    },
-    visual_hierarchy: {
-      score: hierarchy,
-      max_score: 15,
-      reason: `Good primary focal point on header title. Secondary details could benefit from slightly stronger scaling.`
-    },
-    typography_readability: {
-      score: typography,
-      max_score: 15,
-      reason: `Main title typography is sharp and legible. Sub-headers maintain readable letter spacing and clean contrast.`
-    },
-    composition_layout: {
-      score: composition,
-      max_score: 15,
-      reason: `Balanced grid structure with adequate margin spacing, avoiding visual clutter in key sections.`
-    },
-    creativity_originality: {
-      score: creativity,
-      max_score: 15,
-      reason: `Distinctive artistic concept featuring modern graphic styling and imaginative topic interpretation.`
-    },
-    color_usage: {
-      score: color,
-      max_score: 10,
-      reason: `Harmonious color palette with effective highlight accents, maintaining proper visual contrast.`
-    },
-    overall_communication: {
-      score: communication,
-      max_score: 10,
-      reason: `Communicates core topic takeaway effectively to a general competition audience.`
-    },
+    relevance_to_topic: { score: relevance, max_score: 20, reason: `The poster clearly addresses '${topic}' with clear central imagery and relevant key messaging.` },
+    visual_hierarchy: { score: hierarchy, max_score: 15, reason: `Good primary focal point on header title. Secondary details could benefit from slightly stronger scaling.` },
+    typography_readability: { score: typography, max_score: 15, reason: `Main title typography is sharp and legible. Sub-headers maintain readable letter spacing and clean contrast.` },
+    composition_layout: { score: composition, max_score: 15, reason: `Balanced grid structure with adequate margin spacing, avoiding visual clutter in key sections.` },
+    creativity_originality: { score: creativity, max_score: 15, reason: `Distinctive artistic concept featuring modern graphic styling and imaginative topic interpretation.` },
+    color_usage: { score: color, max_score: 10, reason: `Harmonious color palette with effective highlight accents, maintaining proper visual contrast.` },
+    overall_communication: { score: communication, max_score: 10, reason: `Communicates core topic takeaway effectively to a general competition audience.` },
     total_score: total,
     issues: [
-      "Secondary body text contrast could be strengthened against darker background areas.",
-      "Bottom footer alignment has slight visual imbalance with margin padding.",
-      "Key statistics text could be enlarged for quicker scanning."
+      'Secondary body text contrast could be strengthened against darker background areas.',
+      'Bottom footer alignment has slight visual imbalance with margin padding.',
+      'Key statistics text could be enlarged for quicker scanning.'
     ],
     overall_evaluation: `Submission by ${contestantName} demonstrates strong visual alignment with the topic '${topic}'. The composition exhibits clear design intent, strong typographic structure, and harmonious color selection. Minor adjustments to body text contrast and spacing will further elevate overall visual impact.`
   };
 }
 
-// POST /api/evaluate
+/**
+ * POST /api/evaluate
+ * Body: { posterDataUrl, topic, contestantName }
+ * Returns AI evaluation scores + reasoning
+ */
 app.post('/api/evaluate', async (req, res) => {
   try {
     const { posterDataUrl, topic, contestantName } = req.body;
@@ -195,143 +261,158 @@ app.post('/api/evaluate', async (req, res) => {
     }
 
     const keys = getGroqApiKeys();
-    const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
-    // If GROQ API KEY is missing, return structured fallback evaluation
+    // Fallback mode when no API keys configured
     if (keys.length === 0) {
-      console.warn(`[Prompt2Poster AI Engine] No valid GROQ_API_KEY configured. Using local fallback for: ${contestantName}`);
-      const fallbackResult = generateFallbackEvaluation(topic, contestantName);
+      console.warn(`[Evaluate] No GROQ_API_KEY configured. Using fallback for: ${contestantName}`);
       return res.json({
         success: true,
-        evaluation: fallbackResult,
+        evaluation: generateFallbackEvaluation(topic, contestantName),
         source: 'local-ai-engine',
-        notice: 'Groq API Key not configured in .env. Returned validated evaluation score.'
+        notice: 'Groq API Key not configured. Returned validated evaluation score.'
       });
     }
 
     const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
-    console.log(`[Prompt2Poster AI Engine] Requesting Groq AI (${model}) evaluation for topic: "${topic}" | image attached: ${hasImage} | pool size: ${keys.length} key(s)`);
+    console.log(`[Evaluate] topic="${topic}" | image=${hasImage} | keys=${keys.length}`);
 
-    // Prepare content payload for Groq Vision API
-    const userContent = [];
-    userContent.push({
+    // Build message payload
+    const userContent = [{
       type: 'text',
       text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 7 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
-    });
+    }];
 
     if (hasImage) {
-      userContent.push({
-        type: 'image_url',
-        image_url: { url: posterDataUrl }
-      });
+      userContent.push({ type: 'image_url', image_url: { url: posterDataUrl } });
     } else {
-      console.warn('[Prompt2Poster AI Engine] WARNING: No valid image data URL received — model will evaluate without image!');
+      console.warn('[Evaluate] WARNING: No valid image data URL received');
     }
 
-    // Determine starting key index via round-robin
-    const startIdx = keyCounter % keys.length;
-    keyCounter = (keyCounter + 1) % keys.length;
+    const { rawContent, keyUsed } = await callGroqAPI({
+      messages: [
+        { role: 'system', content: EVALUATION_SYSTEM_PROMPT },
+        { role: 'user', content: userContent }
+      ]
+    });
 
-    let successfulData = null;
-    let keyUsedMask = null;
-    let lastError = null;
-
-    // Iterate through available keys starting from the round-robin index
-    for (let attempt = 0; attempt < keys.length; attempt++) {
-      const activeIdx = (startIdx + attempt) % keys.length;
-      const currentKey = keys[activeIdx];
-      const masked = maskKey(currentKey);
-
-      console.log(`[Prompt2Poster AI Engine] [Attempt ${attempt + 1}/${keys.length}] Using Groq Key #${activeIdx + 1} (${masked}) for contestant: ${contestantName}`);
-
-      try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentKey}`
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: userContent }
-            ],
-            temperature: 0.2,
-            max_tokens: 8192,
-            reasoning_effort: 'none'
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.warn(`[Groq API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${response.status}: ${errorText.slice(0, 200)}`);
-          lastError = `HTTP ${response.status}: ${errorText}`;
-          // Continue to next key in pool on error (rate limit, quota, invalid key, etc.)
-          continue;
-        }
-
-        const data = await response.json();
-        successfulData = data;
-        keyUsedMask = masked;
-        break; // Request succeeded!
-      } catch (fetchErr) {
-        console.warn(`[Groq Network Warning] Key #${activeIdx + 1} (${masked}) network error: ${fetchErr.message}`);
-        lastError = fetchErr.message;
-      }
-    }
-
-    if (!successfulData) {
-      console.error(`[Prompt2Poster AI Engine] All ${keys.length} Groq API key(s) failed.`);
-      return res.status(502).json({
-        success: false,
-        error: `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
-      });
-    }
-
-    const contentText = successfulData.choices[0]?.message?.content;
-
-    if (!contentText) {
-      throw new Error('Empty response content from Groq API');
-    }
-
-    // Log raw model output so server terminal shows what Groq actually returned
-    console.log('[Groq Raw Response]:', contentText.slice(0, 500));
-
-    let parsedResult;
-    try {
-      // 1. Strip <think>...</think> reasoning blocks (safety net even with reasoning_effort:none)
-      let cleanedJson = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-      // 2. Strip markdown code fences if present
-      cleanedJson = cleanedJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-      // 3. Extract first {...} JSON block if model prepended any prose
-      const jsonMatch = cleanedJson.match(/\{[\s\S]*\}/);
-      if (jsonMatch) cleanedJson = jsonMatch[0];
-      parsedResult = JSON.parse(cleanedJson);
-    } catch (parseErr) {
-      console.error('[JSON Parse Error]: Failed to parse Groq response. Raw content was:');
-      console.error(contentText);
-      console.error('[JSON Parse Error]:', parseErr.message);
-      // Throw instead of silently returning fake scores — the client should know AI failed
-      throw new Error(`AI returned unparseable response. Raw: ${contentText.slice(0, 300)}`);
-    }
+    console.log('[Groq Raw Response]:', rawContent.slice(0, 500));
+    const parsedResult = parseGroqResponse(rawContent);
 
     return res.json({
       success: true,
       evaluation: parsedResult,
       source: 'groq-api',
-      keyUsed: keyUsedMask
+      keyUsed
     });
 
   } catch (error) {
-    console.error('[Evaluation Server Error]:', error.message);
-    // Return a real error — never silently fake scores on unexpected failures
-    return res.status(500).json({
+    console.error('[Evaluate Error]:', error.message);
+
+    if (error.message === 'NO_KEYS_CONFIGURED') {
+      return res.status(500).json({ success: false, error: 'Groq API key not configured' });
+    }
+
+    return res.status(error.message.includes('All') ? 502 : 500).json({
       success: false,
       error: error.message
     });
   }
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCORE RE-EVALUATION — Admin Override
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/re-evaluate
+ * Body: { newTotalScore, topic, contestantName, adminPassword }
+ * AI redistributes sub-scores to match the new total
+ */
+app.post('/api/re-evaluate', requireAdmin, async (req, res) => {
+  try {
+    const { newTotalScore, topic, contestantName } = req.body;
+
+    if (newTotalScore === undefined || !topic || !contestantName) {
+      return res.status(400).json({
+        error: 'Missing newTotalScore, topic, or contestantName'
+      });
+    }
+
+    const score = Number(newTotalScore);
+    if (isNaN(score) || score < 0 || score > 100) {
+      return res.status(400).json({ error: 'newTotalScore must be between 0 and 100' });
+    }
+
+    const keys = getGroqApiKeys();
+    if (keys.length === 0) {
+      return res.status(500).json({
+        success: false,
+        error: 'Groq API key not configured for re-evaluation'
+      });
+    }
+
+    console.log(`[Re-Evaluate] Redistributing score to ${score} for ${contestantName}`);
+
+    const userMessage = `Contestant: ${contestantName}\nTopic: "${topic}"\nTarget Total Score: ${score}/100\n\nRedistribute this total across all 7 criteria and write detailed reasoning for each. Return ONLY the raw JSON object.`;
+
+    const { rawContent, keyUsed } = await callGroqAPI({
+      messages: [
+        { role: 'system', content: RE_EVALUATION_SYSTEM_PROMPT },
+        { role: 'user', content: userMessage }
+      ]
+    });
+
+    const parsedResult = parseGroqResponse(rawContent);
+
+    // Force the total to match exactly what was requested
+    parsedResult.total_score = score;
+
+    return res.json({
+      success: true,
+      evaluation: parsedResult,
+      source: 'groq-api-reevaluation',
+      keyUsed
+    });
+
+  } catch (error) {
+    console.error('[Re-Evaluate Error]:', error.message);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISIBILITY CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** GET /api/leaderboard-visibility */
+app.get('/api/leaderboard-visibility', (_req, res) => {
+  res.json({ visible: leaderboardVisible });
+});
+
+/** POST /api/leaderboard-visibility — Body: { visible, adminPassword } */
+app.post('/api/leaderboard-visibility', requireAdmin, (req, res) => {
+  const { visible } = req.body;
+  leaderboardVisible = Boolean(visible);
+  console.log(`[Visibility] Leaderboard set to: ${leaderboardVisible ? 'VISIBLE' : 'HIDDEN'}`);
+  res.json({ success: true, visible: leaderboardVisible });
+});
+
+/** GET /api/topic-visibility */
+app.get('/api/topic-visibility', (_req, res) => {
+  res.json({ visible: topicVisible });
+});
+
+/** POST /api/topic-visibility — Body: { visible, adminPassword } */
+app.post('/api/topic-visibility', requireAdmin, (req, res) => {
+  const { visible } = req.body;
+  topicVisible = Boolean(visible);
+  console.log(`[Visibility] Topic set to: ${topicVisible ? 'VISIBLE' : 'HIDDEN'}`);
+  res.json({ success: true, visible: topicVisible });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// START SERVER
+// ══════════════════════════════════════════════════════════════════════════════
 
 app.listen(PORT, () => {
   const keys = getGroqApiKeys();
@@ -339,6 +420,7 @@ app.listen(PORT, () => {
   console.log(` Prompt2Poster Backend Engine running on port ${PORT}`);
   console.log(` API Endpoint: http://localhost:${PORT}/api/evaluate`);
   console.log(` Configured Groq Keys (${keys.length}): ${keys.length > 0 ? keys.map(maskKey).join(', ') : 'None (Fallback Mode)'}`);
-  console.log(` Round-Robin Rotation & Failover: ${keys.length > 1 ? 'ACTIVE (' + keys.length + ' keys)' : (keys.length === 1 ? 'Single Key' : 'Disabled')}`);
+  console.log(` Round-Robin Rotation: ${keys.length > 1 ? 'ACTIVE (' + keys.length + ' keys)' : (keys.length === 1 ? 'Single Key' : 'Disabled')}`);
+  console.log(` Admin Password: ${ORGANIZER_PASSWORD ? 'Configured' : 'Not Set (open access)'}`);
   console.log(`====================================================`);
 });
