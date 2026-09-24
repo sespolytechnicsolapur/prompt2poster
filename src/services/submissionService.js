@@ -298,9 +298,8 @@ export async function saveSubmission(submissionData) {
           finalPosterUrl = uploadResult.url;
         }
       }
-      }
     }
-    
+
     let finalScreenshotUrl = '';
     if (chatScreenshotFile) {
       if (typeof chatScreenshotFile === 'string' && chatScreenshotFile.startsWith('https://')) {
