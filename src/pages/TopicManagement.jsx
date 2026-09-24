@@ -20,9 +20,9 @@ import {
 const ORGANIZER_PASSWORD = import.meta.env.VITE_ORGANIZER_PASSWORD;
 
 function PasswordGate({ onUnlock }) {
-  const [input, setInput]     = useState('');
-  const [showPw, setShowPw]   = useState(false);
-  const [error, setError]     = useState(false);
+  const [input, setInput] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -106,7 +106,7 @@ function PasswordGate({ onUnlock }) {
 function SingleTopicTab({ activeTopic, onUpdateTopic }) {
   const [topicTitle, setTopicTitle] = useState(activeTopic?.topic_title || '');
   const [description, setDescription] = useState(activeTopic?.description || '');
-  const [isSaving, setIsSaving]     = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
 
   const handleSubmit = async (e) => {
@@ -151,11 +151,11 @@ function SingleTopicTab({ activeTopic, onUpdateTopic }) {
 
 // ── Topic Pool Tab ────────────────────────────────────────────────────────────
 function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
-  const [newTitle, setNewTitle]       = useState('');
-  const [newDesc, setNewDesc]         = useState('');
-  const [isAdding, setIsAdding]       = useState(false);
-  const [deletingId, setDeletingId]   = useState(null);
-  const [successMsg, setSuccessMsg]   = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -185,7 +185,7 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
           <input type="text" placeholder="e.g. AI in Healthcare: Precision Medicine" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="form-input" required />
         </div>
         <div className="form-group">
-          <label className="form-label"><span>Description (optional)</span></label>
+          <label className="form-label"><span>Description</span></label>
           <input type="text" placeholder="Brief context for contestants and AI judge..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="form-input" />
         </div>
         {successMsg && (
@@ -237,10 +237,10 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
 // ── Submissions Management Tab ────────────────────────────────────────────────
 function SubmissionsTab({ adminPassword, onViewDetails }) {
   const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [editTarget, setEditTarget]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [isDeleting, setIsDeleting]   = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);

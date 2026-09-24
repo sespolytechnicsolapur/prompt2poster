@@ -8,10 +8,10 @@ import { loginContestant } from '../services/authService';
  * imported from the admin Excel upload.
  */
 export function Login({ onLoginSuccess }) {
-  const [userId, setUserId]       = useState('');
-  const [uniqueId, setUniqueId]   = useState('');
-  const [showId, setShowId]       = useState(false);
-  const [error, setError]         = useState(null);
+  const [userId, setUserId] = useState('');
+  const [uniqueId, setUniqueId] = useState('');
+  const [showId, setShowId] = useState(false);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -185,7 +185,7 @@ export function Login({ onLoginSuccess }) {
         textAlign: 'center', marginTop: '0.5rem',
         animation: 'fade-up 0.5s ease-out both 0.4s'
       }}>
-        <button 
+        <button
           onClick={() => {
             const pwd = prompt("Enter Organizer Password:");
             if (pwd === import.meta.env.VITE_ORGANIZER_PASSWORD) {

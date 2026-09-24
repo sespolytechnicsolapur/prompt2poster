@@ -20,16 +20,16 @@ export function Submit({
   leaderboard
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl]     = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [selectedScreenshotFile, setSelectedScreenshotFile] = useState(null);
-  const [screenshotPreviewUrl, setScreenshotPreviewUrl]     = useState(null);
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted]   = useState(false);
-  const [error, setError]               = useState(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState(null);
   const [aiPromptUsed, setAiPromptUsed] = useState('');
 
   // Check if contestant already submitted based on leaderboard data
-  const hasAlreadySubmitted = leaderboard && contestant 
+  const hasAlreadySubmitted = leaderboard && contestant
     ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id)
     : false;
 
@@ -189,7 +189,7 @@ export function Submit({
           marginBottom: '2rem',
           fontFamily: 'var(--font-sans)',
         }}>
-          Your poster has been securely uploaded and the AI evaluation is complete. 
+          Your poster has been securely uploaded and the AI evaluation is complete.
           The detailed results and final scores will be announced by the organizers later.
         </p>
       </div>
@@ -298,13 +298,13 @@ export function Submit({
                 </div>
               </div>
             ) : (
-               <div style={{
-                 padding: '1.5rem',
-                 backgroundColor: 'var(--bg-surface-subtle)',
-                 borderRadius: 'var(--radius-md)',
-                 border: '1px solid var(--border-strong)',
-                 textAlign: 'center'
-               }}>
+              <div style={{
+                padding: '1.5rem',
+                backgroundColor: 'var(--bg-surface-subtle)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-strong)',
+                textAlign: 'center'
+              }}>
                 <h3 style={{
                   fontSize: '1.1rem', fontWeight: 700,
                   color: 'var(--text-primary)',
@@ -370,7 +370,7 @@ export function Submit({
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>AI Prompt Used (Optional)</label>
+                <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>AI Prompt Used</label>
                 <textarea
                   rows={3}
                   placeholder="Paste the prompt you used to generate this poster (e.g. Midjourney, DALL-E)..."
@@ -384,7 +384,7 @@ export function Submit({
 
             <div className="form-group" style={{ marginTop: '1.25rem' }}>
               <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>
-                Chat Screenshot (Optional)
+                Chat Screenshot
               </label>
               <p style={{
                 fontSize: '0.85rem',

@@ -6,8 +6,8 @@ import { formatDate } from '../utils/formatters';
 
 export function SubmissionDetails({ submissionId, initialRecord, onBack, isAdmin }) {
   const [submission, setSubmission] = useState(initialRecord);
-  const [loading, setLoading]       = useState(!initialRecord);
-  const [error, setError]           = useState(null);
+  const [loading, setLoading] = useState(!initialRecord);
+  const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
