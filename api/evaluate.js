@@ -6,9 +6,9 @@ dotenv.config();
 
 const SYSTEM_PROMPT = `You are the official expert AI judge for a prestigious college AI Poster Making Challenge called Prompt2Poster.
 
-Your role is to rigorously, objectively, and transparently evaluate the ATTACHED POSTER IMAGE based on the assigned competition topic. You may also receive a second attached image which is a screenshot of the AI chat used to generate the poster.
+Your role is to rigorously, objectively, and transparently evaluate the ATTACHED POSTER IMAGE based on the assigned competition topic.
 
-CRITICAL: You are analyzing REAL images attached to this message. You MUST reference specific, concrete, observable visual details from the actual images. Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
+CRITICAL: You are analyzing a REAL poster image attached to this message. You MUST reference specific, concrete, observable visual details from the actual image (e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
 
 You MUST evaluate the poster strictly according to these EXACT 8 criteria (Total Maximum = 100 points):
 
@@ -34,7 +34,7 @@ Evaluate color harmony, contrast, consistency, and appropriateness. Name the act
 Evaluate how effectively the complete poster communicates its intended message to a viewer.
 
 8. Prompt Authenticity & Human Element (Max 10 points):
-Evaluate whether the chat screenshot (if provided) shows a prompt that seems human-written. Dock points if it looks overly structured, like typical AI-generated text, or if no screenshot is provided. The prompt in the screenshot must also accurately describe the resulting poster.
+Evaluate whether the prompt used to generate the image seems human-written. Dock points if it looks overly structured or like typical AI-generated text. The prompt must also accurately describe the resulting poster.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { posterDataUrl, chatScreenshotDataUrl, topic, contestantName } = req.body;
+    const { posterDataUrl, topic, contestantName, aiPrompt } = req.body;
 
     if (!topic || !contestantName) {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
@@ -142,15 +142,12 @@ export default async function handler(req, res) {
     const userContent = [
       {
         type: 'text',
-        text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image(s) across all 8 criteria. If a second image is attached, it is the AI Chat Screenshot. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
+        text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\nAI Prompt Used: "${aiPrompt || 'None provided'}"\n\nEvaluate the attached poster image across all 8 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
       }
     ];
 
     if (hasImage) {
       userContent.push({ type: 'image_url', image_url: { url: posterDataUrl } });
-    }
-    if (chatScreenshotDataUrl && (chatScreenshotDataUrl.startsWith('data:image/') || chatScreenshotDataUrl.startsWith('http'))) {
-      userContent.push({ type: 'image_url', image_url: { url: chatScreenshotDataUrl } });
     }
 
     // Determine starting key index via round-robin

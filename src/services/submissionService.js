@@ -298,6 +298,7 @@ export async function saveSubmission(submissionData) {
           finalPosterUrl = uploadResult.url;
         }
       }
+      }
     }
     
     let finalScreenshotUrl = '';
