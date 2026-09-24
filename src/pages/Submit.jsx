@@ -21,6 +21,8 @@ export function Submit({
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl]     = useState(null);
+  const [selectedScreenshotFile, setSelectedScreenshotFile] = useState(null);
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl]     = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted]   = useState(false);
   const [error, setError]               = useState(null);
@@ -32,6 +34,7 @@ export function Submit({
     : false;
 
   const fileInputRef = useRef(null);
+  const screenshotInputRef = useRef(null);
 
   // Determine the topic for this contestant
   let assignedTopic = activeTopic;
@@ -64,6 +67,34 @@ export function Submit({
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    setError(null);
+  };
+
+  const handleScreenshotSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, WebP) for the chat screenshot');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Screenshot must be less than 10MB');
+      return;
+    }
+
+    setSelectedScreenshotFile(file);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => setScreenshotPreviewUrl(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const clearScreenshotSelection = () => {
+    setSelectedScreenshotFile(null);
+    setScreenshotPreviewUrl(null);
+    if (screenshotInputRef.current) screenshotInputRef.current.value = '';
     setError(null);
   };
 
@@ -106,6 +137,7 @@ export function Submit({
         collegeName: contestant.college_name,
         topic: finalTopicTitle,
         posterFile: imageUrlForAi !== previewUrl ? imageUrlForAi : selectedFile, // pass url if uploaded, else file for fallback
+        chatScreenshotFile: selectedScreenshotFile,
         aiPromptUsed: aiPromptUsed.trim(),
         evaluation
       });
@@ -348,6 +380,86 @@ export function Submit({
                   style={{ resize: 'vertical' }}
                 />
               </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1.25rem' }}>
+              <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>
+                Chat Screenshot (Optional)
+              </label>
+              <p style={{
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '0.75rem',
+                lineHeight: '1.4'
+              }}>
+                Upload a screenshot of your conversation with the AI showing the prompt and generated image.
+              </p>
+              {!screenshotPreviewUrl ? (
+                <div
+                  onClick={() => screenshotInputRef.current?.click()}
+                  style={{
+                    border: '2px dashed var(--border-strong)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: 'var(--bg-surface-subtle)',
+                    transition: 'all 200ms ease',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                    e.currentTarget.style.backgroundColor = 'var(--accent-primary-subtle)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-strong)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-surface-subtle)';
+                  }}
+                >
+                  <input
+                    type="file"
+                    ref={screenshotInputRef}
+                    onChange={handleScreenshotSelect}
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: 'none' }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                    <ImageIcon size={20} />
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>Click to upload screenshot</span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  position: 'relative',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  padding: '0.5rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                      <ImageIcon size={18} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {selectedScreenshotFile?.name}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearScreenshotSelection}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+                        padding: '0.25rem'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--status-danger)'}
+                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Remove screenshot"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

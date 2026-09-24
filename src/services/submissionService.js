@@ -211,17 +211,17 @@ function lsSetSubmissions(list) { lsSet(LS_SUBMISSIONS, list); }
  * @param {Object} submissionData - Submission payload
  * @returns {Promise<Object>} Saved submission record
  */
-export async function uploadPosterImage(posterFile, userId) {
-  if (!isSupabaseConfigured || !supabase || !posterFile) {
+export async function uploadImageToSupabase(file, userId, folder = 'submissions') {
+  if (!isSupabaseConfigured || !supabase || !file) {
     return { path: null, url: null };
   }
-  const fileExt = posterFile.name.split('.').pop();
+  const fileExt = file.name.split('.').pop();
   const fileName = `${userId}_${Date.now()}.${fileExt}`;
-  const filePath = `submissions/${fileName}`;
+  const filePath = `${folder}/${fileName}`;
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('posters')
-    .upload(filePath, posterFile, {
+    .upload(filePath, file, {
       cacheControl: '3600',
       upsert: false
     });
@@ -244,7 +244,7 @@ export async function uploadPosterImage(posterFile, userId) {
  */
 export async function saveSubmission(submissionData) {
   const {
-    contestantName, topic, posterFile,
+    contestantName, topic, posterFile, chatScreenshotFile,
     evaluation, aiPromptUsed = '', submittedByUserId = '',
     collegeName = ''
   } = submissionData;
@@ -256,6 +256,7 @@ export async function saveSubmission(submissionData) {
     topic,
     poster_storage_path: 'uploading...',
     poster_url: null,
+    chat_screenshot_url: null,
     submitted_by_user_id: submittedByUserId,
     ai_prompt_used: aiPromptUsed,
     relevance_to_topic_score:     evaluation.relevance_to_topic.score,
@@ -291,11 +292,22 @@ export async function saveSubmission(submissionData) {
         storagePath = 'already_uploaded';
       } else {
         // Fallback upload if it wasn't uploaded beforehand
-        const uploadResult = await uploadPosterImage(posterFile, submittedByUserId);
+        const uploadResult = await uploadImageToSupabase(posterFile, submittedByUserId, 'submissions');
         if (uploadResult.url) {
           storagePath = uploadResult.path;
           finalPosterUrl = uploadResult.url;
         }
+      }
+      }
+    }
+    
+    let finalScreenshotUrl = '';
+    if (chatScreenshotFile) {
+      if (typeof chatScreenshotFile === 'string' && chatScreenshotFile.startsWith('https://')) {
+        finalScreenshotUrl = chatScreenshotFile;
+      } else {
+        const snapUpload = await uploadImageToSupabase(chatScreenshotFile, submittedByUserId, 'screenshots');
+        if (snapUpload.url) finalScreenshotUrl = snapUpload.url;
       }
     }
 
@@ -306,6 +318,7 @@ export async function saveSubmission(submissionData) {
         topic:                        record.topic,
         poster_storage_path:          storagePath,
         poster_url:                   finalPosterUrl,
+        chat_screenshot_url:          finalScreenshotUrl,
         submitted_by_user_id:         record.submitted_by_user_id,
         ai_prompt_used:               record.ai_prompt_used,
         relevance_to_topic_score:     record.relevance_to_topic_score,

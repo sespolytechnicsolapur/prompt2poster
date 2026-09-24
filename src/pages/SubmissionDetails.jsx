@@ -215,6 +215,39 @@ export function SubmissionDetails({ submissionId, initialRecord, onBack, isAdmin
               </div>
             </div>
           )}
+
+          {/* AI Chat Screenshot (if available) */}
+          {submission.chat_screenshot_url && (
+            <div className="surface-card" style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <ImageIcon size={16} style={{ color: 'var(--accent-primary)' }} />
+                <h3 style={{
+                  fontSize: '1.05rem', fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-heading)',
+                  margin: 0
+                }}>
+                  AI Chat Screenshot
+                </h3>
+              </div>
+              <div style={{
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-surface-subtle)',
+              }}>
+                <a href={submission.chat_screenshot_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                  <img
+                    src={submission.chat_screenshot_url}
+                    alt="AI Chat Screenshot"
+                    style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', display: 'block', transition: 'opacity 0.2s' }}
+                    onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                  />
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Details & Evaluation */}
