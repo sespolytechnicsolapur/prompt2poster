@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Send, Image as ImageIcon, Loader2, FileText, CheckCircle2, AlertCircle, Sparkles, Pencil } from 'lucide-react';
 import { evaluatePosterWithAI } from '../services/evaluationService';
-import { saveSubmission, pickRandomTopic, uploadPosterImage } from '../services/submissionService';
+import { saveSubmission, pickRandomTopic, uploadImageToSupabase } from '../services/submissionService';
 
 /**
  * Poster Submission Page
@@ -117,7 +117,7 @@ export function Submit({
     try {
       // 1. Upload the image to Supabase first to prevent Vercel Payload Too Large 502 crash
       let imageUrlForAi = previewUrl; // fallback to Base64
-      const uploadResult = await uploadPosterImage(selectedFile, contestant.user_id);
+      const uploadResult = await uploadImageToSupabase(selectedFile, contestant.user_id, 'submissions');
       if (uploadResult.url) {
         imageUrlForAi = uploadResult.url;
       }
