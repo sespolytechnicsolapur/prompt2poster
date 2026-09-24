@@ -184,7 +184,7 @@ export function Navbar({
       {mobileOpen && (
         <div className="mobile-menu">
           <button
-            onClick={() => navTo('home')}
+            onClick={() => { navTo('home'); setMobileOpen(false); }}
             className={`mobile-menu-item ${activePage === 'home' ? 'mobile-menu-active' : ''}`}
             style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
           >
@@ -192,7 +192,7 @@ export function Navbar({
           </button>
           {showLeaderboardNav && (
             <button
-              onClick={() => navTo('leaderboard')}
+              onClick={() => { navTo('leaderboard'); setMobileOpen(false); }}
               className={`mobile-menu-item ${activePage === 'leaderboard' ? 'mobile-menu-active' : ''}`}
               style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
             >
@@ -201,12 +201,31 @@ export function Navbar({
           )}
 
           <button
-            onClick={() => navTo('organizer')}
+            onClick={() => { navTo('organizer'); setMobileOpen(false); }}
             className={`mobile-menu-item ${activePage === 'organizer' ? 'mobile-menu-active' : ''}`}
             style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
           >
             Organizer
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => {
+                if (setIsAdmin) setIsAdmin(false);
+                if (activePage === 'organizer') navTo('home');
+                setMobileOpen(false);
+              }}
+              className="mobile-menu-item"
+              style={{ 
+                width: '100%', textAlign: 'left', background: 'none', 
+                border: 'none', fontFamily: 'var(--font-sans)', 
+                fontSize: '1rem', cursor: 'pointer', color: 'var(--status-danger)',
+                display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}
+            >
+              <Lock size={16} /> Lock Admin Session
+            </button>
+          )}
 
           <div style={{
             height: '1px', 
@@ -227,7 +246,7 @@ export function Navbar({
                 <span>Logged in as <strong style={{ fontFamily: 'var(--font-heading)' }}>{contestant.name}</strong></span>
               </div>
               <button
-                onClick={() => navTo('submit')}
+                onClick={() => { navTo('submit'); setMobileOpen(false); }}
                 className="btn btn-accent"
                 style={{
                   width: '100%', padding: '0.8rem',

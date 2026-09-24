@@ -207,6 +207,18 @@ export default function App() {
             setIsAdmin={setIsAdmin}
           />
         )}
+
+        {/* LOGIN */}
+        {activePage === 'login' && (
+          <Login onLoginSuccess={(data) => {
+            if (data?.isAdmin) {
+              handleOrganizerAccess();
+              setActivePage('organizer');
+            } else {
+              handleLoginSuccess(data);
+            }
+          }} />
+        )}
       </main>
 
       {/* FOOTER */}
