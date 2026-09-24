@@ -11,6 +11,7 @@ import { Login } from './pages/Login';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
+  const [previousPage, setPreviousPage] = useState('home');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [activeSubmissionRecord, setActiveSubmissionRecord] = useState(null);
 
@@ -48,6 +49,7 @@ export default function App() {
   const handleSelectSubmission = (id, record = null) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(record);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
 
@@ -55,15 +57,18 @@ export default function App() {
     refreshLeaderboard();
     setSelectedSubmissionId(savedRecord.id);
     setActiveSubmissionRecord(savedRecord);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
 
   const handleNavigation = (page) => {
     // Guard: Submit page requires login
     if (page === 'submit' && !contestant) {
+      setPreviousPage(activePage);
       setActivePage('login');
       return;
     }
+    setPreviousPage(activePage);
     setActivePage(page);
     if (page !== 'details') {
       setSelectedSubmissionId(null);
@@ -90,6 +95,7 @@ export default function App() {
   const handleViewDetails = (id) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(null);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
 
@@ -176,7 +182,7 @@ export default function App() {
           <SubmissionDetails
             submissionId={selectedSubmissionId}
             initialRecord={activeSubmissionRecord}
-            onBack={() => handleNavigation('leaderboard')}
+            onBack={() => handleNavigation(previousPage === 'details' ? 'home' : (previousPage || 'leaderboard'))}
             isAdmin={isAdmin}
           />
         )}

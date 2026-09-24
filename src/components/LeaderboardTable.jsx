@@ -6,8 +6,8 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filtered = submissions.filter((item) =>
-    item.contestant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.topic.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.contestant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!submissions || submissions.length === 0) {
@@ -24,7 +24,7 @@ export function LeaderboardTable({ submissions = [], onSelectSubmission }) {
   }
 
   return (
-    <div className="surface-card" style={{ overflow: 'hidden' }}>
+    <div className="surface-card" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
       {/* Table Controls */}
       <div style={{
         padding: '0.85rem 1.25rem',

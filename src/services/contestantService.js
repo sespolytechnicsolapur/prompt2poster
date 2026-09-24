@@ -38,6 +38,7 @@ export async function uploadContestantExcel(file, adminPassword) {
     const name = String(row[0] || '').trim();
     const userId = String(row[1] || '').trim();
     const uniqueId = String(row[2] || '').trim();
+    const collegeName = String(row[3] || '').trim();
 
     // Skip header row
     if (i === 0 && (
@@ -50,12 +51,12 @@ export async function uploadContestantExcel(file, adminPassword) {
     }
 
     if (name && userId && uniqueId) {
-      contestants.push({ name, user_id: userId, unique_id: uniqueId });
+      contestants.push({ name, user_id: userId, unique_id: uniqueId, college_name: collegeName });
     }
   }
 
   if (contestants.length === 0) {
-    throw new Error('No valid contestant rows found. Expected format: Name | UserID | UniqueID');
+    throw new Error('No valid contestant rows found. Expected format: Name | UserID | UniqueID | CollegeName');
   }
 
   // Clear existing contestants first to match previous behavior
@@ -70,7 +71,7 @@ export async function uploadContestantExcel(file, adminPassword) {
   return {
     success: true,
     count: contestants.length,
-    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id }))
+    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id, college_name: c.college_name }))
   };
 }
 
@@ -90,7 +91,7 @@ export async function fetchContestants(adminPassword) {
 
   const { data, error } = await supabase
     .from('contestants')
-    .select('name, user_id, unique_id')
+    .select('name, user_id, unique_id, college_name')
     .order('name');
 
   if (error) throw new Error(error.message);

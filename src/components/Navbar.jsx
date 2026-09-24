@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Menu, X, Code, Sun, Moon, LogOut, LogIn, User, Lock } from 'lucide-react';
+import { Menu, X, Triangle, Sun, Moon, LogOut, LogIn, User, Lock } from 'lucide-react';
 
 /**
  * Main application navigation.
- * Updates conditionally based on authentication, admin state, and visibility rules.
+ * Hand-drawn style with sketchy borders, handwritten fonts, and playful interactions.
  */
 export function Navbar({
   activePage,
@@ -33,13 +33,23 @@ export function Navbar({
       <div className="container">
         <div className="navbar-inner">
           {/* LOGO & BRAND */}
-          <div className="navbar-brand-group">
-            <div className="navbar-logo-symbol">
-              <Code size={18} strokeWidth={2.5} />
+          <div className="navbar-brand-group" onClick={() => navTo('home')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '32px', height: '32px',
+              backgroundColor: 'var(--text-primary)',
+              color: 'var(--text-inverse)',
+              borderRadius: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <Triangle size={16} strokeWidth={3} fill="currentColor" />
             </div>
-            <div>
-              <div className="navbar-brand-name">Prompt2Poster</div>
-              <div className="navbar-subtitle">AI Evaluation Engine</div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1 }}>
+                Prompt2Poster
+              </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>
+                AI Evaluation Engine
+              </div>
             </div>
           </div>
 
@@ -87,8 +97,15 @@ export function Navbar({
               <>
                 <button
                   onClick={() => navTo('submit')}
-                  className="btn btn-primary"
-                  style={{ padding: '0.4rem 1rem', height: '36px', fontSize: '0.875rem' }}
+                  className="btn btn-accent"
+                  style={{
+                    padding: '0.45rem 1.1rem',
+                    height: '38px',
+                    fontSize: '0.95rem',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: 600,
+                    borderRadius: 'var(--radius-sm)',
+                  }}
                 >
                   Submit Poster
                 </button>
@@ -96,7 +113,12 @@ export function Navbar({
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   marginLeft: '0.25rem'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500 }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.9rem', fontWeight: 600,
+                    fontFamily: 'var(--font-sans)'
+                  }}>
                     <User size={14} />
                     <span>{contestant.name.split(' ')[0]}</span>
                   </div>
@@ -109,7 +131,13 @@ export function Navbar({
               <button
                 onClick={() => navTo('login')}
                 className="btn btn-secondary"
-                style={{ padding: '0.4rem 1rem', height: '36px', fontSize: '0.875rem' }}
+                style={{
+                  padding: '0.45rem 1.1rem',
+                  height: '38px',
+                  fontSize: '0.95rem',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 700,
+                }}
               >
                 <LogIn size={14} />
                 <span>Login to Submit</span>
@@ -158,7 +186,7 @@ export function Navbar({
           <button
             onClick={() => navTo('home')}
             className={`mobile-menu-item ${activePage === 'home' ? 'mobile-menu-active' : ''}`}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
           >
             Overview
           </button>
@@ -166,7 +194,7 @@ export function Navbar({
             <button
               onClick={() => navTo('leaderboard')}
               className={`mobile-menu-item ${activePage === 'leaderboard' ? 'mobile-menu-active' : ''}`}
-              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
+              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
             >
               Live Leaderboard
             </button>
@@ -175,30 +203,51 @@ export function Navbar({
           <button
             onClick={() => navTo('organizer')}
             className={`mobile-menu-item ${activePage === 'organizer' ? 'mobile-menu-active' : ''}`}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: '0.9375rem', cursor: 'pointer' }}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
           >
             Organizer
           </button>
 
-          <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '0.5rem 0' }} />
+          <div style={{
+            height: '1px', 
+            backgroundColor: 'var(--border-color)', 
+            margin: '0.75rem 0',
+          }} />
 
           {contestant ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.75rem',
+                color: 'var(--text-secondary)',
+                fontSize: '0.95rem',
+                fontFamily: 'var(--font-sans)'
+              }}>
                 <User size={16} />
-                <span>Logged in as <strong>{contestant.name}</strong></span>
+                <span>Logged in as <strong style={{ fontFamily: 'var(--font-heading)' }}>{contestant.name}</strong></span>
               </div>
               <button
                 onClick={() => navTo('submit')}
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', justifyContent: 'center' }}
+                className="btn btn-accent"
+                style={{
+                  width: '100%', padding: '0.8rem',
+                  marginTop: '0.5rem', justifyContent: 'center',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '1.05rem',
+                  fontWeight: 600,
+                }}
               >
                 Submit Poster
               </button>
               <button
                 onClick={() => { onLogout(); setMobileOpen(false); }}
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', justifyContent: 'center' }}
+                style={{
+                  width: '100%', padding: '0.8rem',
+                  marginTop: '0.5rem', justifyContent: 'center',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '1rem',
+                }}
               >
                 <LogOut size={16} />
                 <span>Logout</span>
@@ -208,7 +257,12 @@ export function Navbar({
              <button
               onClick={() => navTo('login')}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem', justifyContent: 'center' }}
+              style={{
+                width: '100%', padding: '0.8rem', justifyContent: 'center',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '1.05rem',
+                fontWeight: 700,
+              }}
             >
               <LogIn size={16} />
               <span>Login to Submit</span>

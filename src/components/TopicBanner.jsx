@@ -1,28 +1,40 @@
 import React from 'react';
-import { Target, FileText, Lock } from 'lucide-react';
+import { Target, Lock, Sparkles } from 'lucide-react';
 
 export function TopicBanner({ topicTitle, description, topicVisible, isAdmin }) {
-  // If topic is hidden and user is not an admin, show a placeholder
   if (!topicVisible && !isAdmin) {
     return (
       <div className="surface-card" style={{
         padding: '2rem',
         display: 'flex', alignItems: 'center', gap: '1.5rem',
-        border: '1px dashed var(--border-strong)',
-        backgroundColor: 'var(--bg-surface-subtle)'
+        backgroundColor: 'var(--bg-surface-subtle)',
+        border: '1px solid var(--border-color)',
       }}>
         <div style={{
-          width: '56px', height: '56px', borderRadius: 'var(--radius-lg)',
-          backgroundColor: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--text-muted)', flexShrink: 0, boxShadow: 'var(--shadow-sm)'
+          width: '56px', height: '56px',
+          borderRadius: '12px',
+          backgroundColor: 'var(--bg-surface)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text-muted)', flexShrink: 0,
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow-sm)',
         }}>
           <Lock size={24} />
         </div>
         <div>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+          <h2 style={{
+            fontSize: '1.3rem', fontWeight: 700,
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-heading)',
+            margin: '0 0 0.25rem 0'
+          }}>
             Competition Topic Hidden
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', margin: 0, lineHeight: '1.6' }}>
+          <p style={{
+            color: 'var(--text-secondary)',
+            fontSize: '1rem', margin: 0, lineHeight: '1.6',
+            fontFamily: 'var(--font-sans)',
+          }}>
             The topic will be revealed shortly by the organizers.
           </p>
         </div>
@@ -34,53 +46,56 @@ export function TopicBanner({ topicTitle, description, topicVisible, isAdmin }) 
     <div className="surface-card" style={{
       padding: '2rem',
       display: 'flex', alignItems: 'flex-start', gap: '1.5rem',
-      position: 'relative', overflow: 'hidden'
+      position: 'relative', overflow: 'hidden',
     }}>
-      {/* Decorative gradient blur */}
-      <div style={{
-        position: 'absolute', top: '-50px', right: '-50px',
-        width: '150px', height: '150px', borderRadius: '50%',
-        background: 'var(--accent-primary)',
-        filter: 'blur(80px)', opacity: 0.1, zIndex: 0
-      }} />
 
       <div style={{
-        width: '56px', height: '56px', borderRadius: 'var(--radius-lg)',
-        background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-subtle) 100%)',
-        border: '1px solid var(--border-color)',
+        width: '56px', height: '56px',
+        borderRadius: '12px',
+        background: 'var(--text-primary)',
+        boxShadow: 'var(--shadow-sm)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: 'var(--accent-primary)', flexShrink: 0,
-        boxShadow: 'var(--shadow-md)', zIndex: 1
+        color: 'var(--text-inverse)', flexShrink: 0, zIndex: 1,
       }}>
-        <Target size={28} />
+        <Target size={26} />
       </div>
 
       <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
-            fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.05em',
-            textTransform: 'uppercase', color: 'var(--text-muted)',
-            display: 'flex', alignItems: 'center', gap: '0.25rem'
+            fontSize: '0.75rem', fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--accent-primary)',
+            display: 'flex', alignItems: 'center', gap: '0.35rem',
+            fontFamily: 'var(--font-sans)'
           }}>
-            <FileText size={12} />
+            <Sparkles size={14} />
             <span>Active Topic</span>
           </div>
           {isAdmin && !topicVisible && (
-             <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--status-danger)' }}>
-               (HIDDEN FROM CONTESTANTS)
+             <span className="badge badge-rose" style={{ fontSize: '0.7rem' }}>
+               Hidden from Contestants
              </span>
           )}
         </div>
         <h2 style={{
-          fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)',
-          letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2
+          fontSize: '1.7rem', fontWeight: 700,
+          color: 'var(--text-primary)',
+          fontFamily: 'var(--font-heading)',
+          letterSpacing: '-0.01em',
+          margin: 0, lineHeight: 1.25,
         }}>
           {topicTitle || 'No active topic set'}
         </h2>
         {description && (
           <p style={{
-            color: 'var(--text-secondary)', fontSize: '0.9375rem',
-            margin: '0.25rem 0 0 0', lineHeight: '1.6', maxWidth: '800px'
+            color: 'var(--text-secondary)',
+            fontSize: '1rem',
+            fontFamily: 'var(--font-sans)',
+            margin: '0.25rem 0 0 0',
+            lineHeight: '1.65',
+            maxWidth: '800px',
           }}>
             {description}
           </p>

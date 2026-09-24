@@ -16,8 +16,9 @@ export function AdminSubmissionTable({
   const [searchTerm, setSearchTerm] = useState('');
 
   const filtered = submissions.filter((item) =>
-    item.contestant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.topic?.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.contestant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.topic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.college_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (submissions.length === 0) {
@@ -34,7 +35,7 @@ export function AdminSubmissionTable({
   }
 
   return (
-    <div className="surface-card" style={{ overflow: 'hidden' }}>
+    <div className="surface-card" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
       {/* Header */}
       <div style={{
         padding: '0.85rem 1.25rem',
@@ -77,6 +78,7 @@ export function AdminSubmissionTable({
             <tr>
               <th style={{ width: '40px' }}>#</th>
               <th>Contestant</th>
+              <th>College</th>
               <th style={{ textAlign: 'right' }}>Score</th>
               <th style={{ width: '60px', textAlign: 'center' }}>Status</th>
               <th style={{ width: '160px', textAlign: 'right' }}>Actions</th>
@@ -105,6 +107,13 @@ export function AdminSubmissionTable({
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                         {formatDate(sub.created_at)}
                       </div>
+                    </div>
+                  </td>
+
+                  {/* College */}
+                  <td>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                      {sub.college_name || '—'}
                     </div>
                   </td>
 
@@ -181,7 +190,7 @@ export function AdminSubmissionTable({
               ))
             ) : (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                   No submissions matching "{searchTerm}"
                 </td>
               </tr>

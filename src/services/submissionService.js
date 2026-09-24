@@ -245,12 +245,14 @@ export async function uploadPosterImage(posterFile, userId) {
 export async function saveSubmission(submissionData) {
   const {
     contestantName, topic, posterFile,
-    evaluation, aiPromptUsed = '', submittedByUserId = ''
+    evaluation, aiPromptUsed = '', submittedByUserId = '',
+    collegeName = ''
   } = submissionData;
 
   const record = {
     id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     contestant_name: contestantName,
+    college_name: collegeName,
     topic,
     poster_storage_path: 'uploading...',
     poster_url: null,
@@ -300,6 +302,7 @@ export async function saveSubmission(submissionData) {
     try {
       const dbPayload = {
         contestant_name:              record.contestant_name,
+        college_name:                 record.college_name,
         topic:                        record.topic,
         poster_storage_path:          storagePath,
         poster_url:                   finalPosterUrl,

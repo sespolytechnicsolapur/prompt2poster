@@ -23,7 +23,7 @@ export async function loginContestant(userId, uniqueId) {
 
   const { data, error } = await supabase
     .from('contestants')
-    .select('name, user_id')
+    .select('name, user_id, college_name')
     .eq('user_id', userId.trim())
     .eq('unique_id', uniqueId.trim())
     .single();

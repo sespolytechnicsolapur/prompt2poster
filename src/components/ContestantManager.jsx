@@ -4,7 +4,7 @@ import { uploadContestantExcel, fetchContestants, clearContestants } from '../se
 
 /**
  * Admin component for managing contestants via Excel file upload.
- * Excel format: Column A = Name, Column B = User ID, Column C = Unique ID
+ * Excel format: Column A = Name, Column B = User ID, Column C = Unique ID, Column D = College Name
  */
 export function ContestantManager({ adminPassword }) {
   const [contestants, setContestants]   = useState([]);
@@ -98,7 +98,7 @@ export function ContestantManager({ adminPassword }) {
         </div>
 
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-          Upload an Excel file with columns: <strong>Name</strong> | <strong>User ID</strong> | <strong>Unique ID</strong>.
+          Upload an Excel file with columns: <strong>Name</strong> | <strong>User ID</strong> | <strong>Unique ID</strong> | <strong>College Name</strong>.
           This will <strong>replace</strong> all existing contestants.
         </p>
 
