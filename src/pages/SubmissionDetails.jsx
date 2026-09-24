@@ -185,36 +185,7 @@ export function SubmissionDetails({ submissionId, initialRecord, onBack, isAdmin
             </div>
           </div>
 
-          {/* AI Prompt Used (if available) */}
-          {submission.ai_prompt_used && (
-            <div className="surface-card" style={{ padding: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <Pencil size={16} style={{ color: 'var(--accent-primary)' }} />
-                <h3 style={{
-                  fontSize: '1.05rem', fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-heading)',
-                  margin: 0
-                }}>
-                  AI Prompt Used
-                </h3>
-              </div>
-              <div style={{
-                backgroundColor: 'var(--bg-surface-subtle)',
-                padding: '1rem',
-                borderRadius: '12px 4px 12px 4px / 4px 12px 4px 12px',
-                fontSize: '0.9rem',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.65,
-                fontFamily: 'var(--font-mono)',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                border: '2px dashed var(--border-subtle)'
-              }}>
-                {submission.ai_prompt_used}
-              </div>
-            </div>
-          )}
+
 
           {/* AI Chat Screenshot (if available) */}
           {submission.chat_screenshot_url && (

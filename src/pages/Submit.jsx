@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Send, Image as ImageIcon, Loader2, FileText, CheckCircle2, AlertCircle, Sparkles, Pencil } from 'lucide-react';
 import { evaluatePosterWithAI } from '../services/evaluationService';
-import { saveSubmission, pickRandomTopic, uploadPosterImage } from '../services/submissionService';
+import { saveSubmission, pickRandomTopic, uploadImageToSupabase } from '../services/submissionService';
 
 /**
  * Poster Submission Page
@@ -26,7 +26,6 @@ export function Submit({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted]   = useState(false);
   const [error, setError]               = useState(null);
-  const [aiPromptUsed, setAiPromptUsed] = useState('');
 
   // Check if contestant already submitted based on leaderboard data
   const hasAlreadySubmitted = leaderboard && contestant 
@@ -117,17 +116,23 @@ export function Submit({
     try {
       // 1. Upload the image to Supabase first to prevent Vercel Payload Too Large 502 crash
       let imageUrlForAi = previewUrl; // fallback to Base64
-      const uploadResult = await uploadPosterImage(selectedFile, contestant.user_id);
+      const uploadResult = await uploadImageToSupabase(selectedFile, contestant.user_id, 'submissions');
       if (uploadResult.url) {
         imageUrlForAi = uploadResult.url;
+      }
+
+      let screenshotUrlForAi = screenshotPreviewUrl; // fallback to Base64
+      if (selectedScreenshotFile) {
+        const screenshotUpload = await uploadImageToSupabase(selectedScreenshotFile, contestant.user_id, 'screenshots');
+        if (screenshotUpload.url) screenshotUrlForAi = screenshotUpload.url;
       }
 
       // 2. Evaluate with AI
       const { evaluation, source } = await evaluatePosterWithAI({
         posterDataUrl: imageUrlForAi,
+        chatScreenshotDataUrl: screenshotUrlForAi,
         topic: finalTopicTitle,
-        contestantName: contestant.name,
-        aiPrompt: aiPromptUsed
+        contestantName: contestant.name
       });
 
       // 3. Save submission to DB
@@ -137,8 +142,7 @@ export function Submit({
         collegeName: contestant.college_name,
         topic: finalTopicTitle,
         posterFile: imageUrlForAi !== previewUrl ? imageUrlForAi : selectedFile, // pass url if uploaded, else file for fallback
-        chatScreenshotFile: selectedScreenshotFile,
-        aiPromptUsed: aiPromptUsed.trim(),
+        chatScreenshotFile: screenshotUrlForAi !== screenshotPreviewUrl ? screenshotUrlForAi : selectedScreenshotFile,
         evaluation
       });
 
@@ -369,17 +373,6 @@ export function Submit({
                 </span>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>AI Prompt Used (Optional)</label>
-                <textarea
-                  rows={3}
-                  placeholder="Paste the prompt you used to generate this poster (e.g. Midjourney, DALL-E)..."
-                  value={aiPromptUsed}
-                  onChange={(e) => setAiPromptUsed(e.target.value)}
-                  className="form-input"
-                  style={{ resize: 'vertical' }}
-                />
-              </div>
             </div>
 
             <div className="form-group" style={{ marginTop: '1.25rem' }}>
