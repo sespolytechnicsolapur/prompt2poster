@@ -1,32 +1,33 @@
 import React, { useState } from 'react';
 import { Search, Eye, EyeOff, Trash2, Edit3, ChevronRight } from 'lucide-react';
 import { formatDate } from '../utils/formatters';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../lib/utils';
 
-/**
- * Admin-only submission table showing all entries (including hidden ones).
- * Provides per-row actions: edit scores, hide/unhide, delete.
- */
 export function AdminSubmissionTable({
   submissions = [],
   onEditScores,
   onToggleVisibility,
   onDelete,
-  onViewDetails
+  onViewDetails,
+  whitelistedUserIds,
+  onToggleUserWhitelist
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filtered = submissions.filter((item) =>
-    item.contestant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.topic?.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.contestant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.topic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.college_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (submissions.length === 0) {
     return (
-      <div className="surface-card" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+      <div className="surface-card p-12 text-center shadow-sketchy">
+        <h3 className="text-xl font-bold text-primary font-heading mb-2">
           No Submissions
         </h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', maxWidth: '360px', margin: '0 auto' }}>
+        <p className="text-secondary font-sans text-sm max-w-sm mx-auto">
           Submissions will appear here as contestants submit their poster designs.
         </p>
       </div>
@@ -34,158 +35,174 @@ export function AdminSubmissionTable({
   }
 
   return (
-    <div className="surface-card" style={{ overflow: 'hidden' }}>
+    <div className="surface-card overflow-hidden shadow-sketchy">
       {/* Header */}
-      <div style={{
-        padding: '0.85rem 1.25rem',
-        borderBottom: '1px solid var(--border-color)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: '0.75rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+      <div className="p-5 border-b-2 border-dashed border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-subtle">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-bold text-primary font-heading m-0">
             All Submissions
           </h3>
-          <span className="badge badge-mono" style={{ fontSize: '0.6875rem' }}>
+          <span className="badge badge-mono shadow-sm">
             {submissions.length} total
           </span>
           {submissions.filter(s => s.is_hidden).length > 0 && (
-            <span className="badge badge-mono" style={{ fontSize: '0.6875rem', color: 'var(--status-warning)' }}>
+            <span className="badge badge-mono bg-warning-subtle text-warning border-warning shadow-sm">
               {submissions.filter(s => s.is_hidden).length} hidden
             </span>
           )}
         </div>
 
         {/* Search */}
-        <div style={{ position: 'relative', width: '220px' }}>
-          <Search size={13} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <div className="relative w-full md:w-64">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
             placeholder="Search contestant..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="form-input"
-            style={{ paddingLeft: '1.85rem', paddingTop: '0.35rem', paddingBottom: '0.35rem', fontSize: '0.8125rem' }}
+            className="form-input pl-9 py-2 text-sm w-full"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table className="ledger-table">
+      <div className="overflow-x-auto">
+        <table className="ledger-table w-full">
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>#</th>
-              <th>Contestant</th>
-              <th style={{ textAlign: 'right' }}>Score</th>
-              <th style={{ width: '60px', textAlign: 'center' }}>Status</th>
-              <th style={{ width: '160px', textAlign: 'right' }}>Actions</th>
+              <th className="w-12 text-center font-heading text-xs text-secondary">#</th>
+              <th className="font-heading text-xs text-secondary text-left">Contestant</th>
+              <th className="font-heading text-xs text-secondary text-left">College</th>
+              <th className="text-right font-heading text-xs text-secondary">Score</th>
+              <th className="w-20 text-center font-heading text-xs text-secondary">Status</th>
+              <th className="w-24 text-center font-heading text-xs text-secondary">Whitelist</th>
+              <th className="w-40 text-right font-heading text-xs text-secondary">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length > 0 ? (
-              filtered.map((sub, index) => (
-                <tr
-                  key={sub.id}
-                  style={{ opacity: sub.is_hidden ? 0.5 : 1 }}
-                >
-                  {/* Row Number */}
-                  <td>
-                    <span className="mono-num" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                      {(index + 1).toString().padStart(2, '0')}
-                    </span>
-                  </td>
-
-                  {/* Contestant */}
-                  <td>
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-                        {sub.contestant_name}
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {formatDate(sub.created_at)}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Score */}
-                  <td style={{ textAlign: 'right' }}>
-                    <span className="mono-num" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {sub.total_score}
-                    </span>
-                    <span className="mono-num" style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>/100</span>
-                    {sub.score_edit_log && sub.score_edit_log.length > 0 && (
-                      <span style={{
-                        display: 'inline-block', marginLeft: '0.4rem',
-                        fontSize: '0.625rem', color: 'var(--status-warning)',
-                        fontWeight: 600
-                      }}>
-                        (edited)
+            <AnimatePresence>
+              {filtered.length > 0 ? (
+                filtered.map((sub, index) => (
+                  <motion.tr
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: sub.is_hidden ? 0.5 : 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    key={sub.id}
+                    className="group hover:bg-surface-hover transition-colors"
+                  >
+                    {/* Row Number */}
+                    <td className="text-center align-middle">
+                      <span className="mono-num text-sm text-dim">
+                        {(index + 1).toString().padStart(2, '0')}
                       </span>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* Status */}
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`badge badge-mono ${sub.is_hidden ? '' : 'badge-success'}`}
-                      style={{ fontSize: '0.625rem' }}>
-                      {sub.is_hidden ? 'Hidden' : 'Visible'}
-                    </span>
-                  </td>
+                    {/* Contestant */}
+                    <td className="align-middle">
+                      <div>
+                        <div className="font-bold text-primary text-sm font-sans">
+                          {sub.contestant_name}
+                        </div>
+                        <div className="text-xs text-muted font-sans mt-0.5">
+                          {formatDate(sub.created_at)}
+                        </div>
+                      </div>
+                    </td>
 
-                  {/* Actions */}
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem' }}>
-                      {/* Edit Scores */}
+                    {/* College */}
+                    <td className="align-middle">
+                      <div className="text-sm text-secondary font-sans truncate max-w-[150px]">
+                        {sub.college_name || '—'}
+                      </div>
+                    </td>
+
+                    {/* Score */}
+                    <td className="text-right align-middle">
+                      <span className="mono-num text-lg font-bold text-primary mr-0.5">
+                        {sub.total_score}
+                      </span>
+                      <span className="mono-num text-xs text-dim">/100</span>
+                      {sub.score_edit_log && sub.score_edit_log.length > 0 && (
+                        <span className="inline-block ml-2 text-[10px] text-warning font-bold uppercase tracking-wider font-sans">
+                          (edited)
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="text-center align-middle">
+                      <span className={cn(
+                        "badge badge-mono text-[10px] uppercase tracking-wider py-1",
+                        sub.is_hidden ? 'opacity-70' : 'bg-success-subtle text-success border-success'
+                      )}>
+                        {sub.is_hidden ? 'Hidden' : 'Visible'}
+                      </span>
+                    </td>
+
+                    {/* Whitelist */}
+                    <td className="text-center align-middle">
                       <button
-                        onClick={(e) => { e.stopPropagation(); onEditScores(sub); }}
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '0.2rem 0.4rem', height: '26px' }}
-                        title="Edit scores"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleUserWhitelist(sub.submitted_by_user_id, !whitelistedUserIds.has(sub.submitted_by_user_id));
+                        }}
+                        className={cn(
+                          "btn btn-sm text-xs px-2 py-1 font-bold",
+                          whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'btn-ghost text-success hover:bg-success-subtle' : 'btn-secondary'
+                        )}
+                        title={whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'Remove from whitelist' : 'Add to whitelist'}
                       >
-                        <Edit3 size={13} />
+                        {whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'ON' : 'OFF'}
                       </button>
+                    </td>
 
-                      {/* Toggle Visibility */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onToggleVisibility(sub.id, !sub.is_hidden); }}
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '0.2rem 0.4rem', height: '26px' }}
-                        title={sub.is_hidden ? 'Unhide from leaderboard' : 'Hide from leaderboard'}
-                      >
-                        {sub.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
-                      </button>
+                    {/* Actions */}
+                    <td className="text-right align-middle">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onEditScores(sub); }}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent-subtle rounded-md transition-colors"
+                          title="Edit scores"
+                        >
+                          <Edit3 size={16} />
+                        </button>
 
-                      {/* Delete */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(sub); }}
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '0.2rem 0.4rem', height: '26px', color: 'var(--status-danger)' }}
-                        title="Delete submission"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleVisibility(sub.id, !sub.is_hidden); }}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent-subtle rounded-md transition-colors"
+                          title={sub.is_hidden ? 'Unhide from leaderboard' : 'Hide from leaderboard'}
+                        >
+                          {sub.is_hidden ? <Eye size={16} /> : <EyeOff size={16} />}
+                        </button>
 
-                      {/* View Details */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onViewDetails(sub.id); }}
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '0.2rem 0.4rem', height: '26px' }}
-                        title="View details"
-                      >
-                        <ChevronRight size={13} />
-                      </button>
-                    </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDelete(sub); }}
+                          className="p-1.5 text-muted hover:text-danger hover:bg-danger-subtle rounded-md transition-colors"
+                          title="Delete submission"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onViewDetails(sub.id); }}
+                          className="p-1.5 text-muted hover:text-primary hover:bg-surface-hover rounded-md transition-colors ml-1 border border-transparent hover:border-border"
+                          title="View details"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-muted font-sans text-sm">
+                    No submissions matching "{searchTerm}"
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                  No submissions matching "{searchTerm}"
-                </td>
-              </tr>
-            )}
+              )}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

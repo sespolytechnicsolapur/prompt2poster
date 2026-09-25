@@ -8,9 +8,11 @@ import { Leaderboard } from './pages/Leaderboard';
 import { SubmissionDetails } from './pages/SubmissionDetails';
 import { TopicManagement } from './pages/TopicManagement';
 import { Login } from './pages/Login';
+import { Whitelist } from './pages/Whitelist';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
+  const [previousPage, setPreviousPage] = useState('home');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [activeSubmissionRecord, setActiveSubmissionRecord] = useState(null);
 
@@ -40,14 +42,17 @@ export default function App() {
     contestant, isAdmin, setIsAdmin,
     handleLogin, handleLogout,
 
-    leaderboardVisible, topicVisible,
+    leaderboardVisible, topicVisible, whitelistEnabled, whitelistedUserIds,
     toggleLeaderboardVisibility, toggleTopicVisibility,
+    toggleWhitelistEnabled, toggleUserWhitelist,
+    roundSettings, saveRoundSettings, toggleQualificationOverride,
   } = useCompetition();
 
   // ── Navigation ──────────────────────────────────────────────────────────
   const handleSelectSubmission = (id, record = null) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(record);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
 
@@ -55,15 +60,18 @@ export default function App() {
     refreshLeaderboard();
     setSelectedSubmissionId(savedRecord.id);
     setActiveSubmissionRecord(savedRecord);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
 
   const handleNavigation = (page) => {
     // Guard: Submit page requires login
     if (page === 'submit' && !contestant) {
+      setPreviousPage(activePage);
       setActivePage('login');
       return;
     }
+    setPreviousPage(activePage);
     setActivePage(page);
     if (page !== 'details') {
       setSelectedSubmissionId(null);
@@ -90,8 +98,28 @@ export default function App() {
   const handleViewDetails = (id) => {
     setSelectedSubmissionId(id);
     setActiveSubmissionRecord(null);
+    setPreviousPage(activePage);
     setActivePage('details');
   };
+
+  // Global Login Wall
+  if (!contestant && !isAdmin) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-default)' }}>
+        <main className="container" style={{ flex: 1, paddingTop: '4rem', paddingBottom: '3.5rem' }}>
+          <Login onLoginSuccess={(data) => {
+            if (data?.isAdmin) {
+              handleOrganizerAccess();
+              setActivePage('organizer');
+            } else {
+              handleLoginSuccess(data);
+            }
+          }} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -106,6 +134,7 @@ export default function App() {
         onLogout={handleLogoutClick}
         leaderboardVisible={leaderboardVisible}
         isAdmin={isAdmin}
+        setIsAdmin={setIsAdmin}
       />
 
       {/* MAIN CONTENT */}
@@ -124,11 +153,6 @@ export default function App() {
           />
         )}
 
-        {/* LOGIN */}
-        {activePage === 'login' && (
-          <Login onLoginSuccess={handleLoginSuccess} />
-        )}
-
         {/* SUBMIT */}
         {activePage === 'submit' && (
           <Submit
@@ -140,6 +164,8 @@ export default function App() {
             contestant={contestant}
             topicVisible={topicVisible}
             isAdmin={isAdmin}
+            leaderboard={leaderboard}
+            roundSettings={roundSettings}
           />
         )}
 
@@ -152,6 +178,12 @@ export default function App() {
             onRefresh={refreshLeaderboard}
             leaderboardVisible={leaderboardVisible}
             isAdmin={isAdmin}
+            whitelistEnabled={whitelistEnabled}
+            onToggleWhitelistEnabled={(v) => toggleWhitelistEnabled(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            roundSettings={roundSettings}
+            onToggleQualificationOverride={toggleQualificationOverride}
           />
         )}
 
@@ -160,7 +192,7 @@ export default function App() {
           <SubmissionDetails
             submissionId={selectedSubmissionId}
             initialRecord={activeSubmissionRecord}
-            onBack={() => handleNavigation('leaderboard')}
+            onBack={() => handleNavigation(previousPage === 'details' ? 'home' : (previousPage || 'leaderboard'))}
             isAdmin={isAdmin}
           />
         )}
@@ -181,7 +213,36 @@ export default function App() {
             onToggleLeaderboard={(v) => toggleLeaderboardVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             onToggleTopic={(v) => toggleTopicVisibility(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             onViewDetails={handleViewDetails}
+            isAdmin={isAdmin}
+            setIsAdmin={setIsAdmin}
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            roundSettings={roundSettings}
+            onSaveRoundSettings={(settings) => saveRoundSettings(settings, import.meta.env.VITE_ORGANIZER_PASSWORD)}
           />
+        )}
+
+        {/* WHITELIST */}
+        {activePage === 'whitelist' && (
+          <Whitelist
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            isAdmin={isAdmin}
+            whitelistEnabled={whitelistEnabled}
+            onToggleWhitelistEnabled={(v) => toggleWhitelistEnabled(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+          />
+        )}
+
+        {/* LOGIN */}
+        {activePage === 'login' && (
+          <Login onLoginSuccess={(data) => {
+            if (data?.isAdmin) {
+              handleOrganizerAccess();
+              setActivePage('organizer');
+            } else {
+              handleLoginSuccess(data);
+            }
+          }} />
         )}
       </main>
 

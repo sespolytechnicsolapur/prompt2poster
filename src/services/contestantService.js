@@ -1,95 +1,151 @@
-/**
- * Prompt2Poster — Contestant Management Service
- *
- * Handles Excel file upload, contestant listing, and clearing
- * via the backend admin endpoints.
- */
+import * as XLSX from 'xlsx';
+import { supabase, isSupabaseConfigured } from './supabase';
+
+const ORGANIZER_PASSWORD = import.meta.env.VITE_ORGANIZER_PASSWORD;
 
 /**
- * Uploads an Excel file containing contestant credentials to the backend.
- * The file is read as base64 and sent to the server for parsing.
+ * Uploads an Excel file containing contestant credentials directly to Supabase.
+ * The file is parsed in the browser using XLSX.
  *
  * @param {File} file - The .xlsx or .xls file to upload
  * @param {string} adminPassword - The organizer admin password
  * @returns {Promise<{count: number, contestants: Array}>} Parsed results
- * @throws {Error} On parse failure or invalid file
  */
 export async function uploadContestantExcel(file, adminPassword) {
-  // Convert file to base64 for transmission
-  const base64 = await fileToBase64(file);
-
-  const response = await fetch('/api/contestants/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileData: base64, adminPassword })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Failed to upload contestant file');
+  if (adminPassword !== ORGANIZER_PASSWORD) {
+    throw new Error('Unauthorized: Invalid admin password');
   }
 
-  return data;
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  // Parse Excel file in the browser
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: 'array' });
+
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName) throw new Error('Excel file contains no sheets');
+
+  const worksheet = workbook.Sheets[firstSheetName];
+  const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+  const contestants = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length < 3) continue;
+
+    const name = String(row[0] || '').trim();
+    const userId = String(row[1] || '').trim();
+    const uniqueId = String(row[2] || '').trim();
+    const collegeName = String(row[3] || '').trim();
+
+    // Skip header row
+    if (i === 0 && (
+      name.toLowerCase() === 'name' ||
+      userId.toLowerCase() === 'userid' ||
+      userId.toLowerCase() === 'user_id' ||
+      userId.toLowerCase() === 'user id'
+    )) {
+      continue;
+    }
+
+    if (name && userId && uniqueId) {
+      contestants.push({ name, user_id: userId, unique_id: uniqueId, college_name: collegeName });
+    }
+  }
+
+  if (contestants.length === 0) {
+    throw new Error('No valid contestant rows found. Expected format: Name | UserID | UniqueID | CollegeName');
+  }
+
+  // Clear existing contestants first to match previous behavior
+  await supabase.from('contestants').delete().neq('name', '___dummy___');
+
+  // Batch insert into Supabase
+  const { error } = await supabase.from('contestants').insert(contestants);
+  if (error) {
+    throw new Error(`Supabase Insert Error: ${error.message}`);
+  }
+
+  return {
+    success: true,
+    count: contestants.length,
+    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id, college_name: c.college_name, is_whitelisted: false }))
+  };
 }
 
 /**
- * Fetches all loaded contestants from the server (admin only).
+ * Fetches all loaded contestants from Supabase.
  *
  * @param {string} adminPassword - The organizer admin password
  * @returns {Promise<{count: number, contestants: Array}>}
  */
 export async function fetchContestants(adminPassword) {
-  const response = await fetch(
-    `/api/contestants/list?adminPassword=${encodeURIComponent(adminPassword)}`
-  );
-
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Failed to fetch contestants');
+  if (adminPassword !== ORGANIZER_PASSWORD) {
+    throw new Error('Unauthorized');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured.');
   }
 
-  return data;
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('name, user_id, unique_id, college_name, is_whitelisted')
+    .order('name');
+
+  if (error) throw new Error(error.message);
+
+  return {
+    success: true,
+    count: data.length,
+    contestants: data
+  };
 }
 
 /**
- * Clears all loaded contestants from the server (admin only).
+ * Clears all loaded contestants from Supabase.
  *
  * @param {string} adminPassword - The organizer admin password
  * @returns {Promise<{cleared: number}>}
  */
 export async function clearContestants(adminPassword) {
-  const response = await fetch('/api/contestants/clear', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ adminPassword })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Failed to clear contestants');
+  if (adminPassword !== ORGANIZER_PASSWORD) {
+    throw new Error('Unauthorized');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured.');
   }
 
-  return data;
+  // To get count, we can fetch first or just delete all
+  const { data, error: fetchErr } = await supabase.from('contestants').select('id');
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const prevCount = data.length;
+
+  const { error } = await supabase.from('contestants').delete().neq('name', '___dummy___');
+  if (error) throw new Error(error.message);
+
+  return { success: true, cleared: prevCount };
 }
 
 /**
- * Converts a File object to a base64 string (without the data URL prefix).
- * @param {File} file
- * @returns {Promise<string>}
+ * Deletes a single contestant from Supabase.
+ *
+ * @param {string} userId - The contestant's user_id
+ * @param {string} adminPassword - The organizer admin password
+ * @returns {Promise<{success: boolean}>}
  */
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Strip the "data:...;base64," prefix
-      const result = reader.result;
-      const base64 = result.split(',')[1] || result;
-      resolve(base64);
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
+export async function deleteContestant(userId, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) {
+    throw new Error('Unauthorized');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { error } = await supabase.from('contestants').delete().eq('user_id', userId);
+  if (error) throw new Error(error.message);
+
+  return { success: true };
 }

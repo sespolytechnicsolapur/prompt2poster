@@ -1,73 +1,64 @@
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-/**
- * Confirmation dialog for permanently deleting a submission.
- */
 export function ConfirmDeleteModal({ submission, onConfirm, onClose, isDeleting }) {
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 999,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1.5rem'
-      }}
-    >
+    <AnimatePresence>
       <div
-        onClick={(e) => e.stopPropagation()}
-        className="surface-card"
-        style={{
-          width: '100%', maxWidth: '420px',
-          padding: '1.5rem',
-          display: 'flex', flexDirection: 'column', gap: '1rem'
-        }}
+        onClick={onClose}
+        className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center p-6 backdrop-blur-sm"
       >
-        {/* Warning Icon */}
-        <div style={{
-          width: '40px', height: '40px',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--status-danger-subtle)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--status-danger)'
-        }}>
-          <AlertTriangle size={20} />
-        </div>
-
-        {/* Message */}
-        <div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
-            Delete Submission
-          </h3>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
-            Are you sure you want to permanently delete the submission by{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>{submission?.contestant_name}</strong>?
-            This action cannot be undone. The entry will be removed from the database and leaderboard.
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" disabled={isDeleting}>
-            Cancel
-          </button>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="surface-card w-full max-w-md p-6 flex flex-col gap-5 shadow-2xl relative"
+        >
           <button
-            onClick={onConfirm}
-            className="btn btn-sm"
-            disabled={isDeleting}
-            style={{
-              backgroundColor: 'var(--status-danger)',
-              color: '#FFFFFF',
-              border: 'none',
-              cursor: isDeleting ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.35rem'
-            }}
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-muted hover:text-primary transition-colors rounded-full hover:bg-surface-hover"
           >
-            <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
+            <X size={20} />
           </button>
-        </div>
+
+          {/* Warning Icon */}
+          <div className="w-12 h-12 rounded-xl bg-danger-subtle text-danger flex items-center justify-center transform -rotate-6">
+            <AlertTriangle size={24} />
+          </div>
+
+          {/* Message */}
+          <div>
+            <h3 className="text-xl font-bold text-primary font-heading mb-2">
+              Delete Submission
+            </h3>
+            <p className="text-secondary text-[0.95rem] leading-relaxed font-sans m-0">
+              Are you sure you want to permanently delete the submission by{' '}
+              <strong className="text-primary font-bold">{submission?.contestant_name}</strong>?
+              This action cannot be undone. The entry will be removed from the database and leaderboard.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2">
+            <button 
+              onClick={onClose} 
+              className="btn btn-secondary px-5 font-bold" 
+              disabled={isDeleting}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="btn btn-primary bg-danger border-danger text-white hover:-translate-y-1 hover:shadow-lg shadow-danger/20 font-bold px-6 flex items-center gap-2"
+              disabled={isDeleting}
+            >
+              <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
+            </button>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

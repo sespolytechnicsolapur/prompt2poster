@@ -2,19 +2,20 @@ import { validateEvaluationScore } from '../utils/scoreValidation';
 
 /**
  * Sends poster data to AI evaluation backend service.
- * @param {Object} payload - { posterDataUrl, topic, contestantName }
+ * @param {Object} payload - { posterDataUrl, topic, contestantName, aiPrompt }
  * @returns {Promise<Object>} Validated evaluation result
  */
-export async function evaluatePosterWithAI({ posterDataUrl, topic, contestantName }) {
+export async function evaluatePosterWithAI({ posterDataUrl, topic, contestantName, aiPrompt }) {
   try {
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ posterDataUrl, topic, contestantName })
+      body: JSON.stringify({ posterDataUrl, topic, contestantName, aiPrompt })
     });
 
     if (!response.ok) {
-      throw new Error(`Evaluation API returned status ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Evaluation API returned status ${response.status}`);
     }
 
     const data = await response.json();

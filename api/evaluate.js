@@ -10,7 +10,7 @@ Your role is to rigorously, objectively, and transparently evaluate the ATTACHED
 
 CRITICAL: You are analyzing a REAL poster image attached to this message. You MUST reference specific, concrete, observable visual details from the actual image (e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
 
-You MUST evaluate the poster strictly according to these EXACT 7 criteria (Total Maximum = 100 points):
+You MUST evaluate the poster strictly according to these EXACT 8 criteria (Total Maximum = 100 points):
 
 1. Relevance to topic (Max 20 points):
 Evaluate how directly and effectively the poster represents the assigned competition topic. Reference specific visual elements that relate (or fail to relate) to the topic.
@@ -18,7 +18,7 @@ Evaluate how directly and effectively the poster represents the assigned competi
 2. Visual hierarchy (Max 15 points):
 Evaluate whether important information stands out and whether the viewer's attention is guided naturally. Describe the actual dominant element and hierarchy flow you observe.
 
-3. Typography / readability (Max 15 points):
+3. Typography / readability (Max 10 points):
 Evaluate text clarity, legibility, font choices, sizing, spacing, contrast, and reading ease. Mention specific text elements you can observe.
 
 4. Composition / layout (Max 15 points):
@@ -30,8 +30,11 @@ Evaluate originality of concept, creative interpretation of topic, and distincti
 6. Color usage (Max 10 points):
 Evaluate color harmony, contrast, consistency, and appropriateness. Name the actual dominant colors you see in the poster.
 
-7. Overall communication (Max 10 points):
+7. Overall communication (Max 5 points):
 Evaluate how effectively the complete poster communicates its intended message to a viewer.
+
+8. Prompt Authenticity & Human Element (Max 10 points):
+Evaluate whether the prompt used to generate the image seems human-written. Dock points if it looks overly structured or like typical AI-generated text. The prompt must also accurately describe the resulting poster.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
@@ -40,52 +43,57 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
   "relevance_to_topic": {
     "score": <integer 0-20>,
     "max_score": 20,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "visual_hierarchy": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "typography_readability": {
-    "score": <integer 0-15>,
-    "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "score": <integer 0-10>,
+    "max_score": 10,
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "composition_layout": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "creativity_originality": {
     "score": <integer 0-15>,
     "max_score": 15,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
   },
   "color_usage": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation naming the actual colors seen>"
+    "reason": "<strictly 1-2 sentence explanation naming the actual colors seen>"
   },
   "overall_communication": {
+    "score": <integer 0-5>,
+    "max_score": 5,
+    "reason": "<strictly 1-2 sentence explanation referencing actual observed visual content>"
+  },
+  "prompt_authenticity": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation referencing actual observed visual content>"
+    "reason": "<strictly 1-2 sentence explanation of prompt authenticity and match>"
   },
-  "total_score": <exact arithmetic sum of all 7 individual scores above>,
+  "total_score": <exact arithmetic sum of all 8 individual scores above>,
   "issues": [
     "<specific concrete issue referencing an actual observed element>",
-    "<specific concrete issue>",
     "<specific concrete issue>"
   ],
-  "overall_evaluation": "<comprehensive evaluation paragraph with specific visual references>"
+  "overall_evaluation": "<brief 2-3 sentence evaluation paragraph with specific visual references>"
 }
 
 CRITICAL RULES:
-- All 7 score fields must exist and be integers (no decimals).
+- All 8 score fields must exist and be integers (no decimals).
 - Do NOT exceed max scores for any criterion.
-- total_score MUST equal EXACTLY the arithmetic sum of the 7 individual scores.
+- total_score MUST equal EXACTLY the arithmetic sum of the 8 individual scores.
 - All reason fields and issues must reference specific, concrete, actually observed poster content.
+- VERY IMPORTANT: Keep ALL reasons extremely concise (maximum 2 sentences) to prevent token truncation!
 `;
 
 // Helper to extract and sanitize all configured Groq API keys (comma-separated support)
@@ -103,6 +111,8 @@ function maskKey(key) {
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
 }
 
+// Round-robin counter — resets on Vercel cold starts. This is acceptable
+// because the failover loop tries ALL keys regardless of starting index.
 let keyCounter = 0;
 
 export default async function handler(req, res) {
@@ -112,7 +122,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { posterDataUrl, topic, contestantName } = req.body;
+    const { posterDataUrl, topic, contestantName, aiPrompt } = req.body;
 
     if (!topic || !contestantName) {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
@@ -128,13 +138,13 @@ export default async function handler(req, res) {
       });
     }
 
-    const hasImage = !!(posterDataUrl && posterDataUrl.startsWith('data:image/'));
+    const hasImage = !!(posterDataUrl && (posterDataUrl.startsWith('data:image/') || posterDataUrl.startsWith('http')));
     console.log(`[Evaluate] model=${model} topic="${topic}" image=${hasImage} poolSize=${keys.length}`);
 
     const userContent = [
       {
         type: 'text',
-        text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 7 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
+        text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\nAI Prompt Used: "${aiPrompt || 'None provided'}"\n\nEvaluate the attached poster image across all 8 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
       }
     ];
 
@@ -170,7 +180,7 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 8192,
+            max_tokens: 950,
             reasoning_effort: 'none'
           })
         });
@@ -212,6 +222,7 @@ export default async function handler(req, res) {
     try {
       let cleaned = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
       cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // Greedy match is intentional — our schema has nested {score, reason} objects
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
       if (jsonMatch) cleaned = jsonMatch[0];
       parsedResult = JSON.parse(cleaned);

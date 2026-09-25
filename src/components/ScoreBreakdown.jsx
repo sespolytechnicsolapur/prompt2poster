@@ -22,7 +22,7 @@ export function ScoreBreakdown({ evaluation, totalScore }) {
             Criteria Score Breakdown
           </h3>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Evaluated against 7 weighted visual benchmarks
+            Evaluated against 8 weighted visual benchmarks
           </span>
         </div>
 

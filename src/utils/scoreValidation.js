@@ -6,11 +6,12 @@
 export const CRITERIA_DEFINITIONS = [
   { key: 'relevance_to_topic', label: 'Relevance to Topic', maxScore: 20 },
   { key: 'visual_hierarchy', label: 'Visual Hierarchy', maxScore: 15 },
-  { key: 'typography_readability', label: 'Typography / Readability', maxScore: 15 },
+  { key: 'typography_readability', label: 'Typography / Readability', maxScore: 10 },
   { key: 'composition_layout', label: 'Composition / Layout', maxScore: 15 },
   { key: 'creativity_originality', label: 'Creativity / Originality', maxScore: 15 },
   { key: 'color_usage', label: 'Color Usage', maxScore: 10 },
-  { key: 'overall_communication', label: 'Overall Communication', maxScore: 10 },
+  { key: 'overall_communication', label: 'Overall Communication', maxScore: 5 },
+  { key: 'prompt_authenticity', label: 'Prompt Authenticity', maxScore: 10 },
 ];
 
 export const TOTAL_MAX_SCORE = 100;

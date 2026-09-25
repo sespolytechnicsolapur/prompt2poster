@@ -12,7 +12,15 @@ import {
   setLeaderboardVisibility,
   fetchTopicVisibility,
   setTopicVisibility,
+  fetchWhitelistEnabled,
+  setWhitelistEnabled,
+  toggleContestantWhitelistByUserId,
+  fetchWhitelistedContestants,
+  fetchRoundSettings,
+  updateRoundSettings,
+  setQualificationOverride
 } from '../services/submissionService';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { getLoggedInContestant, logoutContestant } from '../services/authService';
 
 /**
@@ -35,11 +43,30 @@ export function useCompetition() {
 
   // ── Auth State ────────────────────────────────────────────────────────────
   const [contestant, setContestant]             = useState(() => getLoggedInContestant());
-  const [isAdmin, setIsAdmin]                   = useState(false);
+  const [isAdmin, setIsAdminState]              = useState(() => sessionStorage.getItem('prompt2poster_admin') === 'true');
+
+  const setIsAdmin = (value) => {
+    if (value) {
+      sessionStorage.setItem('prompt2poster_admin', 'true');
+    } else {
+      sessionStorage.removeItem('prompt2poster_admin');
+    }
+    setIsAdminState(value);
+  };
 
   // ── Visibility State ──────────────────────────────────────────────────────
   const [leaderboardVisible, setLeaderboardVisibleState] = useState(true);
   const [topicVisible, setTopicVisibleState]             = useState(true);
+  const [whitelistEnabled, setWhitelistEnabledState]     = useState(false);
+  const [whitelistedUserIds, setWhitelistedUserIds]      = useState(new Set());
+  
+  // ── Round Settings State ──────────────────────────────────────────────────
+  const [roundSettings, setRoundSettingsState] = useState({
+    current_round: 1,
+    qualification_cutoff: 60,
+    show_qualification: false,
+    show_round_2: false
+  });
 
   const [error, setError] = useState(null);
 
@@ -83,16 +110,25 @@ export function useCompetition() {
 
   const loadVisibility = useCallback(async () => {
     try {
-      const [lbVisible, tVisible] = await Promise.all([
+      const [lbVisible, tVisible, wEnabled, rSettings] = await Promise.all([
         fetchLeaderboardVisibility(),
         fetchTopicVisibility(),
+        fetchWhitelistEnabled(),
+        fetchRoundSettings()
       ]);
       setLeaderboardVisibleState(lbVisible);
       setTopicVisibleState(tVisible);
+      setWhitelistEnabledState(wEnabled);
+      setRoundSettingsState(rSettings);
+      
+      if (isAdmin && import.meta.env.VITE_ORGANIZER_PASSWORD) {
+        const whitelisted = await fetchWhitelistedContestants(import.meta.env.VITE_ORGANIZER_PASSWORD);
+        setWhitelistedUserIds(new Set(whitelisted.map(c => c.user_id)));
+      }
     } catch (err) {
       console.error('Failed to load visibility settings:', err);
     }
-  }, []);
+  }, [isAdmin]);
 
   // ── Initial Load ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -101,6 +137,37 @@ export function useCompetition() {
     loadPool();
     loadVisibility();
   }, [loadTopic, loadLeaderboard, loadPool, loadVisibility]);
+
+  // ── Supabase Realtime Subscriptions ─────────────────────────────────────
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const channel = supabase.channel('public:realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'submissions' },
+        () => {
+          console.log('[Realtime] Submissions table changed, reloading leaderboard...');
+          loadLeaderboard();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'topics' },
+        () => {
+          console.log('[Realtime] Topics table changed, reloading topic & visibility...');
+          loadTopic();
+          loadVisibility();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadLeaderboard, loadTopic, loadVisibility]);
 
   // ── Topic Mutators ──────────────────────────────────────────────────────
   const changeTopic = async (title, description) => {
@@ -155,6 +222,51 @@ export function useCompetition() {
     }
   };
 
+  const toggleWhitelistEnabled = async (enabled, adminPassword) => {
+    try {
+      const result = await setWhitelistEnabled(enabled, adminPassword);
+      setWhitelistEnabledState(result);
+    } catch (err) {
+      console.error('Failed to toggle whitelist:', err);
+    }
+  };
+
+  const toggleUserWhitelist = async (userId, isWhitelisted, adminPassword) => {
+    try {
+      await toggleContestantWhitelistByUserId(userId, isWhitelisted, adminPassword);
+      setWhitelistedUserIds(prev => {
+        const next = new Set(prev);
+        if (isWhitelisted) next.add(userId);
+        else next.delete(userId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to toggle contestant whitelist:', err);
+      throw err;
+    }
+  };
+
+  const saveRoundSettings = async (settings, adminPassword) => {
+    try {
+      const result = await updateRoundSettings(settings, adminPassword);
+      setRoundSettingsState(result);
+    } catch (err) {
+      console.error('Failed to update round settings:', err);
+      throw err;
+    }
+  };
+
+  const toggleQualificationOverride = async (id, overrideStatus) => {
+    try {
+      const updated = await setQualificationOverride(id, overrideStatus);
+      if (updated) {
+        setLeaderboard(prev => prev.map(s => s.id === id ? { ...s, qualification_override: overrideStatus } : s));
+      }
+    } catch (err) {
+      console.error('Failed to toggle qualification override:', err);
+    }
+  };
+
   return {
     // Single topic
     activeTopic,
@@ -183,12 +295,21 @@ export function useCompetition() {
     handleLogin,
     handleLogout,
 
-    // Visibility
+    // Visibility & Whitelist
     leaderboardVisible,
     topicVisible,
+    whitelistEnabled,
+    whitelistedUserIds,
     toggleLeaderboardVisibility,
     toggleTopicVisibility,
+    toggleWhitelistEnabled,
+    toggleUserWhitelist,
     refreshVisibility: loadVisibility,
+    
+    // Rounds
+    roundSettings,
+    saveRoundSettings,
+    toggleQualificationOverride,
 
     error,
   };

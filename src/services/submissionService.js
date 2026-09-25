@@ -211,18 +211,56 @@ function lsSetSubmissions(list) { lsSet(LS_SUBMISSIONS, list); }
  * @param {Object} submissionData - Submission payload
  * @returns {Promise<Object>} Saved submission record
  */
+export async function uploadImageToSupabase(file, userId, folder = 'submissions') {
+  if (!isSupabaseConfigured || !supabase || !file) {
+    return { path: null, url: null };
+  }
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}_${Date.now()}.${fileExt}`;
+  const filePath = `${folder}/${fileName}`;
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('posters')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (uploadError) {
+    console.error('[Storage Upload Error]:', uploadError);
+    return { path: null, url: null, error: uploadError };
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('posters')
+    .getPublicUrl(filePath);
+
+  return { path: filePath, url: publicUrlData.publicUrl };
+}
+
+/**
+ * Saves a new submission locally and to Supabase (if configured).
+ * @param {Object} submissionData
+ */
 export async function saveSubmission(submissionData) {
   const {
-    contestantName, topic, posterStoragePath, posterUrl,
-    evaluation, aiPromptUsed = '', submittedByUserId = ''
+    contestantName, topic, posterFile, chatScreenshotFile,
+    evaluation, aiPromptUsed = '', submittedByUserId = '',
+    collegeName = ''
   } = submissionData;
 
-  const record = {
-    id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-    contestant_name: contestantName,
-    topic,
-    poster_storage_path: posterStoragePath,
-    poster_url: (posterUrl && posterUrl.startsWith('https://')) ? posterUrl : null,
+    const activeTopicData = await fetchActiveTopic();
+    const currentRound = activeTopicData?.current_round || 1;
+
+    const record = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      contestant_name: contestantName,
+      college_name: collegeName,
+      topic,
+      round_number: currentRound,
+      poster_storage_path: 'uploading...',
+    poster_url: null,
+    chat_screenshot_url: null,
     submitted_by_user_id: submittedByUserId,
     ai_prompt_used: aiPromptUsed,
     relevance_to_topic_score:     evaluation.relevance_to_topic.score,
@@ -232,6 +270,7 @@ export async function saveSubmission(submissionData) {
     creativity_originality_score: evaluation.creativity_originality.score,
     color_usage_score:            evaluation.color_usage.score,
     overall_communication_score:  evaluation.overall_communication.score,
+    prompt_authenticity_score:    evaluation.prompt_authenticity.score,
     total_score:        evaluation.total_score,
     evaluation_reasoning: evaluation,
     issues:             evaluation.issues || [],
@@ -246,13 +285,44 @@ export async function saveSubmission(submissionData) {
   localList.unshift(record);
   lsSetSubmissions(localList);
 
+  let storagePath = 'local-only';
+  let finalPosterUrl = '';
+
   if (isSupabaseConfigured && supabase) {
+    if (posterFile) {
+      if (typeof posterFile === 'string' && posterFile.startsWith('https://')) {
+        // If it's already a URL, just use it (already uploaded)
+        finalPosterUrl = posterFile;
+        storagePath = 'already_uploaded';
+      } else {
+        // Fallback upload if it wasn't uploaded beforehand
+        const uploadResult = await uploadImageToSupabase(posterFile, submittedByUserId, 'submissions');
+        if (uploadResult.url) {
+          storagePath = uploadResult.path;
+          finalPosterUrl = uploadResult.url;
+        }
+      }
+    }
+
+    let finalScreenshotUrl = '';
+    if (chatScreenshotFile) {
+      if (typeof chatScreenshotFile === 'string' && chatScreenshotFile.startsWith('https://')) {
+        finalScreenshotUrl = chatScreenshotFile;
+      } else {
+        const snapUpload = await uploadImageToSupabase(chatScreenshotFile, submittedByUserId, 'screenshots');
+        if (snapUpload.url) finalScreenshotUrl = snapUpload.url;
+      }
+    }
+
     try {
       const dbPayload = {
         contestant_name:              record.contestant_name,
+        college_name:                 record.college_name,
         topic:                        record.topic,
-        poster_storage_path:          record.poster_storage_path || 'local-only',
-        poster_url:                   record.poster_url || '',
+        round_number:                 record.round_number,
+        poster_storage_path:          storagePath,
+        poster_url:                   finalPosterUrl,
+        chat_screenshot_url:          finalScreenshotUrl,
         submitted_by_user_id:         record.submitted_by_user_id,
         ai_prompt_used:               record.ai_prompt_used,
         relevance_to_topic_score:     record.relevance_to_topic_score,
@@ -262,12 +332,14 @@ export async function saveSubmission(submissionData) {
         creativity_originality_score: record.creativity_originality_score,
         color_usage_score:            record.color_usage_score,
         overall_communication_score:  record.overall_communication_score,
+        prompt_authenticity_score:    record.prompt_authenticity_score,
         total_score:                  record.total_score,
         evaluation_reasoning:         record.evaluation_reasoning,
         issues:                       record.issues,
         overall_evaluation:           record.overall_evaluation,
         is_hidden:                    false,
         score_edit_log:               [],
+        qualification_override:       'auto',
       };
 
       const { data, error } = await supabase
@@ -397,6 +469,37 @@ export async function toggleSubmissionVisibility(id, isHidden) {
 }
 
 /**
+ * Toggle a submission's qualification override status.
+ * @param {string} id - Submission ID
+ * @param {string} override - 'auto', 'qualified', or 'disqualified'
+ * @returns {Promise<Object|null>} Updated record
+ */
+export async function setQualificationOverride(id, override) {
+  // Update localStorage
+  const list = lsGetSubmissions();
+  const idx = list.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    list[idx].qualification_override = override;
+    lsSetSubmissions(list);
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .update({ qualification_override: override })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) console.error('[setQualificationOverride DB Error]:', error.message);
+      if (data) return data;
+    } catch (err) { console.error('[setQualificationOverride DB Error]:', err.message); }
+  }
+
+  return idx !== -1 ? list[idx] : null;
+}
+
+/**
  * Update submission scores and reasoning after admin edit or AI re-evaluation.
  * Appends an entry to the score_edit_log.
  *
@@ -426,6 +529,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
     entry.creativity_originality_score = updatedEvaluation.creativity_originality.score;
     entry.color_usage_score            = updatedEvaluation.color_usage.score;
     entry.overall_communication_score  = updatedEvaluation.overall_communication.score;
+    entry.prompt_authenticity_score    = updatedEvaluation.prompt_authenticity.score;
     entry.total_score                  = updatedEvaluation.total_score;
     entry.evaluation_reasoning         = updatedEvaluation;
     entry.issues                       = updatedEvaluation.issues || [];
@@ -436,15 +540,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // First fetch current edit log
-      const { data: current } = await supabase
-        .from('submissions')
-        .select('score_edit_log')
-        .eq('id', id)
-        .single();
-
-      const existingLog = current?.score_edit_log || [];
-
+      // Update scores in a single UPDATE (no read needed)
       const { data, error } = await supabase
         .from('submissions')
         .update({
@@ -455,17 +551,40 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
           creativity_originality_score: updatedEvaluation.creativity_originality.score,
           color_usage_score:            updatedEvaluation.color_usage.score,
           overall_communication_score:  updatedEvaluation.overall_communication.score,
+          prompt_authenticity_score:    updatedEvaluation.prompt_authenticity.score,
           total_score:                  updatedEvaluation.total_score,
           evaluation_reasoning:         updatedEvaluation,
           issues:                       updatedEvaluation.issues || [],
           overall_evaluation:           updatedEvaluation.overall_evaluation,
-          score_edit_log:               [...existingLog, editLogEntry],
         })
         .eq('id', id)
         .select()
         .single();
 
       if (error) console.error('[updateScores DB Error]:', error.message);
+
+      // Atomically append to score_edit_log via RPC (avoids read-modify-write race)
+      try {
+        await supabase.rpc('append_score_edit_log', {
+          submission_id: id,
+          new_entry: editLogEntry,
+        });
+      } catch (rpcErr) {
+        // Fallback: if the RPC function doesn't exist yet (migration not run),
+        // do the old read-modify-write approach
+        console.warn('[updateScores] RPC append_score_edit_log not available, using fallback:', rpcErr.message);
+        const { data: current } = await supabase
+          .from('submissions')
+          .select('score_edit_log')
+          .eq('id', id)
+          .single();
+        const existingLog = current?.score_edit_log || [];
+        await supabase
+          .from('submissions')
+          .update({ score_edit_log: [...existingLog, editLogEntry] })
+          .eq('id', id);
+      }
+
       if (data) return data;
     } catch (err) { console.error('[updateScores DB Error]:', err.message); }
   }
@@ -477,15 +596,17 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
 // VISIBILITY CONTROLS
 // ══════════════════════════════════════════════════════════════════════════════
 
+const ORGANIZER_PASSWORD = import.meta.env.VITE_ORGANIZER_PASSWORD;
+
 /**
  * Fetch current leaderboard visibility state.
  * @returns {Promise<boolean>}
  */
 export async function fetchLeaderboardVisibility() {
+  if (!isSupabaseConfigured || !supabase) return true;
   try {
-    const res = await fetch('/api/leaderboard-visibility');
-    const data = await res.json();
-    return data.visible !== false;
+    const { data } = await supabase.from('topics').select('leaderboard_visible').eq('is_active', true).single();
+    return data?.leaderboard_visible ?? true;
   } catch {
     return true;
   }
@@ -498,14 +619,13 @@ export async function fetchLeaderboardVisibility() {
  * @returns {Promise<boolean>} New visibility state
  */
 export async function setLeaderboardVisibility(visible, adminPassword) {
-  const res = await fetch('/api/leaderboard-visibility', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ visible, adminPassword })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update leaderboard visibility');
-  return data.visible;
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ leaderboard_visible: visible }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return visible;
 }
 
 /**
@@ -513,10 +633,10 @@ export async function setLeaderboardVisibility(visible, adminPassword) {
  * @returns {Promise<boolean>}
  */
 export async function fetchTopicVisibility() {
+  if (!isSupabaseConfigured || !supabase) return true;
   try {
-    const res = await fetch('/api/topic-visibility');
-    const data = await res.json();
-    return data.visible !== false;
+    const { data } = await supabase.from('topics').select('topic_visible').eq('is_active', true).single();
+    return data?.topic_visible ?? true;
   } catch {
     return true;
   }
@@ -529,12 +649,124 @@ export async function fetchTopicVisibility() {
  * @returns {Promise<boolean>} New visibility state
  */
 export async function setTopicVisibility(visible, adminPassword) {
-  const res = await fetch('/api/topic-visibility', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ visible, adminPassword })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update topic visibility');
-  return data.visible;
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ topic_visible: visible }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return visible;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ROUNDS & QUALIFICATION CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchRoundSettings() {
+  if (!isSupabaseConfigured || !supabase) {
+    return { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  }
+  try {
+    const { data } = await supabase.from('topics')
+      .select('current_round, qualification_cutoff, show_qualification, show_round_2')
+      .eq('is_active', true).single();
+    return data || { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  } catch {
+    return { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  }
+}
+
+export async function updateRoundSettings(settings, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+
+  const { error } = await supabase.from('topics').update(settings).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return settings;
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WHITELIST CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch current whitelist enabled state.
+ * @returns {Promise<boolean>}
+ */
+export async function fetchWhitelistEnabled() {
+  if (!isSupabaseConfigured || !supabase) return false;
+  try {
+    const { data } = await supabase.from('topics').select('whitelist_enabled').eq('is_active', true).single();
+    return data?.whitelist_enabled ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Set whitelist enabled state (admin only).
+ * @param {boolean} enabled
+ * @param {string} adminPassword
+ * @returns {Promise<boolean>} New state
+ */
+export async function setWhitelistEnabled(enabled, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ whitelist_enabled: enabled }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return enabled;
+}
+
+/**
+ * Toggle a contestant's whitelist status by user_id
+ */
+export async function toggleContestantWhitelistByUserId(userId, isWhitelisted, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+
+  const { data, error } = await supabase
+    .from('contestants')
+    .update({ is_whitelisted: isWhitelisted })
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Fetch all whitelisted contestants
+ */
+export async function fetchWhitelistedContestants(adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('*')
+    .eq('is_whitelisted', true);
+    
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+/**
+ * Fetch all contestants (for admin)
+ */
+export async function fetchAllContestants(adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('*')
+    .order('created_at', { ascending: false });
+    
+  if (error) throw new Error(error.message);
+  return data || [];
 }

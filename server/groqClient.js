@@ -25,7 +25,13 @@ export function maskKey(key) {
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
 }
 
-/** Round-robin counter shared across all calls */
+/**
+ * Round-robin counter shared across all calls within this process.
+ * NOTE: In serverless (Vercel), this resets on cold start. This is intentional —
+ * the failover loop tries all keys regardless of starting index, so perfect
+ * round-robin distribution is not required. True cross-instance distribution
+ * would require external state (Redis/KV) which is overkill for this use case.
+ */
 let keyCounter = 0;
 
 // ── Core API Caller ───────────────────────────────────────────────────────────

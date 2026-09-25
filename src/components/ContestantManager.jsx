@@ -1,18 +1,17 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Trash2, AlertCircle, Check, FileSpreadsheet, Users } from 'lucide-react';
-import { uploadContestantExcel, fetchContestants, clearContestants } from '../services/contestantService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { uploadContestantExcel, fetchContestants, clearContestants, deleteContestant } from '../services/contestantService';
+import { cn } from '../lib/utils';
 
-/**
- * Admin component for managing contestants via Excel file upload.
- * Excel format: Column A = Name, Column B = User ID, Column C = Unique ID
- */
-export function ContestantManager({ adminPassword }) {
+export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
   const [contestants, setContestants]   = useState([]);
   const [isUploading, setIsUploading]   = useState(false);
   const [isClearing, setIsClearing]     = useState(false);
   const [isLoading, setIsLoading]       = useState(false);
   const [successMsg, setSuccessMsg]     = useState(null);
   const [error, setError]               = useState(null);
+  const [isDeletingUserId, setIsDeletingUserId] = useState(null);
   const fileInputRef = useRef(null);
 
   const showSuccess = (msg) => {
@@ -20,7 +19,6 @@ export function ContestantManager({ adminPassword }) {
     setTimeout(() => setSuccessMsg(null), 4000);
   };
 
-  // Load contestants from server
   const loadContestants = async () => {
     setIsLoading(true);
     try {
@@ -33,7 +31,6 @@ export function ContestantManager({ adminPassword }) {
     }
   };
 
-  // Upload Excel file
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -64,7 +61,6 @@ export function ContestantManager({ adminPassword }) {
     }
   };
 
-  // Clear all contestants
   const handleClear = async () => {
     if (!confirm('Clear all imported contestants? This cannot be undone.')) return;
 
@@ -81,95 +77,113 @@ export function ContestantManager({ adminPassword }) {
     }
   };
 
-  // Load on first render
+  const handleDeleteIndividual = async (userId) => {
+    if (!confirm('Delete this contestant?')) return;
+    setIsDeletingUserId(userId);
+    setError(null);
+    try {
+      await deleteContestant(userId, adminPassword);
+      setContestants(prev => prev.filter(c => c.user_id !== userId));
+      showSuccess('Contestant deleted');
+    } catch (err) {
+      setError(err.message || 'Failed to delete contestant');
+    } finally {
+      setIsDeletingUserId(null);
+    }
+  };
+
+  const handleToggleWhitelist = async (userId, currentStatus) => {
+    if (!onToggleUserWhitelist) return;
+    try {
+      await onToggleUserWhitelist(userId, !currentStatus);
+      setContestants(prev => prev.map(c => c.user_id === userId ? { ...c, is_whitelisted: !currentStatus } : c));
+    } catch (err) {
+      setError(err.message || 'Failed to toggle whitelist');
+    }
+  };
+
   React.useEffect(() => {
     loadContestants();
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Upload Section */}
-      <div className="surface-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <FileSpreadsheet size={16} style={{ color: 'var(--accent-primary)' }} />
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+      <div className="surface-card p-6 flex flex-col gap-5 border border-border shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent-subtle text-accent flex items-center justify-center transform -rotate-3">
+            <FileSpreadsheet size={20} />
+          </div>
+          <h3 className="text-lg font-bold text-primary font-heading m-0">
             Import Contestants from Excel
           </h3>
         </div>
 
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-          Upload an Excel file with columns: <strong>Name</strong> | <strong>User ID</strong> | <strong>Unique ID</strong>.
-          This will <strong>replace</strong> all existing contestants.
+        <p className="text-sm text-secondary font-sans m-0 leading-relaxed max-w-2xl">
+          Upload an Excel file with columns: <strong className="text-primary font-bold">Name</strong> | <strong className="text-primary font-bold">User ID</strong> | <strong className="text-primary font-bold">Unique ID</strong> | <strong className="text-primary font-bold">College Name</strong>.
+          This will <strong className="text-danger font-bold">replace</strong> all existing contestants.
         </p>
 
         <input
           ref={fileInputRef}
           type="file"
           accept=".xlsx,.xls"
-          style={{ display: 'none' }}
+          className="hidden"
           onChange={handleFileUpload}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary px-5 py-2 font-bold flex items-center gap-2"
             disabled={isUploading}
           >
-            <Upload size={13} />
+            <Upload size={16} />
             <span>{isUploading ? 'Importing...' : 'Upload Excel File'}</span>
           </button>
 
           {contestants.length > 0 && (
             <button
               onClick={handleClear}
-              className="btn btn-ghost btn-sm"
+              className="btn btn-secondary px-5 py-2 font-bold flex items-center gap-2 text-danger border-danger hover:bg-danger-subtle"
               disabled={isClearing}
-              style={{ color: 'var(--status-danger)' }}
             >
-              <Trash2 size={13} />
+              <Trash2 size={16} />
               <span>{isClearing ? 'Clearing...' : 'Clear All'}</span>
             </button>
           )}
         </div>
 
         {/* Messages */}
-        {successMsg && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--status-success)',
-            backgroundColor: 'var(--status-success-subtle)',
-            padding: '0.5rem 0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.8125rem'
-          }}>
-            <Check size={14} />
-            <span>{successMsg}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {successMsg && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-2 text-success bg-success-subtle p-3 rounded-sketchy border border-success-subtle text-sm font-bold font-sans"
+            >
+              <Check size={16} />
+              <span>{successMsg}</span>
+            </motion.div>
+          )}
 
-        {error && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--status-danger-subtle)',
-            padding: '0.5rem 0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.8125rem',
-            border: '1px solid rgba(239, 68, 68, 0.2)'
-          }}>
-            <AlertCircle size={14} />
-            <span>{error}</span>
-          </div>
-        )}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-2 text-danger bg-danger-subtle p-3 rounded-sketchy border-2 border-dashed border-danger text-sm font-bold font-sans"
+            >
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Contestant List */}
-      <div className="surface-card" style={{ padding: '1.25rem 1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Users size={14} style={{ color: 'var(--text-muted)' }} />
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+      <div className="surface-card p-6 border border-border shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Users size={18} className="text-muted" />
+            <h3 className="text-lg font-bold text-primary font-heading m-0">
               Registered Contestants
             </h3>
           </div>
@@ -177,45 +191,79 @@ export function ContestantManager({ adminPassword }) {
         </div>
 
         {isLoading ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading contestants...</p>
+          <p className="text-muted text-sm font-sans italic p-4 text-center">Loading contestants...</p>
         ) : contestants.length === 0 ? (
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.8125rem', textAlign: 'center', margin: '1rem 0' }}>
-            No contestants imported. Upload an Excel file to get started.
-          </p>
+          <div className="text-center p-8 bg-surface-subtle border-2 border-dashed border-border-subtle rounded-sketchy">
+            <p className="text-secondary text-sm font-sans m-0">
+              No contestants imported. Upload an Excel file to get started.
+            </p>
+          </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="ledger-table">
+          <div className="overflow-x-auto">
+            <table className="ledger-table w-full">
               <thead>
                 <tr>
-                  <th style={{ width: '40px' }}>#</th>
-                  <th>Name</th>
-                  <th>User ID</th>
-                  <th>Unique ID</th>
+                  <th className="w-10 text-center font-heading text-xs text-secondary">#</th>
+                  <th className="font-heading text-xs text-secondary text-left">Name</th>
+                  <th className="font-heading text-xs text-secondary text-left">User ID</th>
+                  <th className="font-heading text-xs text-secondary text-left">Unique ID</th>
+                  <th className="text-center font-heading text-xs text-secondary w-24">Whitelist</th>
+                  <th className="text-right font-heading text-xs text-secondary w-20">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {contestants.map((c, idx) => (
-                  <tr key={c.user_id || idx}>
-                    <td>
-                      <span className="mono-num" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                        {(idx + 1).toString().padStart(2, '0')}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-                      {c.name}
-                    </td>
-                    <td>
-                      <span className="mono-num" style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                        {c.user_id}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="mono-num" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                        {c.unique_id}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                <AnimatePresence>
+                  {contestants.map((c, idx) => (
+                    <motion.tr 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      key={c.user_id || idx}
+                      className="group hover:bg-surface-hover transition-colors"
+                    >
+                      <td className="text-center align-middle">
+                        <span className="mono-num text-xs text-dim">
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </span>
+                      </td>
+                      <td className="font-bold text-primary text-sm font-sans align-middle">
+                        {c.name}
+                      </td>
+                      <td className="align-middle">
+                        <span className="mono-num text-sm text-secondary">
+                          {c.user_id}
+                        </span>
+                      </td>
+                      <td className="align-middle">
+                        <span className="mono-num text-sm text-muted">
+                          {c.unique_id}
+                        </span>
+                      </td>
+                      <td className="text-center align-middle">
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => handleToggleWhitelist(c.user_id, c.is_whitelisted)}
+                            className={cn(
+                              "btn btn-sm text-xs px-2 py-1 font-bold",
+                              c.is_whitelisted ? 'btn-ghost text-success hover:bg-success-subtle' : 'btn-secondary'
+                            )}
+                            title={c.is_whitelisted ? 'Remove from whitelist' : 'Add to whitelist'}
+                          >
+                            {c.is_whitelisted ? 'ON' : 'OFF'}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="text-right align-middle">
+                        <button
+                          onClick={() => handleDeleteIndividual(c.user_id)}
+                          disabled={isDeletingUserId === c.user_id}
+                          className="p-1.5 text-muted hover:text-danger hover:bg-danger-subtle rounded-md transition-colors"
+                          title="Delete contestant"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>

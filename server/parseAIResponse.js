@@ -24,7 +24,15 @@ export function parseGroqResponse(rawText) {
   // 2. Strip markdown code fences if present
   cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
-  // 3. Extract first {...} JSON block if model prepended any prose
+  // 3. Extract first {...} JSON block if model prepended any prose.
+  //    NOTE: The greedy match [\s\S]* is intentional, NOT a bug. Our evaluation
+  //    schema contains nested {score, reason} objects, so a non-greedy [\s\S]*?
+  //    would break on the first closing brace. The greedy match captures from
+  //    the first { to the last }, which is correct for a single top-level JSON object.
+  //    If the AI ever outputs two separate JSON objects (unlikely given the system
+  //    prompt's "Return ONLY a raw valid JSON object" instruction), this would
+  //    capture garbage between them — but that's an acceptable edge case vs.
+  //    the guaranteed breakage from non-greedy matching.
   const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     cleaned = jsonMatch[0];

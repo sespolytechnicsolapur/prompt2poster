@@ -1,5 +1,9 @@
 @import './variables.css';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* =========================================================
    GLOBAL RESET & BOX SIZING
    ========================================================= */
@@ -15,63 +19,107 @@ body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
   overflow-x: hidden;
   transition:
-    background-color var(--transition-normal),
-    color var(--transition-normal);
+    background-color var(--transition-smooth),
+    color var(--transition-smooth);
+}
+
+/* Subtle tech-grid background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  opacity: 0.4;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
 /* =========================================================
-   TYPOGRAPHY
+   PROFESSIONAL KEYFRAMES & ANIMATIONS
    ========================================================= */
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes scale-in {
+  0% { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  50% { box-shadow: 0 0 15px 0 rgba(59, 130, 246, 0.4); }
+}
+
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* =========================================================
+   TYPOGRAPHY — Crisp, Modern
+   ========================================================= */
+
+h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 h1 {
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
   letter-spacing: -0.03em;
+  font-weight: 800;
 }
 
 h2 {
-  font-size: 1.35rem;
+  font-size: 1.8rem;
 }
 
 h3 {
-  font-size: 1.15rem;
-}
-
-h4 {
-  font-size: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 p {
   color: var(--text-secondary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
 }
 
 a {
-  color: inherit;
+  color: var(--accent-primary);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
-button,
-input,
-select,
-textarea {
+a:hover {
+  color: var(--accent-primary-hover);
+}
+
+button, input, select, textarea {
   font-family: inherit;
   font-size: inherit;
 }
@@ -88,17 +136,22 @@ textarea {
 }
 
 /* =========================================================
-   SURFACE & CARD PANELS
+   SURFACE & CARD PANELS — Clean Glassmorphism
    ========================================================= */
 
 .surface-card,
 .glass-panel {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  position: relative;
   transition:
     border-color var(--transition-fast),
-    background-color var(--transition-fast);
+    background-color var(--transition-smooth),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  animation: fade-up 0.5s var(--transition-fast) both;
 }
 
 .surface-card-subtle {
@@ -108,12 +161,14 @@ textarea {
 }
 
 .surface-card-interactive:hover {
-  background-color: var(--bg-surface-subtle);
-  border-color: var(--border-strong);
+  background-color: var(--bg-surface);
+  border-color: var(--accent-primary-subtle);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* =========================================================
-   BUTTONS
+   BUTTONS — Sleek & Modern
    ========================================================= */
 
 .btn {
@@ -121,55 +176,72 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.95rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
+  padding: 0.6rem 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-sketchy-btn);
+  border: 2.5px solid transparent;
   cursor: pointer;
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
     color var(--transition-fast),
-    transform 80ms ease;
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
   user-select: none;
   white-space: nowrap;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn:active {
   transform: translateY(1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+  outline: 3px dashed var(--accent-primary);
+  outline-offset: 3px;
 }
 
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .btn-primary {
-  background-color: var(--text-primary);
+  background-color: var(--accent-primary);
   color: var(--text-inverse);
-  border-color: var(--text-primary);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
-  opacity: 0.92;
+  background-color: var(--accent-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--bg-surface-subtle);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-ghost {
@@ -181,60 +253,67 @@ textarea {
 .btn-ghost:hover:not(:disabled) {
   background-color: var(--bg-surface-subtle);
   color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .btn-accent {
-  background-color: var(--accent-primary);
-  color: #ffffff;
-  border-color: var(--accent-primary);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: transparent;
+  box-shadow: var(--shadow-md);
 }
 
 .btn-accent:hover:not(:disabled) {
-  background-color: var(--accent-primary-hover);
+  background-color: var(--text-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-sm {
   padding: 0.35rem 0.7rem;
-  font-size: 0.8125rem;
+  font-size: 0.85rem;
   border-radius: var(--radius-sm);
 }
 
 /* =========================================================
-   BADGES & MICRO TAGS
+   BADGES & MICRO TAGS — Sleek labels
    ========================================================= */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.25rem 0.65rem;
   font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  border-radius: 9999px; /* Pill shape */
   background-color: var(--bg-surface-subtle);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
-  line-height: 1.2;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .badge-mono {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
 }
 
 .badge-primary,
 .badge-cyan {
   background-color: var(--accent-primary-subtle);
   color: var(--accent-primary);
-  border-color: rgba(59, 130, 246, 0.2);
+  border-color: transparent;
 }
 
 .badge-emerald,
 .badge-success {
   background-color: var(--status-success-subtle);
   color: var(--status-success);
-  border-color: rgba(16, 185, 129, 0.2);
+  border-color: transparent;
 }
 
 .badge-amber,
@@ -242,45 +321,48 @@ textarea {
 .badge-warning {
   background-color: var(--status-warning-subtle);
   color: var(--status-warning);
-  border-color: rgba(245, 158, 11, 0.2);
+  border-color: transparent;
 }
 
 .badge-rose,
 .badge-danger {
   background-color: var(--status-danger-subtle);
   color: var(--status-danger);
-  border-color: rgba(239, 68, 68, 0.2);
+  border-color: transparent;
 }
 
 /* =========================================================
-   FORM CONTROLS
+   FORM CONTROLS — Clean Inputs
    ========================================================= */
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
 .form-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .form-input,
 .form-textarea,
 .form-select {
   width: 100%;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.875rem;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
   background-color: var(--bg-input);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
@@ -290,8 +372,8 @@ textarea {
 .form-textarea:focus,
 .form-select:focus {
   outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 1px var(--border-focus);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-subtle);
 }
 
 .form-input::placeholder,
@@ -300,31 +382,37 @@ textarea {
 }
 
 /* =========================================================
-   DATA TABLES & LEDGERS
+   DATA TABLES & LEDGERS — Professional Grid
    ========================================================= */
 
 .ledger-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
 .ledger-table th {
-  padding: 0.65rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-surface-subtle);
   user-select: none;
+  letter-spacing: 0.03em;
 }
 
 .ledger-table td {
-  padding: 0.75rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 2px dashed var(--border-subtle);
   vertical-align: middle;
+  font-family: var(--font-sans);
 }
 
 .ledger-table tr:last-child td {
@@ -333,33 +421,46 @@ textarea {
 
 .ledger-table tr.interactive-row {
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .ledger-table tr.interactive-row:hover {
   background-color: var(--bg-surface-subtle);
+  transform: translateX(4px);
+}
+
+/* Row hover effect for all table rows */
+.ledger-table tbody tr {
+  transition: all var(--transition-fast);
+}
+
+.ledger-table tbody tr:hover {
+  background-color: var(--bg-surface-subtle);
+  transform: translateX(3px) rotate(-0.2deg);
 }
 
 /* =========================================================
-   CRITERIA METER BAR
+   CRITERIA METER BAR — Sketchy progress
    ========================================================= */
 
 .score-track {
   width: 100%;
-  height: 4px;
+  height: 8px;
   background-color: var(--bg-surface-hover);
-  border-radius: 2px;
+  border-radius: var(--radius-sketchy-btn);
   overflow: hidden;
+  border: 1.5px solid var(--border-subtle);
 }
 
 .score-fill {
   height: 100%;
-  border-radius: 2px;
-  transition: width 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: var(--radius-sketchy-btn);
+  transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
 }
 
 /* =========================================================
-   RESPONSIVE NAVBAR
+   RESPONSIVE NAVBAR — Hand-drawn header
    ========================================================= */
 
 .site-navbar {
@@ -367,14 +468,24 @@ textarea {
   top: 0;
   z-index: 100;
   background-color: var(--bg-app);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 3px solid var(--border-color);
   transition:
-    background-color var(--transition-normal),
-    border-color var(--transition-normal);
+    background-color var(--transition-smooth),
+    border-color var(--transition-smooth);
+  /* Sketchy bottom border wiggle */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 10px,
+      var(--doodle-color) 10px, var(--doodle-color) 11px
+    );
+  background-position: bottom;
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
 }
 
 .navbar-inner {
-  height: 52px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -384,33 +495,28 @@ textarea {
 .navbar-brand-group {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   cursor: pointer;
   user-select: none;
+  transition: transform var(--transition-fast);
 }
 
-.navbar-logo-symbol {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  background-color: var(--text-primary);
-  color: var(--text-inverse);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .navbar-brand-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
 }
 
 .navbar-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
+  font-family: var(--font-sans);
   white-space: nowrap;
+  font-style: italic;
 }
 
 .navbar-nav-links {
@@ -423,26 +529,43 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
   color: var(--text-secondary);
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+  border-radius: var(--radius-sketchy-btn);
+  border: 2px solid transparent;
   background: transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
+  position: relative;
 }
 
 .nav-link-btn:hover {
   color: var(--text-primary);
   background-color: var(--bg-surface-subtle);
+  transform: translateY(-1px);
 }
 
 .nav-link-btn.active {
-  color: var(--text-primary);
+  color: var(--accent-primary);
   background-color: var(--bg-surface);
-  border-color: var(--border-color);
+  border-color: var(--accent-primary);
+  box-shadow: 2px 2px 0 var(--accent-primary-subtle);
+  font-weight: 700;
+}
+
+/* Sleek underline for active nav */
+.nav-link-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 15%;
+  width: 70%;
+  height: 3px;
+  background-color: var(--accent-primary);
+  border-radius: 2px;
 }
 
 /* Desktop Navigation Used By Responsive Navbar */
@@ -454,20 +577,23 @@ textarea {
 }
 
 .navbar-nav-button {
-  min-height: 34px;
+  min-height: 38px;
 }
 
 .navbar-divider {
-  width: 1px;
-  height: 22px;
+  width: 2px;
+  height: 24px;
   background-color: var(--border-color);
-  margin: 0 0.25rem;
+  margin: 0 0.35rem;
+  transform: rotate(5deg);
+  border-radius: 2px;
 }
 
 .navbar-theme-button {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   padding: 0;
+  border-radius: var(--radius-blob);
 }
 
 /* Mobile Navigation */
@@ -479,26 +605,28 @@ textarea {
 }
 
 .mobile-icon-button {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background-color: var(--bg-surface);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border: 2.5px solid var(--border-color);
+  border-radius: var(--radius-blob);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
-    color var(--transition-fast);
+    transform var(--transition-fast);
 }
 
 .mobile-icon-button:hover {
   background-color: var(--bg-surface-subtle);
-  border-color: var(--border-strong);
+  border-color: var(--accent-primary);
+  transform: rotate(-5deg) scale(1.1);
 }
 
 .mobile-menu {
@@ -507,47 +635,53 @@ textarea {
   top: 100%;
   left: 0;
   right: 0;
-  padding: 0.75rem 1rem;
+  z-index: 100;
+  padding: 0.85rem 1.25rem;
   background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-bottom: 3px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  animation: fade-up 0.3s ease-out;
 }
 
 .mobile-menu-item {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sketchy-btn);
   background-color: transparent;
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
   text-align: left;
   cursor: pointer;
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast),
-    border-color var(--transition-fast);
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .mobile-menu-item:hover {
   background-color: var(--bg-surface-subtle);
   color: var(--text-primary);
+  transform: translateX(6px) rotate(-0.3deg);
 }
 
 .mobile-menu-active {
-  background-color: var(--bg-surface-subtle);
-  color: var(--text-primary);
-  border-color: var(--border-color);
+  background-color: var(--accent-primary-subtle);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  font-weight: 700;
 }
 
 /* =========================================================
-   MONOSPACE DIGITS
+   MONOSPACE DIGITS — Handwritten-style numbers
    ========================================================= */
 
 .mono-num {
@@ -556,25 +690,95 @@ textarea {
 }
 
 /* =========================================================
-   SUBTLE SCROLLBAR
+   HAND-DRAWN DECORATIVE UTILITIES
+   ========================================================= */
+
+/* Wobbly underline effect for headings */
+.sketchy-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.sketchy-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--underline-color);
+  border-radius: var(--radius-sketchy-btn);
+  transform: rotate(-1deg) scaleX(1.05);
+  animation: pencil-underline 0.6s ease-out forwards;
+}
+
+/* Hand-drawn circle highlight */
+.sketchy-circle {
+  position: relative;
+}
+
+.sketchy-circle::before {
+  content: '';
+  position: absolute;
+  top: -8px; left: -12px; right: -12px; bottom: -8px;
+  border: 3px solid var(--accent-primary);
+  border-radius: var(--radius-blob);
+  opacity: 0.3;
+  pointer-events: none;
+  animation: hand-draw-border 8s ease-in-out infinite;
+}
+
+/* Scribble background effect */
+.scribble-bg {
+  position: relative;
+}
+
+.scribble-bg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 Q 30 5, 50 10 T 90 10' stroke='%23D4A574' fill='none' stroke-width='0.5' opacity='0.15'/%3E%3Cpath d='M10 30 Q 40 25, 60 30 T 90 30' stroke='%23E8573A' fill='none' stroke-width='0.3' opacity='0.08'/%3E%3Cpath d='M10 50 Q 25 45, 50 50 T 90 50' stroke='%23D4A574' fill='none' stroke-width='0.5' opacity='0.12'/%3E%3C/svg%3E");
+  background-size: 200px 100px;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* =========================================================
+   ANIMATE ELEMENTS ON APPEAR (used by page containers)
+   ========================================================= */
+
+.animate-fade-in > * {
+  animation: fade-up 0.5s ease-out both;
+}
+
+.animate-fade-in > *:nth-child(1) { animation-delay: 0.05s; }
+.animate-fade-in > *:nth-child(2) { animation-delay: 0.15s; }
+.animate-fade-in > *:nth-child(3) { animation-delay: 0.25s; }
+.animate-fade-in > *:nth-child(4) { animation-delay: 0.35s; }
+.animate-fade-in > *:nth-child(5) { animation-delay: 0.45s; }
+
+/* =========================================================
+   SUBTLE SCROLLBAR — Sketchy style
    ========================================================= */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-surface-subtle);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 3px;
+  background: var(--border-color);
+  border-radius: var(--radius-sketchy-btn);
+  border: 1px solid var(--bg-surface);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--accent-primary);
 }
 
 /* =========================================================
@@ -588,7 +792,7 @@ textarea {
   }
 
   .navbar-nav-button span {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -610,11 +814,11 @@ textarea {
   }
 
   .navbar-inner {
-    height: 58px;
+    height: 62px;
   }
 
   .navbar-subtitle {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
   }
 
   /* Home Page */
@@ -657,7 +861,7 @@ textarea {
   }
 
   .navbar-inner {
-    height: 56px;
+    height: 58px;
   }
 
   .navbar-brand-group {
@@ -665,17 +869,17 @@ textarea {
   }
 
   .navbar-logo-symbol {
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
   }
 
   .navbar-subtitle {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
   }
 
   .mobile-icon-button {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
   }
 
   .mobile-menu {
@@ -683,15 +887,15 @@ textarea {
   }
 
   .mobile-menu-item {
-    padding: 0.7rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.75rem 0.8rem;
+    font-size: 0.95rem;
   }
 
   /* Home Hero */
 
   .animate-fade-in section:first-child h1 {
     font-size: clamp(2rem, 10vw, 2.6rem) !important;
-    line-height: 1.08 !important;
+    line-height: 1.1 !important;
   }
 
   .animate-fade-in section:first-child p {
@@ -723,11 +927,20 @@ textarea {
   .animate-fade-in section:last-child > div:first-child {
     align-items: flex-start;
   }
+
+  /* Reduce animation intensity on mobile */
+  .surface-card {
+    animation-duration: 0.3s;
+  }
+
+  .navbar-logo-symbol {
+    animation: none;
+  }
 }
 
 @media (max-width: 360px) {
   body {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .navbar-subtitle {
@@ -735,8 +948,8 @@ textarea {
   }
 
   .mobile-icon-button {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
 
   .animate-fade-in section:first-child h1 {
@@ -770,4 +983,13 @@ pre,
 code {
   max-width: 100%;
   overflow-x: auto;
+}
+
+/* =========================================================
+   SELECTION STYLE
+   ========================================================= */
+
+::selection {
+  background: var(--accent-primary-subtle);
+  color: var(--accent-primary);
 }
