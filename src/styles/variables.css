@@ -1,0 +1,129 @@
+:root {
+  /* ── Surface & Background — Vercel Minimalist Light ── */
+  --bg-app: #FAFAFA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F5F5F5;
+  --bg-surface-hover: #EAEAEA;
+  --bg-surface-active: #E0E0E0;
+  --bg-input: #FFFFFF;
+
+  /* ── Borders — Crisp, subtle ── */
+  --border-color: #EAEAEA;
+  --border-subtle: #F5F5F5;
+  --border-strong: #888888;
+  --border-focus: #000000;
+
+  /* ── Text Scale — High contrast ── */
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  --text-dim: #A1A1AA;
+  --text-inverse: #FFFFFF;
+
+  /* ── Brand Accent — Stark Black ── */
+  --accent-primary: #000000;
+  --accent-primary-hover: #333333;
+  --accent-primary-subtle: rgba(0, 0, 0, 0.05);
+
+  /* ── Status Colors — Warm, hand-drawn tones ── */
+  --status-success: #4CAF50;
+  --status-success-subtle: rgba(76, 175, 80, 0.12);
+  --status-warning: #E8A317;
+  --status-warning-subtle: rgba(232, 163, 23, 0.12);
+  --status-danger: #E53935;
+  --status-danger-subtle: rgba(229, 57, 53, 0.1);
+
+  /* ── Typography — Modern Tech Stack ── */
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ── Geometry — Clean & Precise ── */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-sketchy: var(--radius-md); /* Normalized */
+  --radius-sketchy-btn: var(--radius-sm);
+  --radius-sketchy-card: var(--radius-lg);
+  --radius-blob: 50%;
+
+  /* ── Shadows — Soft, Modern Depth ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-overlay: 0 20px 40px rgba(0,0,0,0.12);
+  --shadow-sketchy: 0 4px 12px rgba(59, 130, 246, 0.15); /* Soft glow */
+
+  /* ── Transitions — Smooth & Elegant ── */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 300ms ease;
+
+  /* ── Decoration Colors ── */
+  --doodle-color: rgba(45, 24, 16, 0.06);
+  --scribble-color: rgba(232, 87, 58, 0.15);
+  --underline-color: #E8573A;
+
+  /* Legacy Compatibility Variables (mapped to new design tokens) */
+  --bg-main: var(--bg-app);
+  --bg-card: var(--bg-surface);
+  --bg-card-hover: var(--bg-surface-subtle);
+  --bg-card-solid: var(--bg-surface);
+  --text-main: var(--text-primary);
+  --accent-cyan: var(--accent-primary);
+  --accent-purple: var(--accent-primary);
+  --accent-emerald: var(--status-success);
+  --accent-amber: var(--status-warning);
+  --accent-rose: var(--status-danger);
+}
+
+/* ── Dark Theme — Deep Monochrome Dark ── */
+[data-theme="dark"], :root:not([data-theme="light"]) {
+  --bg-app: #000000;
+  --bg-surface: #111111;
+  --bg-surface-subtle: #1A1A1A;
+  --bg-surface-hover: #222222;
+  --bg-surface-active: #333333;
+  --bg-input: #111111;
+
+  /* Borders — subtle */
+  --border-color: #333333;
+  --border-subtle: #222222;
+  --border-strong: #444444;
+  --border-focus: #FFFFFF;
+
+  /* Text — crisp */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-dim: #52525B;
+  --text-inverse: #000000;
+
+  /* Accent — Stark White on Dark */
+  --accent-primary: #FFFFFF;
+  --accent-primary-hover: #E4E4E7;
+  --accent-primary-subtle: rgba(255, 255, 255, 0.1);
+
+  /* Status */
+  --status-success: #10B981;
+  --status-success-subtle: rgba(16, 185, 129, 0.15);
+  --status-warning: #F59E0B;
+  --status-warning-subtle: rgba(245, 158, 11, 0.15);
+  --status-danger: #EF4444;
+  --status-danger-subtle: rgba(239, 68, 68, 0.15);
+
+  /* Shadows — elegant on dark */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.9);
+  --shadow-overlay: 0 20px 40px rgba(0, 0, 0, 1);
+  --shadow-sketchy: 0 4px 12px rgba(255, 255, 255, 0.1);
+
+  /* Grid/Pattern colors */
+  --doodle-color: rgba(255, 255, 255, 0.05);
+  --scribble-color: rgba(255, 255, 255, 0.1);
+}
+
