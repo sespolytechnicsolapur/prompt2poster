@@ -386,7 +386,7 @@ export async function fetchLeaderboard({ includeHidden = false } = {}) {
       }
 
       const { data, error } = await query;
-      if (!error && data && data.length > 0) return data;
+      if (!error && data) return data; // Return data even if empty
       if (error) console.warn('[fetchLeaderboard]', error.message);
     } catch (err) { console.warn('[fetchLeaderboard]', err.message); }
   }
