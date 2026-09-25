@@ -1,12 +1,22 @@
 import React from 'react';
-import { ArrowRight, Star, TrendingUp, Trophy, Sparkles, Pencil } from 'lucide-react';
+import { ArrowRight, TrendingUp, Trophy, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { TopicBanner } from '../components/TopicBanner';
+import { cn } from '../lib/utils';
 
-/**
- * Landing page Overview.
- * Displays the current topic and a top-3 leaderboard snapshot
- * (if the leaderboard is set to visible or if the user is an admin).
- */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1, 
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
 export function Home({
   activeTopic,
   leaderboard,
@@ -20,237 +30,141 @@ export function Home({
   const showTop3 = leaderboardVisible || isAdmin;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-
-      {/* ── Hero Section — Modern & Professional ── */}
-      <section style={{
-        textAlign: 'center',
-        margin: '4rem 0 3rem 0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative',
-        animation: 'fade-up 0.8s var(--transition-normal) both'
-      }}>
-
-        <div style={{
-          width: '56px', height: '56px',
-          borderRadius: '16px',
-          background: 'var(--text-primary)',
-          color: 'var(--text-inverse)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 1.5rem auto',
-          boxShadow: 'var(--shadow-md)',
-        }}>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="flex flex-col gap-10"
+    >
+      {/* ── Hero Section ── */}
+      <motion.section variants={itemVariants} className="text-center my-16 flex flex-col items-center relative">
+        <div className="w-14 h-14 rounded-2xl bg-primary text-inverse flex items-center justify-center mx-auto mb-6 shadow-md shadow-sketchy transform -rotate-3 hover:rotate-3 transition-transform duration-300">
           <Sparkles size={28} />
         </div>
 
-        <h1 style={{
-          fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-          fontWeight: 800,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-display)',
-          letterSpacing: '-0.03em',
-          lineHeight: '1.1',
-          marginBottom: '1.25rem',
-          maxWidth: '900px',
-          position: 'relative'
-        }}>
+        <h1 className="text-[clamp(2.5rem,6vw,4rem)] font-extrabold text-primary font-display tracking-tight leading-[1.1] mb-5 max-w-[900px] relative">
           AI-Powered Evaluation for{' '}
-          <span style={{ color: 'var(--text-primary)' }}>
+          <span className="text-primary relative inline-block">
             Visual Design
+            <span className="absolute -bottom-1 left-0 w-full h-1 bg-underline-color rounded-full -rotate-1"></span>
           </span>{' '}
           Competitions
         </h1>
 
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: '1.15rem',
-          maxWidth: '650px',
-          margin: '0 0 2.5rem 0',
-          lineHeight: '1.7',
-          fontFamily: 'var(--font-sans)',
-        }}>
+        <p className="text-secondary text-lg max-w-[650px] mx-auto mb-10 leading-relaxed font-sans">
           Submit your AI-generated poster and receive instant, objective scoring across 7 critical design criteria from our multimodal AI judge.
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button
+        <div className="flex flex-wrap gap-4 justify-center">
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => onNavigate('submit')}
-            className="btn btn-accent"
-            style={{
-              padding: '0.85rem 2rem',
-              fontSize: '1.05rem',
-              fontFamily: 'var(--font-sans)',
-              borderRadius: '999px',
-            }}
+            className="btn btn-accent px-8 py-3 text-lg rounded-full"
           >
             Submit Poster <ArrowRight size={18} />
-          </button>
+          </motion.button>
           {showTop3 && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onNavigate('leaderboard')}
-              className="btn btn-secondary"
-              style={{
-                padding: '0.85rem 2rem',
-                fontSize: '1.05rem',
-                fontFamily: 'var(--font-sans)',
-                borderRadius: '999px',
-              }}
+              className="btn btn-secondary px-8 py-3 text-lg rounded-full"
             >
               View Leaderboard
-            </button>
+            </motion.button>
           )}
         </div>
-      </section>
+      </motion.section>
 
       {/* Current Topic Banner */}
-      <TopicBanner
-        topicTitle={activeTopic?.topic_title}
-        description={activeTopic?.description}
-        topicVisible={topicVisible}
-        isAdmin={isAdmin}
-      />
+      <motion.div variants={itemVariants}>
+        <TopicBanner
+          topicTitle={activeTopic?.topic_title}
+          description={activeTopic?.description}
+          topicVisible={topicVisible}
+          isAdmin={isAdmin}
+        />
+      </motion.div>
 
-      {/* ── Top 3 Leaderboard Snapshot — Sketchy cards ── */}
+      {/* ── Top 3 Leaderboard Snapshot ── */}
       {showTop3 && (
-        <section>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between', marginBottom: '1.25rem'
-          }}>
-            <h2 style={{
-              fontSize: '1.6rem', fontWeight: 800,
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-display)',
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              letterSpacing: '-0.02em'
-            }}>
-              <Trophy size={22} style={{ color: 'var(--text-primary)' }} />
+        <motion.section variants={itemVariants}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-2xl font-extrabold text-primary font-display flex items-center gap-2 tracking-tight">
+              <Trophy size={22} className="text-primary" />
               Current Top 3
             </h2>
             <button
               onClick={() => onNavigate('leaderboard')}
-              className="btn btn-ghost btn-sm"
-              style={{ color: 'var(--accent-primary)', fontFamily: 'var(--font-sans)' }}
+              className="btn btn-ghost btn-sm text-accent font-sans flex items-center gap-1"
             >
-              See all →
+              See all <ArrowRight size={14} />
             </button>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '1.5rem'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {topSubmissions.length > 0 ? (
-              topSubmissions.map((sub, index) => (
-                <div
-                  key={sub.id}
-                  onClick={() => onSelectSubmission(sub.id, sub)}
-                  className="surface-card"
-                  style={{
-                    padding: '1.25rem',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    animationDelay: `${index * 0.1}s`,
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  }}
-                >
-                  {/* Decorative left accent stripe */}
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, bottom: 0, width: '6px',
-                    backgroundColor: index === 0 ? 'var(--status-warning)' : index === 1 ? '#9CA3AF' : '#B45309',
-                    borderRadius: '0 4px 4px 0'
-                  }} />
+              topSubmissions.map((sub, index) => {
+                const rankColors = [
+                  'bg-warning border-warning',
+                  'bg-gray-400 border-gray-400',
+                  'bg-amber-700 border-amber-700'
+                ];
+                const rankColor = rankColors[index] || 'bg-gray-300 border-gray-300';
 
-                  <div style={{ paddingLeft: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h3 style={{
-                          fontSize: '1.1rem', fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          fontFamily: 'var(--font-heading)',
-                          margin: '0 0 0.25rem 0'
-                        }}>
-                          {sub.contestant_name}
-                        </h3>
-                        <div style={{
-                          fontSize: '0.85rem',
-                          color: 'var(--text-muted)',
-                          display: 'flex', alignItems: 'center', gap: '0.35rem',
-                          fontFamily: 'var(--font-sans)'
-                        }}>
-                          Rank #{index + 1}
+                return (
+                  <motion.div
+                    key={sub.id}
+                    variants={itemVariants}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    onClick={() => onSelectSubmission(sub.id, sub)}
+                    className="surface-card p-5 cursor-pointer relative overflow-hidden group flex flex-col justify-between"
+                  >
+                    {/* Decorative left accent stripe */}
+                    <div className={cn("absolute top-0 left-0 bottom-0 w-1.5 rounded-r-sm", rankColor.split(' ')[0])} />
+
+                    <div className="pl-3 flex flex-col gap-3 h-full">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-bold text-primary font-heading mb-1 group-hover:text-accent transition-colors">
+                            {sub.contestant_name}
+                          </h3>
+                          <div className="text-sm text-muted flex items-center gap-1 font-sans">
+                            Rank #{index + 1}
+                          </div>
+                        </div>
+                        <div className="mono-num text-2xl font-extrabold text-primary font-display">
+                          {sub.total_score}
                         </div>
                       </div>
-                      <div className="mono-num" style={{
-                        fontSize: '1.5rem', fontWeight: 800,
-                        color: 'var(--text-primary)',
-                        fontFamily: 'var(--font-display)',
-                      }}>
-                        {sub.total_score}
-                      </div>
+                      
+                      {sub.overall_evaluation && (
+                        <p className="text-sm text-secondary italic font-sans line-clamp-2 mt-auto">
+                          "{sub.overall_evaluation}"
+                        </p>
+                      )}
                     </div>
-                    {sub.overall_evaluation && (
-                      <p style={{
-                        fontSize: '0.9rem',
-                        color: 'var(--text-secondary)',
-                        margin: 0,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        fontStyle: 'italic',
-                        fontFamily: 'var(--font-sans)'
-                      }}>
-                        "{sub.overall_evaluation}"
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))
+                  </motion.div>
+                );
+              })
             ) : (
-              <div className="surface-card" style={{
-                padding: '3rem',
-                textAlign: 'center',
-                gridColumn: '1 / -1'
-              }}>
-                <TrendingUp size={36} style={{
-                  color: 'var(--border-strong)',
-                  margin: '0 auto 1rem auto',
-                  animation: 'float 3s ease-in-out infinite'
-                }} />
-                <h3 style={{
-                  fontSize: '1.15rem', fontWeight: 800,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-display)',
-                  margin: '0 0 0.5rem 0',
-                  letterSpacing: '-0.01em'
-                }}>
+              <motion.div 
+                variants={itemVariants}
+                className="surface-card p-12 text-center col-span-full border-dashed border-2 flex flex-col items-center"
+              >
+                <TrendingUp size={36} className="text-border-strong mb-4 opacity-50" />
+                <h3 className="text-xl font-extrabold text-primary font-display mb-2">
                   Leaderboard is empty
                 </h3>
-                <p style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '1rem', margin: 0,
-                  fontFamily: 'var(--font-sans)',
-                }}>
+                <p className="text-secondary font-sans">
                   Be the first to submit a poster and claim the top spot!
                 </p>
-              </div>
+              </motion.div>
             )}
           </div>
-        </section>
+        </motion.section>
       )}
-    </div>
+    </motion.div>
   );
 }
