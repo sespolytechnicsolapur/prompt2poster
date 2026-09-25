@@ -2,7 +2,7 @@
 
 **Prompt2Poster** is a full-stack AI-powered judging and evaluation platform designed for college **AI Poster Making Challenges**. 
 
-During competition events, contestants receive a poster topic on-site, design their poster, and submit it directly to Prompt2Poster. The application automatically uploads the poster to cloud storage, evaluates the visual design using Groq AI and Qwen 3.8 vision models against 7 strict criteria, validates score mathematical integrity, stores results in Supabase, and updates a real-time live leaderboard with full score transparency.
+During competition events, contestants receive a poster topic on-site, design their poster, and submit it directly to Prompt2Poster,The application automatically uploads the poster to cloud storage, evaluates the visual design using Groq AI and Qwen 3.8 vision models against 7 strict criteria, validates score mathematical integrity, stores results in Supabase, and updates a real-time live leaderboard with full score transparency.
 
 ---
 
