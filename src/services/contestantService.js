@@ -59,7 +59,10 @@ export async function uploadContestantExcel(file, adminPassword) {
     throw new Error('No valid contestant rows found. Expected format: Name | UserID | UniqueID | CollegeName');
   }
 
-  // Clear existing contestants first to match previous behavior
+  // Clear existing submissions first to wipe the leaderboard
+  await supabase.from('submissions').delete().neq('contestant_name', '___dummy___');
+
+  // Clear existing contestants
   await supabase.from('contestants').delete().neq('name', '___dummy___');
 
   // Batch insert into Supabase
@@ -123,6 +126,10 @@ export async function clearContestants(adminPassword) {
 
   const prevCount = data.length;
 
+  // Clear submissions first
+  await supabase.from('submissions').delete().neq('contestant_name', '___dummy___');
+
+  // Then clear contestants
   const { error } = await supabase.from('contestants').delete().neq('name', '___dummy___');
   if (error) throw new Error(error.message);
 
@@ -144,6 +151,10 @@ export async function deleteContestant(userId, adminPassword) {
     throw new Error('Supabase is not configured.');
   }
 
+  // Delete their submissions first
+  await supabase.from('submissions').delete().eq('submitted_by_user_id', userId);
+
+  // Then delete the contestant
   const { error } = await supabase.from('contestants').delete().eq('user_id', userId);
   if (error) throw new Error(error.message);
 
