@@ -71,7 +71,7 @@ export async function uploadContestantExcel(file, adminPassword) {
   return {
     success: true,
     count: contestants.length,
-    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id, college_name: c.college_name }))
+    contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, unique_id: c.unique_id, college_name: c.college_name, is_whitelisted: false }))
   };
 }
 
@@ -91,7 +91,7 @@ export async function fetchContestants(adminPassword) {
 
   const { data, error } = await supabase
     .from('contestants')
-    .select('name, user_id, unique_id, college_name')
+    .select('name, user_id, unique_id, college_name, is_whitelisted')
     .order('name');
 
   if (error) throw new Error(error.message);
@@ -127,4 +127,25 @@ export async function clearContestants(adminPassword) {
   if (error) throw new Error(error.message);
 
   return { success: true, cleared: prevCount };
+}
+
+/**
+ * Deletes a single contestant from Supabase.
+ *
+ * @param {string} userId - The contestant's user_id
+ * @param {string} adminPassword - The organizer admin password
+ * @returns {Promise<{success: boolean}>}
+ */
+export async function deleteContestant(userId, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) {
+    throw new Error('Unauthorized');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { error } = await supabase.from('contestants').delete().eq('user_id', userId);
+  if (error) throw new Error(error.message);
+
+  return { success: true };
 }

@@ -452,7 +452,10 @@ export function TopicManagement({
 
       {/* ── Contestants Tab ─────────────────────────────────────────── */}
       {activeTab === 'contestants' && (
-        <ContestantManager adminPassword={adminPassword} />
+        <ContestantManager
+          adminPassword={adminPassword}
+          onToggleUserWhitelist={onToggleUserWhitelist}
+        />
       )}
 
       {/* ── Submissions Tab ─────────────────────────────────────────── */}

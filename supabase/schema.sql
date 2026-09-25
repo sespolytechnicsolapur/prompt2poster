@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS topics (
   is_active BOOLEAN DEFAULT false,
   leaderboard_visible BOOLEAN DEFAULT true,
   topic_visible BOOLEAN DEFAULT true,
+  whitelist_enabled BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -40,6 +41,8 @@ CREATE TABLE IF NOT EXISTS contestants (
   name TEXT NOT NULL,
   user_id TEXT NOT NULL UNIQUE,
   unique_id TEXT NOT NULL,
+  college_name TEXT DEFAULT '',
+  is_whitelisted BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -59,10 +62,14 @@ CREATE TABLE IF NOT EXISTS submissions (
   -- Contestant login link
   submitted_by_user_id TEXT DEFAULT '',
 
+  -- Optional chat screenshot from the AI tool used
+  chat_screenshot_path TEXT DEFAULT '',
+  chat_screenshot_url TEXT DEFAULT '',
+
   -- AI Prompt used by contestant to generate the poster
   ai_prompt_used TEXT DEFAULT '',
 
-  -- 7 Official AI Evaluation Criteria scores
+  -- 8 Official AI Evaluation Criteria scores
   relevance_to_topic_score     INTEGER NOT NULL CHECK (relevance_to_topic_score     BETWEEN 0 AND 20),
   visual_hierarchy_score       INTEGER NOT NULL CHECK (visual_hierarchy_score       BETWEEN 0 AND 15),
   typography_readability_score INTEGER NOT NULL CHECK (typography_readability_score BETWEEN 0 AND 10),
@@ -72,7 +79,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   overall_communication_score  INTEGER NOT NULL CHECK (overall_communication_score  BETWEEN 0 AND 5),
   prompt_authenticity_score    INTEGER NOT NULL CHECK (prompt_authenticity_score    BETWEEN 0 AND 10),
 
-  -- Calculated total (must equal sum of 7 criteria above, max 100)
+  -- Calculated total (must equal sum of 8 criteria above, max 100)
   total_score INTEGER NOT NULL CHECK (total_score BETWEEN 0 AND 100),
 
   -- AI Evaluation payload
@@ -152,3 +159,21 @@ CREATE POLICY "Public Insert Access for Posters"
 -- Required for upsert: true in the upload call
 CREATE POLICY "Public Update Access for Posters"
   ON storage.objects FOR UPDATE USING (bucket_id = 'posters') WITH CHECK (bucket_id = 'posters');
+
+-- ============================================================
+-- 7. Postgres RPC Functions
+-- ============================================================
+-- Used to atomically append items to the JSONB score_edit_log array
+CREATE OR REPLACE FUNCTION append_score_edit_log(
+  submission_id UUID,
+  new_entry JSONB
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE submissions
+  SET score_edit_log = COALESCE(score_edit_log, '[]'::jsonb) || jsonb_build_array(new_entry)
+  WHERE id = submission_id;
+END;
+$$;

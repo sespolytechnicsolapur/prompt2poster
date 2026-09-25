@@ -10,10 +10,10 @@ During competition events, contestants receive a poster topic on-site, design th
 
 * **Dynamic Competition Topic Banner**: Organizers can update active competition topics in real-time; topics are dynamically loaded across contestant portals and AI evaluation prompts.
 * **Streamlined Poster Submission**: Contestant name input, drag-and-drop poster image uploader, format/size validation, and high-definition live preview.
-* **AI Visual Judging (Groq + Qwen 3.8)**: Secure server-side processing layer that analyzes submitted poster images across 7 official evaluation criteria.
+* **AI Visual Judging (Groq + Qwen 3.8)**: Secure server-side processing layer that analyzes submitted poster images across 8 official evaluation criteria.
 * **Strict Score Integrity Validation**: Enforces exact mathematical bounds, score maximums, and sum calculations before saving entries to the database.
 * **Live Contestant Leaderboard**: Real-time rankings sorted by score out of 100 with search filter controls and contestant rank badges.
-* **Transparent Submission Breakdown**: Deep-dive audit page displaying high-res poster view, 7-criteria progress meters, AI rationale descriptions, concrete identified issues, and executive summary.
+* **Transparent Submission Breakdown**: Deep-dive audit page displaying high-res poster view, 8-criteria progress meters, AI rationale descriptions, concrete identified issues, and executive summary.
 * **Cloud & Local Storage Resiliency**: Direct integration with Supabase DB & Supabase Storage with local storage fallback for immediate plug-and-play testing.
 
 ---
@@ -38,7 +38,7 @@ Upload to Supabase Cloud Storage
                ↓
 Server-side Processing & Groq AI Vision Analysis
                ↓
-Structured 7-Criteria Score Generation (/100)
+Structured 8-Criteria Score Generation (/100)
                ↓
 Mathematical Score Integrity Check
                ↓
@@ -49,20 +49,21 @@ Live Leaderboard Update & Transparent Breakdown
 
 ---
 
-## 📊 Official 7 Evaluation Criteria
+## 📊 Official 8 Evaluation Criteria
 
-Every poster is judged objectively according to these exact 7 criteria:
+Every poster is judged objectively according to these exact 8 criteria:
 
 | Criterion | Maximum Score | Description |
 | :--- | :---: | :--- |
 | **Relevance to Topic** | **20 Pts** | Evaluates how directly and effectively the poster represents the assigned topic. |
 | **Visual Hierarchy** | **15 Pts** | Evaluates focal point clarity and how viewer attention is guided naturally. |
-| **Typography / Readability** | **15 Pts** | Evaluates text clarity, font legibility, sizing, contrast, and reading flow. |
+| **Typography / Readability** | **10 Pts** | Evaluates text clarity, font legibility, sizing, contrast, and reading flow. |
 | **Composition / Layout** | **15 Pts** | Evaluates spatial balance, alignment, element arrangement, and margin grid. |
 | **Creativity / Originality** | **15 Pts** | Evaluates artistic concept novelty and distinctive visual presentation. |
 | **Color Usage** | **10 Pts** | Evaluates color harmony, contrast, consistency, and visual tone. |
-| **Overall Communication** | **10 Pts** | Evaluates how effectively the poster conveys its intended core takeaway. |
-| **TOTAL** | **100 Pts** | **Sum of all 7 individual scores** |
+| **Overall Communication** | **5 Pts** | Evaluates how effectively the poster conveys its intended core takeaway. |
+| **Prompt Authenticity** | **10 Pts** | Evaluates whether the prompt used seems human-written and accurately describes the poster. |
+| **TOTAL** | **100 Pts** | **Sum of all 8 individual scores** |
 
 ---
 
@@ -86,7 +87,7 @@ Prompt2Poster/
 │   │   ├── PosterUploader.jsx    # Drag-and-drop file uploader
 │   │   ├── PosterPreview.jsx     # HD poster preview container & modal
 │   │   ├── EvaluationLoader.jsx  # Multi-stage AI processing progress loader
-│   │   ├── ScoreBreakdown.jsx    # 7-criteria progress meters & reasoning
+│   │   ├── ScoreBreakdown.jsx    # 8-criteria progress meters & reasoning
 │   │   ├── IssueList.jsx         # AI identified critique points list
 │   │   ├── LeaderboardTable.jsx  # Live rankings table with search filter
 │   │   ├── LeaderboardRow.jsx    # Single contestant rank row
@@ -107,7 +108,7 @@ Prompt2Poster/
 │   │
 │   ├── utils/
 │   │   ├── validation.js         # Input & file format validation
-│   │   ├── scoreValidation.js    # 7-criteria score mathematical validator
+│   │   ├── scoreValidation.js    # 8-criteria score mathematical validator
 │   │   └── formatters.js         # Date & score color formatters
 │   │
 │   ├── hooks/

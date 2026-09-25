@@ -18,20 +18,17 @@ END;
 $$;
 
 -- ============================================================
--- Tightened RLS Policies
+-- NOTE: We retain public write/delete access here because the
+-- React frontend utilizes the anon key for admin operations
+-- (using client-side password gating).
 -- ============================================================
--- NOTE: These policies tighten access but still allow the anon key
--- to perform operations needed by the app (read all, insert submissions).
--- Admin operations (DELETE, bulk UPDATE) should ideally use a
--- service_role key or be done through the Supabase dashboard.
 
--- Contestants: public read, no public write (admin imports via service key or dashboard)
+-- Ensure Contestants has public write access for admin imports/whitelist toggle
 DROP POLICY IF EXISTS "Allow public write access to contestants" ON contestants;
+CREATE POLICY "Allow public write access to contestants"
+ON contestants FOR ALL USING (true) WITH CHECK (true);
 
--- Topics: public read, restricted write (keep existing write policy for now
--- since visibility toggles go through the anon key from the client)
--- NOTE: If you move admin ops to a server with service_role key, tighten this too.
-
--- Submissions: allow insert (contestants submit), allow update (score edits),
--- but restrict DELETE to prevent casual deletion via REST API
+-- Ensure Submissions has public delete access for admin UI delete actions
 DROP POLICY IF EXISTS "Allow public delete to submissions" ON submissions;
+CREATE POLICY "Allow public delete to submissions"
+ON submissions FOR DELETE USING (true);

@@ -1,18 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Trash2, AlertCircle, Check, FileSpreadsheet, Users } from 'lucide-react';
-import { uploadContestantExcel, fetchContestants, clearContestants } from '../services/contestantService';
+import { uploadContestantExcel, fetchContestants, clearContestants, deleteContestant } from '../services/contestantService';
 
 /**
  * Admin component for managing contestants via Excel file upload.
  * Excel format: Column A = Name, Column B = User ID, Column C = Unique ID, Column D = College Name
  */
-export function ContestantManager({ adminPassword }) {
+export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
   const [contestants, setContestants]   = useState([]);
   const [isUploading, setIsUploading]   = useState(false);
   const [isClearing, setIsClearing]     = useState(false);
   const [isLoading, setIsLoading]       = useState(false);
   const [successMsg, setSuccessMsg]     = useState(null);
   const [error, setError]               = useState(null);
+  const [isDeletingUserId, setIsDeletingUserId] = useState(null);
   const fileInputRef = useRef(null);
 
   const showSuccess = (msg) => {
@@ -78,6 +79,31 @@ export function ContestantManager({ adminPassword }) {
       setError(err.message || 'Failed to clear contestants');
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const handleDeleteIndividual = async (userId) => {
+    if (!confirm('Delete this contestant?')) return;
+    setIsDeletingUserId(userId);
+    setError(null);
+    try {
+      await deleteContestant(userId, adminPassword);
+      setContestants(prev => prev.filter(c => c.user_id !== userId));
+      showSuccess('Contestant deleted');
+    } catch (err) {
+      setError(err.message || 'Failed to delete contestant');
+    } finally {
+      setIsDeletingUserId(null);
+    }
+  };
+
+  const handleToggleWhitelist = async (userId, currentStatus) => {
+    if (!onToggleUserWhitelist) return;
+    try {
+      await onToggleUserWhitelist(userId, !currentStatus);
+      setContestants(prev => prev.map(c => c.user_id === userId ? { ...c, is_whitelisted: !currentStatus } : c));
+    } catch (err) {
+      setError(err.message || 'Failed to toggle whitelist');
     }
   };
 
@@ -191,6 +217,8 @@ export function ContestantManager({ adminPassword }) {
                   <th>Name</th>
                   <th>User ID</th>
                   <th>Unique ID</th>
+                  <th style={{ textAlign: 'center' }}>Whitelist</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,6 +241,29 @@ export function ContestantManager({ adminPassword }) {
                       <span className="mono-num" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                         {c.unique_id}
                       </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          id={`whitelist-toggle-${c.user_id}`}
+                          checked={c.is_whitelisted || false}
+                          onChange={() => handleToggleWhitelist(c.user_id, c.is_whitelisted)}
+                          className="toggle-checkbox"
+                        />
+                        <label className="toggle-label" htmlFor={`whitelist-toggle-${c.user_id}`}></label>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        onClick={() => handleDeleteIndividual(c.user_id)}
+                        disabled={isDeletingUserId === c.user_id}
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: 'var(--status-danger)', padding: '0.35rem' }}
+                        title="Delete contestant"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}
