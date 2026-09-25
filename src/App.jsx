@@ -45,6 +45,7 @@ export default function App() {
     leaderboardVisible, topicVisible, whitelistEnabled, whitelistedUserIds,
     toggleLeaderboardVisibility, toggleTopicVisibility,
     toggleWhitelistEnabled, toggleUserWhitelist,
+    roundSettings, saveRoundSettings,
   } = useCompetition();
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -180,6 +181,7 @@ export default function App() {
             onToggleWhitelistEnabled={(v) => toggleWhitelistEnabled(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             whitelistedUserIds={whitelistedUserIds}
             onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            roundSettings={roundSettings}
           />
         )}
 
@@ -213,6 +215,8 @@ export default function App() {
             setIsAdmin={setIsAdmin}
             whitelistedUserIds={whitelistedUserIds}
             onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            roundSettings={roundSettings}
+            onSaveRoundSettings={(settings) => saveRoundSettings(settings, import.meta.env.VITE_ORGANIZER_PASSWORD)}
           />
         )}
 

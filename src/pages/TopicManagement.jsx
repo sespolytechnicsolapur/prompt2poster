@@ -375,7 +375,9 @@ export function TopicManagement({
   isAdmin,
   setIsAdmin,
   whitelistedUserIds,
-  onToggleUserWhitelist
+  onToggleUserWhitelist,
+  roundSettings,
+  onSaveRoundSettings
 }) {
   const [unlocked, setUnlocked] = useState(isAdmin || !ORGANIZER_PASSWORD);
   const [activeTab, setActiveTab] = useState('topics');
@@ -505,6 +507,8 @@ export function TopicManagement({
             topicVisible={topicVisible}
             onToggleLeaderboard={onToggleLeaderboard}
             onToggleTopic={onToggleTopic}
+            roundSettings={roundSettings}
+            onSaveRoundSettings={onSaveRoundSettings}
           />
         </motion.div>
       )}

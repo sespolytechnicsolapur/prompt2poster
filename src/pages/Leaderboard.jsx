@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Trophy, Search, Loader2, ArrowRight, RefreshCw, EyeOff } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Trophy, Search, Loader2, ArrowRight, RefreshCw, EyeOff, Target, Flag, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDate } from '../utils/formatters';
 import { cn } from '../lib/utils';
@@ -27,9 +27,20 @@ export function Leaderboard({
   whitelistEnabled,
   onToggleWhitelistEnabled,
   whitelistedUserIds,
-  onToggleUserWhitelist
+  onToggleUserWhitelist,
+  roundSettings
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Tabs State
+  const [activeMainTab, setActiveMainTab] = useState(1); // 1 or 2
+  const [activeSubTab, setActiveSubTab] = useState('all'); // 'all', 'qualified', 'not_qualified'
+
+  // Settings from DB (fallback to defaults if undefined)
+  const currentRoundSetting = roundSettings?.current_round || 1;
+  const cutoffScore = roundSettings?.qualification_cutoff || 60;
+  const showQualification = roundSettings?.show_qualification || false;
+  const showRound2 = roundSettings?.show_round_2 || false;
 
   // ── Visibility Guard ──────────────────────────────────────────────────────
   if (!leaderboardVisible && !isAdmin) {
@@ -53,11 +64,39 @@ export function Leaderboard({
     );
   }
 
-  // ── Render Leaderboard ────────────────────────────────────────────────────
-  const filtered = leaderboard.filter((item) =>
-    (item.contestant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ── Data Processing ────────────────────────────────────────────────────────
+  const processedLeaderboard = useMemo(() => {
+    // Basic search filtering
+    const searchFiltered = leaderboard.filter((item) =>
+      (item.contestant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Filter by Active Main Tab (Round 1 vs Round 2)
+    const roundFiltered = searchFiltered.filter((item) => {
+      const itemRound = item.round_number || 1;
+      return itemRound === activeMainTab;
+    });
+
+    // Filter by Active Sub Tab (if on Round 1 and qualification is visible)
+    if (activeMainTab === 1 && showQualification) {
+      if (activeSubTab === 'qualified') {
+        return roundFiltered.filter(item => item.total_score >= cutoffScore);
+      } else if (activeSubTab === 'not_qualified') {
+        return roundFiltered.filter(item => item.total_score < cutoffScore);
+      }
+    }
+
+    return roundFiltered;
+  }, [leaderboard, searchTerm, activeMainTab, activeSubTab, cutoffScore, showQualification]);
+
+  // Handle tab switching logic
+  const handleMainTabSwitch = (tab) => {
+    setActiveMainTab(tab);
+    if (tab !== 1) {
+      setActiveSubTab('all'); // Reset sub-tab if leaving round 1
+    }
+  };
 
   return (
     <motion.div 
@@ -115,6 +154,79 @@ export function Leaderboard({
         </div>
       </motion.div>
 
+      {/* ── Round Tabs ── */}
+      {(showRound2 || isAdmin) && (
+        <motion.div variants={itemVariants} className="flex flex-wrap gap-3 border-b-2 border-border pb-1">
+          <button
+            onClick={() => handleMainTabSwitch(1)}
+            className={cn(
+              "px-6 py-2.5 rounded-t-sketchy font-heading font-bold text-lg flex items-center gap-2 transition-all border-2 border-b-0",
+              activeMainTab === 1 
+                ? "bg-surface text-primary border-border" 
+                : "bg-surface-subtle text-muted border-transparent hover:text-primary hover:bg-surface-hover"
+            )}
+            style={{ marginBottom: activeMainTab === 1 ? '-2px' : '0' }}
+          >
+            <Flag size={18} className={activeMainTab === 1 ? 'text-accent' : ''} />
+            <span>Round 1</span>
+          </button>
+          
+          <button
+            onClick={() => handleMainTabSwitch(2)}
+            className={cn(
+              "px-6 py-2.5 rounded-t-sketchy font-heading font-bold text-lg flex items-center gap-2 transition-all border-2 border-b-0",
+              activeMainTab === 2 
+                ? "bg-surface text-primary border-border" 
+                : "bg-surface-subtle text-muted border-transparent hover:text-primary hover:bg-surface-hover"
+            )}
+            style={{ marginBottom: activeMainTab === 2 ? '-2px' : '0' }}
+          >
+            <Trophy size={18} className={activeMainTab === 2 ? 'text-accent' : ''} />
+            <span>Round 2</span>
+            {isAdmin && !showRound2 && (
+              <EyeOff size={14} className="text-danger ml-1" title="Hidden from public" />
+            )}
+          </button>
+        </motion.div>
+      )}
+
+      {/* ── Qualification Sub-Tabs (Only Round 1) ── */}
+      {activeMainTab === 1 && (showQualification || isAdmin) && (
+        <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2 -mt-4">
+          <span className="text-sm font-bold text-secondary mr-2">Filter:</span>
+          
+          <button
+            onClick={() => setActiveSubTab('all')}
+            className={cn("badge px-4 py-1.5 cursor-pointer hover:scale-105 transition-transform", activeSubTab === 'all' ? 'bg-primary text-inverse border-primary' : 'badge-mono')}
+          >
+            All Submissions
+          </button>
+          
+          <button
+            onClick={() => setActiveSubTab('qualified')}
+            className={cn("badge px-4 py-1.5 cursor-pointer hover:scale-105 transition-transform flex items-center gap-1.5", activeSubTab === 'qualified' ? 'bg-success text-white border-success' : 'badge-mono')}
+          >
+            <Target size={14} />
+            <span>Qualified (≥{cutoffScore})</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveSubTab('not_qualified')}
+            className={cn("badge px-4 py-1.5 cursor-pointer hover:scale-105 transition-transform flex items-center gap-1.5", activeSubTab === 'not_qualified' ? 'bg-danger text-white border-danger' : 'badge-mono')}
+          >
+            <AlertCircle size={14} />
+            <span>Not Qualified</span>
+          </button>
+          
+          {isAdmin && !showQualification && (
+            <span className="text-xs text-danger font-bold italic ml-2 flex items-center gap-1">
+              <EyeOff size={12} /> Hidden from public
+            </span>
+          )}
+        </motion.div>
+      )}
+
+      {/* ── Table ── */}
       <motion.div variants={itemVariants} className="surface-card overflow-x-auto overflow-y-hidden shadow-sketchy">
         {loading && leaderboard.length === 0 ? (
           <div className="py-24 text-center text-muted font-sans flex flex-col items-center">
@@ -130,14 +242,20 @@ export function Leaderboard({
                   <th className="font-heading text-sm text-secondary text-left">Contestant</th>
                   <th className="font-heading text-sm text-secondary text-left">Topic</th>
                   <th className="text-right font-heading text-sm text-secondary">Score</th>
+                  
+                  {/* Qualification Column (Only in Round 1 if visible) */}
+                  {activeMainTab === 1 && (showQualification || isAdmin) && (
+                    <th className="text-center font-heading text-sm text-secondary">Status</th>
+                  )}
+                  
                   {isAdmin && <th className="text-center w-36 font-heading text-sm text-secondary">Whitelist</th>}
                   <th className="w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {filtered.length > 0 ? (
-                    filtered.map((item, index) => {
+                  {processedLeaderboard.length > 0 ? (
+                    processedLeaderboard.map((item, index) => {
                       const isFirst = index === 0;
                       const isSecond = index === 1;
                       const isThird = index === 2;
@@ -147,6 +265,8 @@ export function Leaderboard({
                                         : isSecond ? 'bg-gray-400/20 border-gray-400 text-gray-500' 
                                         : isThird ? 'bg-amber-700/20 border-amber-700 text-amber-700'
                                         : 'bg-transparent border-transparent text-dim';
+
+                      const isQualified = item.total_score >= cutoffScore;
 
                       return (
                         <motion.tr
@@ -171,8 +291,8 @@ export function Leaderboard({
                             <div className="font-bold text-primary font-heading text-lg mb-0.5 group-hover:text-accent transition-colors">
                               {item.contestant_name}
                             </div>
-                            <div className="text-xs text-muted font-sans font-medium uppercase tracking-wider">
-                              {formatDate(item.created_at)}
+                            <div className="text-xs text-muted font-sans font-medium uppercase tracking-wider flex items-center gap-2">
+                              <span>{formatDate(item.created_at)}</span>
                             </div>
                           </td>
                           <td className="align-middle">
@@ -186,6 +306,19 @@ export function Leaderboard({
                             </span>
                             <span className="mono-num text-xs text-dim font-sans font-bold">/100</span>
                           </td>
+                          
+                          {/* Qualification Status */}
+                          {activeMainTab === 1 && (showQualification || isAdmin) && (
+                            <td className="text-center align-middle">
+                              <span className={cn(
+                                "badge px-2 py-1 text-xs",
+                                isQualified ? "bg-success-subtle text-success border-success" : "bg-danger-subtle text-danger border-danger"
+                              )}>
+                                {isQualified ? 'Qualified' : 'Not Qualified'}
+                              </span>
+                            </td>
+                          )}
+
                           {isAdmin && (
                             <td className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
                               <button
@@ -207,7 +340,7 @@ export function Leaderboard({
                     })
                   ) : (
                     <tr>
-                      <td colSpan={isAdmin ? 6 : 5} className="text-center py-16 text-muted font-sans text-lg border-b-0">
+                      <td colSpan={isAdmin ? (activeMainTab === 1 && (showQualification || isAdmin) ? 7 : 6) : (activeMainTab === 1 && showQualification ? 6 : 5)} className="text-center py-16 text-muted font-sans text-lg border-b-0">
                         No submissions found matching "{searchTerm}"
                       </td>
                     </tr>
