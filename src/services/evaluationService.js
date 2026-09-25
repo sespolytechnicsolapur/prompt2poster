@@ -44,7 +44,7 @@ export async function evaluatePosterWithAI({ posterDataUrl, topic, contestantNam
 
 /**
  * Requests AI to re-evaluate a submission with a new target total score.
- * The AI redistributes sub-scores across 7 criteria and generates matching reasoning.
+ * The AI redistributes sub-scores across 8 criteria and generates matching reasoning.
  *
  * @param {Object} params
  * @param {number} params.newTotalScore - Target total score (0-100)

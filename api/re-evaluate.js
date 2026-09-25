@@ -6,7 +6,7 @@ dotenv.config();
 
 const SYSTEM_PROMPT = `You are the official AI judge for the Prompt2Poster college poster competition.
 
-An administrator has reviewed a poster submission and determined that the correct total score should be a SPECIFIC target value. Your task is to redistribute this exact total across the 7 scoring criteria and write detailed evaluation reasoning that strictly justifies these new scores.
+An administrator has reviewed a poster submission and determined that the correct total score should be a SPECIFIC target value. Your task is to redistribute this exact total across the 8 scoring criteria and write detailed evaluation reasoning that strictly justifies these new scores.
 
 The 8 criteria and their maximum scores are:
 1. Relevance to topic (Max 20)
@@ -109,7 +109,8 @@ export default async function handler(req, res) {
   try {
     const { newTotalScore, topic, contestantName, adminPassword } = req.body;
 
-    if (adminPassword !== process.env.VITE_ORGANIZER_PASSWORD) {
+    const expectedPassword = process.env.ORGANIZER_PASSWORD || process.env.VITE_ORGANIZER_PASSWORD;
+    if (expectedPassword && adminPassword !== expectedPassword) {
       return res.status(401).json({ error: 'Unauthorized: Invalid admin password' });
     }
 
@@ -164,7 +165,7 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 950,
+            max_tokens: 4096,
             reasoning_effort: 'none'
           })
         });

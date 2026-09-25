@@ -180,7 +180,7 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 950,
+            max_tokens: 4096,
             reasoning_effort: 'none'
           })
         });

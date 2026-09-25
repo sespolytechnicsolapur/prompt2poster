@@ -23,7 +23,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const ORGANIZER_PASSWORD = process.env.VITE_ORGANIZER_PASSWORD || '';
+const ORGANIZER_PASSWORD = process.env.ORGANIZER_PASSWORD || process.env.VITE_ORGANIZER_PASSWORD || '';
 
 // ── Middleware ─────────────────────────────────────────────────────────────────
 app.use(cors());
@@ -289,7 +289,7 @@ function generateFallbackEvaluation(topic, contestantName) {
  */
 app.post('/api/evaluate', rateLimit, async (req, res) => {
   try {
-    const { posterDataUrl, topic, contestantName } = req.body;
+    const { posterDataUrl, topic, contestantName, aiPrompt } = req.body;
 
     if (!topic || !contestantName) {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
@@ -314,7 +314,7 @@ app.post('/api/evaluate', rateLimit, async (req, res) => {
     // Build message payload
     const userContent = [{
       type: 'text',
-      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 8 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
+      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\nAI Prompt Used: "${aiPrompt || 'None provided'}"\n\nEvaluate the attached poster image across all 8 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
     }];
 
     if (hasImage) {
