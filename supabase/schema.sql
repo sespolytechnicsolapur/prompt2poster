@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS topics (
   leaderboard_visible BOOLEAN DEFAULT true,
   topic_visible BOOLEAN DEFAULT true,
   whitelist_enabled BOOLEAN DEFAULT false,
+  current_round INTEGER DEFAULT 1,
+  qualification_cutoff INTEGER DEFAULT 60,
+  show_qualification BOOLEAN DEFAULT false,
+  show_round_2 BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -56,6 +60,8 @@ CREATE TABLE IF NOT EXISTS submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   contestant_name TEXT NOT NULL,
   topic TEXT NOT NULL,
+  round_number INTEGER DEFAULT 1,
+  qualification_override TEXT DEFAULT 'auto',
   poster_storage_path TEXT NOT NULL DEFAULT 'local-only',
   poster_url TEXT NOT NULL DEFAULT '',
 

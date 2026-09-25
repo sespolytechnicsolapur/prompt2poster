@@ -16,6 +16,9 @@ import {
   setWhitelistEnabled,
   toggleContestantWhitelistByUserId,
   fetchWhitelistedContestants,
+  fetchRoundSettings,
+  updateRoundSettings,
+  setQualificationOverride
 } from '../services/submissionService';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { getLoggedInContestant, logoutContestant } from '../services/authService';
@@ -56,6 +59,14 @@ export function useCompetition() {
   const [topicVisible, setTopicVisibleState]             = useState(true);
   const [whitelistEnabled, setWhitelistEnabledState]     = useState(false);
   const [whitelistedUserIds, setWhitelistedUserIds]      = useState(new Set());
+  
+  // ── Round Settings State ──────────────────────────────────────────────────
+  const [roundSettings, setRoundSettingsState] = useState({
+    current_round: 1,
+    qualification_cutoff: 60,
+    show_qualification: false,
+    show_round_2: false
+  });
 
   const [error, setError] = useState(null);
 
@@ -99,14 +110,16 @@ export function useCompetition() {
 
   const loadVisibility = useCallback(async () => {
     try {
-      const [lbVisible, tVisible, wEnabled] = await Promise.all([
+      const [lbVisible, tVisible, wEnabled, rSettings] = await Promise.all([
         fetchLeaderboardVisibility(),
         fetchTopicVisibility(),
         fetchWhitelistEnabled(),
+        fetchRoundSettings()
       ]);
       setLeaderboardVisibleState(lbVisible);
       setTopicVisibleState(tVisible);
       setWhitelistEnabledState(wEnabled);
+      setRoundSettingsState(rSettings);
       
       if (isAdmin && import.meta.env.VITE_ORGANIZER_PASSWORD) {
         const whitelisted = await fetchWhitelistedContestants(import.meta.env.VITE_ORGANIZER_PASSWORD);
@@ -233,6 +246,27 @@ export function useCompetition() {
     }
   };
 
+  const saveRoundSettings = async (settings, adminPassword) => {
+    try {
+      const result = await updateRoundSettings(settings, adminPassword);
+      setRoundSettingsState(result);
+    } catch (err) {
+      console.error('Failed to update round settings:', err);
+      throw err;
+    }
+  };
+
+  const toggleQualificationOverride = async (id, overrideStatus) => {
+    try {
+      const updated = await setQualificationOverride(id, overrideStatus);
+      if (updated) {
+        setLeaderboard(prev => prev.map(s => s.id === id ? { ...s, qualification_override: overrideStatus } : s));
+      }
+    } catch (err) {
+      console.error('Failed to toggle qualification override:', err);
+    }
+  };
+
   return {
     // Single topic
     activeTopic,
@@ -271,6 +305,11 @@ export function useCompetition() {
     toggleWhitelistEnabled,
     toggleUserWhitelist,
     refreshVisibility: loadVisibility,
+    
+    // Rounds
+    roundSettings,
+    saveRoundSettings,
+    toggleQualificationOverride,
 
     error,
   };

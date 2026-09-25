@@ -1,13 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Send, Image as ImageIcon, Loader2, FileText, CheckCircle2, AlertCircle, Sparkles, Pencil } from 'lucide-react';
+import { Upload, X, Send, Image as ImageIcon, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { evaluatePosterWithAI } from '../services/evaluationService';
 import { saveSubmission, pickRandomTopic, uploadImageToSupabase } from '../services/submissionService';
+import { cn } from '../lib/utils';
 
-/**
- * Poster Submission Page
- * Only accessible to logged-in contestants.
- * Hand-drawn style with sketchy borders and playful animations.
- */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1, 
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
 export function Submit({
   activeTopic,
   loadingTopic,
@@ -17,7 +27,8 @@ export function Submit({
   contestant,
   topicVisible,
   isAdmin,
-  leaderboard
+  leaderboard,
+  roundSettings
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -28,15 +39,15 @@ export function Submit({
   const [error, setError] = useState(null);
   const [aiPromptUsed, setAiPromptUsed] = useState('');
 
-  // Check if contestant already submitted based on leaderboard data
+  const currentRound = roundSettings?.current_round || 1;
+
   const hasAlreadySubmitted = leaderboard && contestant
-    ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id)
+    ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id && (s.round_number || 1) === currentRound)
     : false;
 
   const fileInputRef = useRef(null);
   const screenshotInputRef = useRef(null);
 
-  // Determine the topic for this contestant
   let assignedTopic = activeTopic;
   if (poolMode === 'pool' && contestant) {
     assignedTopic = pickRandomTopic(topicPool, contestant.name) || activeTopic;
@@ -115,14 +126,12 @@ export function Submit({
     setError(null);
 
     try {
-      // 1. Upload the image to Supabase first to prevent Vercel Payload Too Large 502 crash
-      let imageUrlForAi = previewUrl; // fallback to Base64
+      let imageUrlForAi = previewUrl; 
       const uploadResult = await uploadImageToSupabase(selectedFile, contestant.user_id, 'submissions');
       if (uploadResult.url) {
         imageUrlForAi = uploadResult.url;
       }
 
-      // 2. Evaluate with AI
       const { evaluation, source } = await evaluatePosterWithAI({
         posterDataUrl: imageUrlForAi,
         topic: finalTopicTitle,
@@ -130,21 +139,18 @@ export function Submit({
         aiPrompt: aiPromptUsed
       });
 
-      // 3. Save submission to DB
       await saveSubmission({
         contestantName: contestant.name,
         submittedByUserId: contestant.user_id,
         collegeName: contestant.college_name,
         topic: finalTopicTitle,
-        posterFile: imageUrlForAi !== previewUrl ? imageUrlForAi : selectedFile, // pass url if uploaded, else file for fallback
+        posterFile: imageUrlForAi !== previewUrl ? imageUrlForAi : selectedFile, 
         chatScreenshotFile: selectedScreenshotFile,
         aiPromptUsed: aiPromptUsed.trim(),
         evaluation
       });
 
-      console.log(`[Submit] Evaluation complete via ${source}`);
       setIsSubmitted(true);
-
     } catch (err) {
       console.error('[Submit Error]', err);
       setError(err.message || 'An error occurred during evaluation. Please try again.');
@@ -153,171 +159,79 @@ export function Submit({
     }
   };
 
-  // Determine if contestant can see the topic
   const showTopic = topicVisible || isAdmin;
 
   if (isSubmitted || hasAlreadySubmitted) {
     return (
-      <div style={{
-        maxWidth: '600px', margin: '4rem auto', textAlign: 'center',
-        animation: 'fade-up 0.6s var(--transition-normal) both'
-      }}>
-        <div style={{
-          width: '72px', height: '72px',
-          borderRadius: '16px',
-          backgroundColor: 'var(--status-success-subtle)',
-          color: 'var(--status-success)',
-          border: '1px solid var(--status-success)',
-          boxShadow: '0 8px 16px rgba(16, 185, 129, 0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 1.5rem auto'
-        }}>
-          <CheckCircle2 size={34} />
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-xl mx-auto my-16 text-center"
+      >
+        <div className="w-20 h-20 rounded-2xl bg-success-subtle text-success border border-success flex items-center justify-center mx-auto mb-6 shadow-lg shadow-success/10 transform -rotate-3 hover:rotate-3 transition-transform">
+          <CheckCircle2 size={38} />
         </div>
-        <h1 style={{
-          fontSize: '2.2rem', fontWeight: 800,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-display)',
-          marginBottom: '1rem',
-          letterSpacing: '-0.02em'
-        }}>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary font-display mb-4 tracking-tight">
           {hasAlreadySubmitted ? 'You Have Already Submitted!' : 'Successfully Submitted!'}
         </h1>
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: '1.1rem', lineHeight: '1.7',
-          marginBottom: '2rem',
-          fontFamily: 'var(--font-sans)',
-        }}>
+        <p className="text-secondary text-lg leading-relaxed mb-8 font-sans">
           Your poster has been securely uploaded and the AI evaluation is complete.
           The detailed results and final scores will be announced by the organizers later.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="animate-fade-in" style={{
-      maxWidth: '800px', margin: '0 auto',
-      display: 'flex', flexDirection: 'column', gap: '2rem'
-    }}>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="max-w-3xl mx-auto flex flex-col gap-8"
+    >
       {/* Page Header */}
-      <div style={{ textAlign: 'center' }}>
-        <h1 style={{
-          fontSize: '2.2rem', fontWeight: 800,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-display)',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.02em'
-        }}>
+      <motion.div variants={itemVariants} className="text-center">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary font-display mb-2 tracking-tight">
           Submit Your Poster
         </h1>
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: '1.05rem', maxWidth: '500px', margin: '0 auto',
-          fontFamily: 'var(--font-sans)',
-        }}>
+        <p className="text-secondary text-lg max-w-lg mx-auto font-sans">
           Upload your design for AI evaluation and scoring
         </p>
-      </div>
+      </motion.div>
 
-      <div className="surface-card" style={{ padding: '2rem' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
+      <motion.div variants={itemVariants} className="surface-card p-6 md:p-8 shadow-sketchy">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+          
           {/* 1. Topic Assignment Section */}
-          <div>
-            <h2 style={{
-              fontSize: '1.25rem', fontWeight: 700,
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-heading)',
-              marginBottom: '1rem',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
-              <span style={{
-                width: '28px', height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-primary)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
-                boxShadow: '0 4px 8px rgba(59, 130, 246, 0.3)',
-              }}>1</span>
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-primary font-heading flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-sans font-bold shadow-md shadow-accent/30 -rotate-2">1</span>
               Your Assigned Topic
             </h2>
 
             {loadingTopic ? (
-              <div style={{
-                padding: '1.5rem',
-                backgroundColor: 'var(--bg-surface-subtle)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px dashed var(--border-color)',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontFamily: 'var(--font-sans)',
-              }}>
-                <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 0.5rem auto' }} />
+              <div className="p-6 bg-surface-subtle rounded-sketchy border border-dashed border-border text-center text-muted font-sans flex flex-col items-center">
+                <Loader2 size={24} className="animate-spin mb-2 text-accent" />
                 Loading assignment...
               </div>
             ) : showTopic ? (
-              <div style={{
-                padding: '1.5rem',
-                backgroundColor: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--accent-primary-subtle)',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{
-                    width: '44px', height: '44px',
-                    borderRadius: '10px',
-                    backgroundColor: 'var(--accent-primary-subtle)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--accent-primary)', flexShrink: 0,
-                  }}>
-                    <Sparkles size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontSize: '1.2rem', fontWeight: 700,
-                      color: 'var(--text-primary)',
-                      fontFamily: 'var(--font-heading)',
-                      margin: '0 0 0.25rem 0'
-                    }}>
-                      {assignedTopic?.topic_title || 'No active topic'}
-                    </h3>
-                    <p style={{
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.95rem', margin: 0, lineHeight: 1.65,
-                      fontFamily: 'var(--font-sans)',
-                    }}>
-                      {assignedTopic?.description || 'Design a poster based on this topic.'}
-                    </p>
-                  </div>
+              <div className="p-6 bg-surface rounded-sketchy border border-accent-subtle shadow-sm flex items-start gap-4 hover:border-accent transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-accent-subtle flex items-center justify-center text-accent shrink-0 transform rotate-2">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-primary font-heading mb-1">
+                    {assignedTopic?.topic_title || 'No active topic'}
+                  </h3>
+                  <p className="text-secondary text-base leading-relaxed font-sans">
+                    {assignedTopic?.description || 'Design a poster based on this topic.'}
+                  </p>
                 </div>
               </div>
             ) : (
-              <div style={{
-                padding: '1.5rem',
-                backgroundColor: 'var(--bg-surface-subtle)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-strong)',
-                textAlign: 'center'
-              }}>
-                <h3 style={{
-                  fontSize: '1.1rem', fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-heading)',
-                  margin: '0 0 0.25rem 0'
-                }}>
-                  Topic Hidden
-                </h3>
-                <p style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.95rem', margin: 0,
-                  fontFamily: 'var(--font-sans)',
-                }}>
+              <div className="p-6 bg-surface-subtle rounded-sketchy border border-border-strong text-center">
+                <h3 className="text-lg font-bold text-primary font-heading mb-1">Topic Hidden</h3>
+                <p className="text-secondary text-sm font-sans">
                   The competition topic will be revealed shortly by the organizers.
                 </p>
               </div>
@@ -325,134 +239,73 @@ export function Submit({
           </div>
 
           {/* 2. Contestant Details */}
-          <div>
-            <h2 style={{
-              fontSize: '1.25rem', fontWeight: 700,
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-heading)',
-              marginBottom: '1rem',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
-              <span style={{
-                width: '28px', height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-primary)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
-                boxShadow: '0 4px 8px rgba(59, 130, 246, 0.3)',
-              }}>2</span>
+          <div className="flex flex-col gap-5">
+            <h2 className="text-xl font-bold text-primary font-heading flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-sans font-bold shadow-md shadow-accent/30 rotate-2">2</span>
               Submission Details
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>Contestant Name</label>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-sans text-[0.95rem] font-semibold text-primary">Contestant Name</label>
                 <input
                   type="text"
                   value={contestant?.name || ''}
-                  className="form-input"
+                  className="form-input bg-surface-subtle text-secondary cursor-not-allowed border-dashed"
                   disabled
-                  style={{
-                    backgroundColor: 'var(--bg-surface-subtle)',
-                    color: 'var(--text-secondary)',
-                  }}
                 />
-                <span style={{
-                  fontSize: '0.85rem',
-                  color: 'var(--text-dim)', marginTop: '0.25rem',
-                  fontFamily: 'var(--font-sans)',
-                }}>
-                  Autofilled from your login credentials
-                </span>
+                <span className="text-xs text-dim font-sans mt-1">Autofilled from your login credentials</span>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>AI Prompt Used</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-sans text-[0.95rem] font-semibold text-primary">AI Prompt Used</label>
                 <textarea
                   rows={3}
                   placeholder="Paste the prompt you used to generate this poster (e.g. Midjourney, DALL-E)..."
                   value={aiPromptUsed}
                   onChange={(e) => setAiPromptUsed(e.target.value)}
-                  className="form-input"
-                  style={{ resize: 'vertical' }}
+                  className="form-input resize-y"
                 />
               </div>
             </div>
 
-            <div className="form-group" style={{ marginTop: '1.25rem' }}>
-              <label className="form-label" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem' }}>
+            <div className="flex flex-col gap-2 mt-2">
+              <label className="font-sans text-[0.95rem] font-semibold text-primary">
                 Chat Screenshot
               </label>
-              <p style={{
-                fontSize: '0.85rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '0.75rem',
-                lineHeight: '1.4'
-              }}>
+              <p className="text-sm text-secondary mb-2 leading-relaxed">
                 Upload a screenshot of your conversation with the AI showing the prompt and generated image.
               </p>
               {!screenshotPreviewUrl ? (
                 <div
                   onClick={() => screenshotInputRef.current?.click()}
-                  style={{
-                    border: '2px dashed var(--border-strong)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: 'var(--bg-surface-subtle)',
-                    transition: 'all 200ms ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                    e.currentTarget.style.backgroundColor = 'var(--accent-primary-subtle)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-strong)';
-                    e.currentTarget.style.backgroundColor = 'var(--bg-surface-subtle)';
-                  }}
+                  className="border-2 border-dashed border-border-strong rounded-sketchy p-6 text-center cursor-pointer bg-surface-subtle transition-all hover:border-accent hover:bg-accent-subtle group"
                 >
                   <input
                     type="file"
                     ref={screenshotInputRef}
                     onChange={handleScreenshotSelect}
                     accept="image/jpeg,image/png,image/webp"
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                  <div className="flex items-center justify-center gap-2 text-secondary group-hover:text-accent font-sans">
                     <ImageIcon size={20} />
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>Click to upload screenshot</span>
+                    <span className="text-[0.95rem] font-bold">Click to upload screenshot</span>
                   </div>
                 </div>
               ) : (
-                <div style={{
-                  position: 'relative',
-                  borderRadius: 'var(--radius-lg)',
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-surface-subtle)',
-                  padding: '0.5rem'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-                      <ImageIcon size={18} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="relative rounded-sketchy overflow-hidden border border-border bg-surface-subtle p-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 overflow-hidden px-2">
+                      <ImageIcon size={18} className="text-accent shrink-0" />
+                      <span className="text-sm font-bold truncate text-primary">
                         {selectedScreenshotFile?.name}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={clearScreenshotSelection}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                        padding: '0.25rem'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--status-danger)'}
-                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      className="text-muted hover:text-danger p-1 transition-colors"
                       title="Remove screenshot"
                     >
                       <X size={18} />
@@ -464,137 +317,55 @@ export function Submit({
           </div>
 
           {/* 3. File Upload */}
-          <div>
-            <h2 style={{
-              fontSize: '1.25rem', fontWeight: 700,
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-heading)',
-              marginBottom: '1rem',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
-              <span style={{
-                width: '28px', height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-primary)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
-                boxShadow: '0 4px 8px rgba(59, 130, 246, 0.3)',
-              }}>3</span>
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-primary font-heading flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-sans font-bold shadow-md shadow-accent/30 -rotate-1">3</span>
               Upload Design
             </h2>
 
             {!previewUrl ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                style={{
-                  border: '2px dashed var(--border-strong)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '3rem 2rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  backgroundColor: 'var(--bg-surface-subtle)',
-                  transition: 'all 300ms ease',
-                  position: 'relative',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.backgroundColor = 'var(--accent-primary-subtle)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-strong)';
-                  e.currentTarget.style.backgroundColor = 'var(--bg-surface-subtle)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                className="border-2 border-dashed border-border-strong rounded-sketchy p-12 text-center cursor-pointer bg-surface-subtle transition-all hover:border-accent hover:bg-accent-subtle hover:-translate-y-1 group"
               >
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   accept="image/jpeg,image/png,image/webp"
-                  style={{ display: 'none' }}
+                  className="hidden"
                 />
-                <div style={{
-                  width: '68px', height: '68px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '2.5px solid var(--border-color)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 1rem auto',
-                  color: 'var(--accent-primary)',
-                  boxShadow: 'var(--shadow-md)',
-                  animation: 'float 3s ease-in-out infinite'
-                }}>
+                <div className="w-16 h-16 rounded-full bg-surface border-2 border-border flex items-center justify-center mx-auto mb-4 text-accent shadow-md group-hover:rotate-12 transition-transform duration-300">
                   <Upload size={28} />
                 </div>
-                <h3 style={{
-                  fontSize: '1.2rem', fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-heading)',
-                  margin: '0 0 0.5rem 0'
-                }}>
+                <h3 className="text-xl font-bold text-primary font-heading mb-1">
                   Click to upload poster
                 </h3>
-                <p style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.95rem', margin: 0,
-                  fontFamily: 'var(--font-sans)',
-                  fontStyle: 'italic'
-                }}>
+                <p className="text-secondary text-sm font-sans italic">
                   PNG, JPG or WebP (max. 10MB)
                 </p>
               </div>
             ) : (
-              <div style={{
-                position: 'relative',
-                borderRadius: 'var(--radius-lg)',
-                overflow: 'hidden',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-surface-subtle)',
-                boxShadow: 'var(--shadow-md)'
-              }}>
+              <div className="relative rounded-sketchy overflow-hidden border border-border bg-surface-subtle shadow-md group">
                 <img
                   src={previewUrl}
                   alt="Poster preview"
-                  style={{ width: '100%', maxHeight: '600px', objectFit: 'contain', display: 'block' }}
+                  className="w-full max-h-[600px] object-contain block bg-black/5"
                 />
                 <button
                   type="button"
                   onClick={clearSelection}
-                  style={{
-                    position: 'absolute', top: '1rem', right: '1rem',
-                    backgroundColor: 'rgba(0,0,0,0.6)', color: 'white',
-                    border: '2px solid white', borderRadius: '50%',
-                    width: '38px', height: '38px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', backdropFilter: 'blur(4px)',
-                    boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
-                    transition: 'transform 200ms ease'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(-5deg) scale(1.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0) scale(1)'}
+                  className="absolute top-4 right-4 bg-black/60 text-white border-2 border-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer backdrop-blur-sm shadow-md transition-transform hover:-rotate-6 hover:scale-110"
                   title="Remove image"
                 >
                   <X size={18} />
                 </button>
-                <div style={{
-                  position: 'absolute', bottom: '0', left: '0', right: '0',
-                  padding: '1rem',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                  display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white',
-                  fontFamily: 'var(--font-sans)'
-                }}>
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center gap-2 text-white font-sans">
                   <ImageIcon size={16} />
-                  <span style={{
-                    fontSize: '0.95rem', fontWeight: 600, flex: 1,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>
+                  <span className="text-[0.95rem] font-bold flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
                     {selectedFile.name}
                   </span>
-                  <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                  <span className="text-sm opacity-80">
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
                 </div>
@@ -603,46 +374,37 @@ export function Submit({
           </div>
 
           {error && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.75rem',
-              color: 'var(--status-danger)',
-              backgroundColor: 'var(--status-danger-subtle)',
-              padding: '1rem',
-              borderRadius: '15px 225px 15px 255px / 255px 15px 225px 15px',
-              border: '2px solid var(--status-danger)',
-              fontFamily: 'var(--font-sans)',
-              animation: 'wiggle 0.5s ease-out'
-            }}>
-              <AlertCircle size={20} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>{error}</span>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-3 text-danger bg-danger-subtle p-4 rounded-[15px_225px_15px_255px/255px_15px_225px_15px] border-2 border-danger font-sans"
+            >
+              <AlertCircle size={20} className="shrink-0" />
+              <span className="text-[0.95rem] font-bold">{error}</span>
+            </motion.div>
           )}
 
-          <button
+          <motion.button
+            whileHover={{ scale: (isSubmitting || !selectedFile || !showTopic) ? 1 : 1.02 }}
+            whileTap={{ scale: (isSubmitting || !selectedFile || !showTopic) ? 1 : 0.98 }}
             type="submit"
-            className="btn btn-primary"
-            disabled={isSubmitting || !selectedFile || (!showTopic)}
-            style={{
-              width: '100%', padding: '1rem',
-              fontSize: '1.15rem', marginTop: '0.5rem',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-            }}
+            className="btn btn-primary w-full p-4 text-xl mt-2 font-heading font-bold flex items-center justify-center gap-2"
+            disabled={isSubmitting || !selectedFile || !showTopic}
           >
             {isSubmitting ? (
               <>
-                <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={24} className="animate-spin" />
                 <span>AI is evaluating your poster...</span>
               </>
             ) : (
               <>
-                <Send size={18} />
-                <span>Submit Design →</span>
+                <Send size={20} />
+                <span>Submit Design <span className="font-sans opacity-70">→</span></span>
               </>
             )}
-          </button>
+          </motion.button>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

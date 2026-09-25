@@ -249,12 +249,16 @@ export async function saveSubmission(submissionData) {
     collegeName = ''
   } = submissionData;
 
-  const record = {
-    id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-    contestant_name: contestantName,
-    college_name: collegeName,
-    topic,
-    poster_storage_path: 'uploading...',
+    const activeTopicData = await fetchActiveTopic();
+    const currentRound = activeTopicData?.current_round || 1;
+
+    const record = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      contestant_name: contestantName,
+      college_name: collegeName,
+      topic,
+      round_number: currentRound,
+      poster_storage_path: 'uploading...',
     poster_url: null,
     chat_screenshot_url: null,
     submitted_by_user_id: submittedByUserId,
@@ -315,6 +319,7 @@ export async function saveSubmission(submissionData) {
         contestant_name:              record.contestant_name,
         college_name:                 record.college_name,
         topic:                        record.topic,
+        round_number:                 record.round_number,
         poster_storage_path:          storagePath,
         poster_url:                   finalPosterUrl,
         chat_screenshot_url:          finalScreenshotUrl,
@@ -334,6 +339,7 @@ export async function saveSubmission(submissionData) {
         overall_evaluation:           record.overall_evaluation,
         is_hidden:                    false,
         score_edit_log:               [],
+        qualification_override:       'auto',
       };
 
       const { data, error } = await supabase
@@ -457,6 +463,37 @@ export async function toggleSubmissionVisibility(id, isHidden) {
       if (error) console.error('[toggleVisibility DB Error]:', error.message);
       if (data) return data;
     } catch (err) { console.error('[toggleVisibility DB Error]:', err.message); }
+  }
+
+  return idx !== -1 ? list[idx] : null;
+}
+
+/**
+ * Toggle a submission's qualification override status.
+ * @param {string} id - Submission ID
+ * @param {string} override - 'auto', 'qualified', or 'disqualified'
+ * @returns {Promise<Object|null>} Updated record
+ */
+export async function setQualificationOverride(id, override) {
+  // Update localStorage
+  const list = lsGetSubmissions();
+  const idx = list.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    list[idx].qualification_override = override;
+    lsSetSubmissions(list);
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .update({ qualification_override: override })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) console.error('[setQualificationOverride DB Error]:', error.message);
+      if (data) return data;
+    } catch (err) { console.error('[setQualificationOverride DB Error]:', err.message); }
   }
 
   return idx !== -1 ? list[idx] : null;
@@ -620,6 +657,35 @@ export async function setTopicVisibility(visible, adminPassword) {
   
   return visible;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ROUNDS & QUALIFICATION CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchRoundSettings() {
+  if (!isSupabaseConfigured || !supabase) {
+    return { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  }
+  try {
+    const { data } = await supabase.from('topics')
+      .select('current_round, qualification_cutoff, show_qualification, show_round_2')
+      .eq('is_active', true).single();
+    return data || { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  } catch {
+    return { current_round: 1, qualification_cutoff: 60, show_qualification: false, show_round_2: false };
+  }
+}
+
+export async function updateRoundSettings(settings, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+
+  const { error } = await supabase.from('topics').update(settings).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return settings;
+}
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // WHITELIST CONTROLS

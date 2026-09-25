@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { X, Save, Loader2, AlertCircle, RotateCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CRITERIA_DEFINITIONS } from '../utils/scoreValidation';
+import { cn } from '../lib/utils';
 
-/**
- * Modal for editing submission scores.
- * Supports manual score editing and AI re-evaluation when total changes.
- */
 export function ScoreEditModal({
   submission,
   onSave,
   onReEvaluate,
   onClose
 }) {
-  // Initialize scores from the submission's evaluation reasoning
   const evaluation = submission?.evaluation_reasoning || {};
 
   const [scores, setScores] = useState(() => {
@@ -29,7 +26,6 @@ export function ScoreEditModal({
   const [error, setError] = useState(null);
   const [reEvalResult, setReEvalResult] = useState(null);
 
-  // Calculate sum of individual scores
   const calculatedSum = CRITERIA_DEFINITIONS.reduce(
     (sum, crit) => sum + (Number(scores[crit.key]) || 0), 0
   );
@@ -55,7 +51,6 @@ export function ScoreEditModal({
       const result = await onReEvaluate(total);
       setReEvalResult(result);
 
-      // Update individual scores from AI result
       const newScores = {};
       CRITERIA_DEFINITIONS.forEach(crit => {
         newScores[crit.key] = result[crit.key]?.score ?? 0;
@@ -76,14 +71,12 @@ export function ScoreEditModal({
       let evaluationToSave = reEvalResult;
       
       const parsedNewTotal = Number(newTotal);
-      // If the user changed the total score input but hasn't run the AI re-evaluate yet, auto-run it!
       if (!reEvalResult && !isNaN(parsedNewTotal) && parsedNewTotal !== submission?.total_score) {
         setIsReEvaluating(true);
         evaluationToSave = await onReEvaluate(parsedNewTotal);
         setIsReEvaluating(false);
       }
 
-      // If we don't have an AI re-evaluation, build one from the manual sub-scores
       if (!evaluationToSave) {
         evaluationToSave = buildEvaluationFromScores(scores, evaluation);
       }
@@ -98,183 +91,161 @@ export function ScoreEditModal({
   };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 999,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1.5rem'
-      }}
-    >
+    <AnimatePresence>
       <div
-        onClick={(e) => e.stopPropagation()}
-        className="surface-card"
-        style={{
-          width: '100%', maxWidth: '540px', maxHeight: '90vh',
-          overflow: 'auto', padding: '1.5rem',
-          display: 'flex', flexDirection: 'column', gap: '1.25rem'
-        }}
+        onClick={onClose}
+        className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm"
       >
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-              Edit Scores
-            </h2>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-              {submission?.contestant_name} — Current: {submission?.total_score}/100
-            </p>
-          </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '0.25rem' }}>
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* AI Re-Evaluate Section */}
-        <div style={{
-          padding: '1rem',
-          backgroundColor: 'var(--bg-surface-subtle)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-color)'
-        }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Override Total Score & Auto Re-evaluate
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={newTotal}
-              onChange={(e) => setNewTotal(e.target.value)}
-              className="form-input"
-              style={{ width: '80px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 600 }}
-            />
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>/100</span>
-            <button
-              onClick={handleReEvaluate}
-              className="btn btn-primary btn-sm"
-              disabled={isReEvaluating}
-              style={{ marginLeft: 'auto' }}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="surface-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 flex flex-col gap-6 shadow-2xl relative border-2 border-border-strong"
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-primary font-heading m-0">
+                Edit Scores
+              </h2>
+              <p className="text-sm font-bold text-muted font-sans m-0 mt-1">
+                {submission?.contestant_name} — Current: {submission?.total_score}/100
+              </p>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="p-2 text-muted hover:text-primary transition-colors rounded-full hover:bg-surface-hover"
             >
-              {isReEvaluating ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <RotateCw size={13} />}
-              <span>{isReEvaluating ? 'AI Processing...' : 'AI Re-evaluate'}</span>
+              <X size={20} />
             </button>
           </div>
-          <p style={{ fontSize: '0.6875rem', color: 'var(--text-dim)', marginTop: '0.4rem', margin: 0 }}>
-            The AI will redistribute sub-scores to match this total and generate matching reasoning.
-          </p>
-        </div>
 
-        {/* Individual Criteria Scores */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Individual Criteria Scores
-          </div>
-          {CRITERIA_DEFINITIONS.map(crit => (
-            <div key={crit.key} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '0.5rem 0.65rem',
-              backgroundColor: 'var(--bg-surface-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-subtle)',
-              gap: '0.5rem'
-            }}>
-              <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', flex: 1 }}>
-                {crit.label}
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+          {/* AI Re-Evaluate Section */}
+          <div className="p-4 bg-surface-subtle rounded-sketchy border border-border shadow-inner">
+            <div className="text-sm font-bold text-primary font-sans mb-2">
+              Override Total Score & Auto Re-evaluate
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   min={0}
-                  max={crit.maxScore}
-                  value={scores[crit.key]}
-                  onChange={(e) => handleScoreChange(crit.key, e.target.value)}
-                  className="form-input"
-                  style={{
-                    width: '55px', textAlign: 'center',
-                    padding: '0.25rem', fontSize: '0.8125rem',
-                    fontFamily: 'var(--font-mono)', fontWeight: 600
-                  }}
+                  max={100}
+                  value={newTotal}
+                  onChange={(e) => setNewTotal(e.target.value)}
+                  className="form-input w-20 text-center font-mono text-lg py-1 px-2"
                 />
-                <span className="mono-num" style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-                  /{crit.maxScore}
-                </span>
+                <span className="text-sm font-bold text-muted font-mono">/100</span>
               </div>
+              
+              <button
+                onClick={handleReEvaluate}
+                className="btn btn-accent px-4 py-2 font-bold text-sm ml-auto flex items-center gap-2"
+                disabled={isReEvaluating}
+              >
+                {isReEvaluating ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <RotateCw size={16} />
+                )}
+                <span>{isReEvaluating ? 'AI Processing...' : 'AI Re-evaluate'}</span>
+              </button>
             </div>
-          ))}
-
-          {/* Calculated Sum */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0.5rem 0.65rem',
-            borderTop: '1px solid var(--border-color)',
-            marginTop: '0.25rem'
-          }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              Sum of Criteria
-            </span>
-            <span className="mono-num" style={{
-              fontSize: '1rem', fontWeight: 700,
-              color: calculatedSum > 100 ? 'var(--status-danger)' : 'var(--text-primary)'
-            }}>
-              {calculatedSum}/100
-            </span>
+            <p className="text-xs text-dim mt-2 m-0 font-sans leading-relaxed">
+              The AI will redistribute sub-scores to match this total and generate matching reasoning.
+            </p>
           </div>
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--status-danger-subtle)',
-            padding: '0.5rem 0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.8125rem',
-            border: '1px solid rgba(239, 68, 68, 0.2)'
-          }}>
-            <AlertCircle size={14} />
-            <span>{error}</span>
+          {/* Individual Criteria Scores */}
+          <div className="flex flex-col gap-2">
+            <div className="text-sm font-bold text-primary font-sans mb-1">
+              Individual Criteria Scores
+            </div>
+            {CRITERIA_DEFINITIONS.map(crit => (
+              <div key={crit.key} className="flex items-center justify-between p-3 bg-surface-subtle rounded-sketchy border border-border-subtle hover:border-border transition-colors group">
+                <span className="text-sm font-bold text-primary flex-1 font-sans">
+                  {crit.label}
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={crit.maxScore}
+                    value={scores[crit.key]}
+                    onChange={(e) => handleScoreChange(crit.key, e.target.value)}
+                    className="form-input w-16 text-center font-mono py-1 px-2 text-sm focus:bg-white"
+                  />
+                  <span className="mono-num text-xs text-dim w-8 font-bold">
+                    /{crit.maxScore}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {/* Calculated Sum */}
+            <div className="flex items-center justify-between p-4 border-t-2 border-dashed border-border mt-2 bg-surface">
+              <span className="text-base font-bold text-primary font-heading">
+                Sum of Criteria
+              </span>
+              <span className={cn(
+                "mono-num text-xl font-bold px-3 py-1 rounded-sketchy border-2",
+                calculatedSum > 100 
+                  ? 'text-danger bg-danger-subtle border-danger' 
+                  : 'text-primary bg-accent-subtle border-accent'
+              )}>
+                {calculatedSum}/100
+              </span>
+            </div>
           </div>
-        )}
 
-        {/* Re-eval Success Indicator */}
-        {reEvalResult && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--status-success)',
-            backgroundColor: 'var(--status-success-subtle)',
-            padding: '0.5rem 0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.8125rem'
-          }}>
-            <span>✓ AI re-evaluated. Scores redistributed to {reEvalResult.total_score}/100.</span>
+          <AnimatePresence>
+            {/* Error */}
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-2 text-danger bg-danger-subtle p-3 rounded-[15px_225px_15px_255px/255px_15px_225px_15px] border-2 border-dashed border-danger text-sm font-bold font-sans"
+              >
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{error}</span>
+              </motion.div>
+            )}
+
+            {/* Re-eval Success Indicator */}
+            {reEvalResult && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-2 text-success bg-success-subtle p-3 rounded-sketchy border border-success-subtle text-sm font-bold font-sans"
+              >
+                <span>✓ AI re-evaluated. Scores redistributed to {reEvalResult.total_score}/100.</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t-2 border-border mt-auto">
+            <button 
+              onClick={onClose} 
+              className="btn btn-secondary px-6 font-bold" 
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSave} 
+              className="btn btn-primary px-6 flex items-center gap-2 font-bold" 
+              disabled={isSaving || calculatedSum > 100}
+            >
+              <Save size={16} />
+              <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+            </button>
           </div>
-        )}
-
-        {/* Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" disabled={isSaving}>
-            Cancel
-          </button>
-          <button onClick={handleSave} className="btn btn-primary btn-sm" disabled={isSaving || calculatedSum > 100}>
-            <Save size={13} />
-            <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
-          </button>
-        </div>
+        </motion.div>
       </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </AnimatePresence>
   );
 }
 
-/**
- * Builds a full evaluation object from manual score inputs,
- * preserving existing reasoning where available.
- */
 function buildEvaluationFromScores(scores, existingEval) {
   const evaluation = {};
   let totalScore = 0;
