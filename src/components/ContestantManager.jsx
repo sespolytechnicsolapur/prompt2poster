@@ -207,6 +207,7 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
                   <th className="font-heading text-xs text-secondary text-left">Name</th>
                   <th className="font-heading text-xs text-secondary text-left">User ID</th>
                   <th className="font-heading text-xs text-secondary text-left">Unique ID</th>
+                  <th className="font-heading text-xs text-secondary text-left">College Name</th>
                   <th className="text-center font-heading text-xs text-secondary w-24">Whitelist</th>
                   <th className="text-right font-heading text-xs text-secondary w-20">Actions</th>
                 </tr>
@@ -235,6 +236,11 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
                       <td className="align-middle">
                         <span className="mono-num text-sm text-muted">
                           {c.unique_id}
+                        </span>
+                      </td>
+                      <td className="align-middle">
+                        <span className="text-sm text-secondary font-sans font-medium">
+                          {c.college_name || '-'}
                         </span>
                       </td>
                       <td className="text-center align-middle">
