@@ -165,6 +165,7 @@ export default function App() {
             topicVisible={topicVisible}
             isAdmin={isAdmin}
             leaderboard={leaderboard}
+            roundSettings={roundSettings}
           />
         )}
 

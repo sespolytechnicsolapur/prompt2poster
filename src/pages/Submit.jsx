@@ -27,7 +27,8 @@ export function Submit({
   contestant,
   topicVisible,
   isAdmin,
-  leaderboard
+  leaderboard,
+  roundSettings
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -38,8 +39,10 @@ export function Submit({
   const [error, setError] = useState(null);
   const [aiPromptUsed, setAiPromptUsed] = useState('');
 
+  const currentRound = roundSettings?.current_round || 1;
+
   const hasAlreadySubmitted = leaderboard && contestant
-    ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id)
+    ? leaderboard.some(s => s.submitted_by_user_id === contestant.user_id && (s.round_number || 1) === currentRound)
     : false;
 
   const fileInputRef = useRef(null);
