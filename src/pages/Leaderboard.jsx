@@ -28,7 +28,8 @@ export function Leaderboard({
   onToggleWhitelistEnabled,
   whitelistedUserIds,
   onToggleUserWhitelist,
-  roundSettings
+  roundSettings,
+  onToggleQualificationOverride
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -79,11 +80,19 @@ export function Leaderboard({
     });
 
     // Filter by Active Sub Tab (if on Round 1 and qualification is visible)
-    if (activeMainTab === 1 && showQualification) {
+    if (activeMainTab === 1 && (showQualification || isAdmin)) {
       if (activeSubTab === 'qualified') {
-        return roundFiltered.filter(item => item.total_score >= cutoffScore);
+        return roundFiltered.filter(item => {
+          if (item.qualification_override === 'qualified') return true;
+          if (item.qualification_override === 'disqualified') return false;
+          return item.total_score >= cutoffScore;
+        });
       } else if (activeSubTab === 'not_qualified') {
-        return roundFiltered.filter(item => item.total_score < cutoffScore);
+        return roundFiltered.filter(item => {
+          if (item.qualification_override === 'disqualified') return true;
+          if (item.qualification_override === 'qualified') return false;
+          return item.total_score < cutoffScore;
+        });
       }
     }
 
@@ -266,7 +275,20 @@ export function Leaderboard({
                                         : isThird ? 'bg-amber-700/20 border-amber-700 text-amber-700'
                                         : 'bg-transparent border-transparent text-dim';
 
-                      const isQualified = item.total_score >= cutoffScore;
+                      let isQualified = item.total_score >= cutoffScore;
+                      if (item.qualification_override === 'qualified') isQualified = true;
+                      if (item.qualification_override === 'disqualified') isQualified = false;
+
+                      let rowClasses = "cursor-pointer group transition-all duration-300 ";
+                      if (activeMainTab === 1 && (showQualification || isAdmin)) {
+                        if (isQualified) {
+                          rowClasses += "bg-success-subtle/30 hover:bg-success-subtle/60";
+                        } else {
+                          rowClasses += "bg-danger-subtle/20 hover:bg-danger-subtle/40 opacity-90";
+                        }
+                      } else {
+                        rowClasses += "hover:bg-surface-hover";
+                      }
 
                       return (
                         <motion.tr
@@ -276,7 +298,7 @@ export function Leaderboard({
                           transition={{ duration: 0.2, delay: index * 0.05 }}
                           key={item.id}
                           onClick={() => onSelectSubmission(item.id, item)}
-                          className="cursor-pointer group hover:bg-surface-hover transition-colors"
+                          className={rowClasses}
                         >
                           <td className="text-center align-middle">
                             <div className={cn(
@@ -309,13 +331,36 @@ export function Leaderboard({
                           
                           {/* Qualification Status */}
                           {activeMainTab === 1 && (showQualification || isAdmin) && (
-                            <td className="text-center align-middle">
-                              <span className={cn(
-                                "badge px-2 py-1 text-xs",
-                                isQualified ? "bg-success-subtle text-success border-success" : "bg-danger-subtle text-danger border-danger"
-                              )}>
-                                {isQualified ? 'Qualified' : 'Not Qualified'}
-                              </span>
+                            <td className="text-center align-middle" onClick={(e) => {
+                              if (isAdmin) e.stopPropagation();
+                            }}>
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={cn(
+                                  "badge px-2 py-1 text-xs",
+                                  isQualified ? "bg-success-subtle text-success border-success" : "bg-danger-subtle text-danger border-danger",
+                                  item.qualification_override !== 'auto' && "border-dashed"
+                                )}>
+                                  {isQualified ? 'Qualified' : 'Not Qualified'}
+                                </span>
+                                {isAdmin && (
+                                  <div className="flex gap-1 mt-1">
+                                    <button 
+                                      onClick={() => onToggleQualificationOverride(item.id, item.qualification_override === 'qualified' ? 'auto' : 'qualified')}
+                                      className={cn("text-[10px] px-1.5 py-0.5 rounded border transition-colors", item.qualification_override === 'qualified' ? "bg-success text-white border-success" : "bg-surface text-secondary border-border hover:bg-surface-hover")}
+                                      title="Force Qualify"
+                                    >
+                                      ✓
+                                    </button>
+                                    <button 
+                                      onClick={() => onToggleQualificationOverride(item.id, item.qualification_override === 'disqualified' ? 'auto' : 'disqualified')}
+                                      className={cn("text-[10px] px-1.5 py-0.5 rounded border transition-colors", item.qualification_override === 'disqualified' ? "bg-danger text-white border-danger" : "bg-surface text-secondary border-border hover:bg-surface-hover")}
+                                      title="Force Disqualify"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </td>
                           )}
 

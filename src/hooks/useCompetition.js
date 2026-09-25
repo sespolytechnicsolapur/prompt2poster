@@ -17,7 +17,8 @@ import {
   toggleContestantWhitelistByUserId,
   fetchWhitelistedContestants,
   fetchRoundSettings,
-  updateRoundSettings
+  updateRoundSettings,
+  setQualificationOverride
 } from '../services/submissionService';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { getLoggedInContestant, logoutContestant } from '../services/authService';
@@ -255,6 +256,17 @@ export function useCompetition() {
     }
   };
 
+  const toggleQualificationOverride = async (id, overrideStatus) => {
+    try {
+      const updated = await setQualificationOverride(id, overrideStatus);
+      if (updated) {
+        setLeaderboard(prev => prev.map(s => s.id === id ? { ...s, qualification_override: overrideStatus } : s));
+      }
+    } catch (err) {
+      console.error('Failed to toggle qualification override:', err);
+    }
+  };
+
   return {
     // Single topic
     activeTopic,
@@ -297,6 +309,7 @@ export function useCompetition() {
     // Rounds
     roundSettings,
     saveRoundSettings,
+    toggleQualificationOverride,
 
     error,
   };

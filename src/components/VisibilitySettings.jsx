@@ -109,7 +109,7 @@ export function VisibilitySettings({
                 onTouchEnd={saveCutoff}
                 className="flex-1 accent-accent"
               />
-              <div className="bg-white border-2 border-border font-mono font-bold text-primary px-3 py-1 rounded-sketchy w-16 text-center shadow-inner">
+              <div className="bg-surface-hover border-2 border-border font-mono font-bold text-primary px-3 py-1 rounded-sketchy w-16 text-center shadow-inner">
                 {localCutoff}
               </div>
             </div>

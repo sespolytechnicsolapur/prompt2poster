@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   contestant_name TEXT NOT NULL,
   topic TEXT NOT NULL,
   round_number INTEGER DEFAULT 1,
+  qualification_override TEXT DEFAULT 'auto',
   poster_storage_path TEXT NOT NULL DEFAULT 'local-only',
   poster_url TEXT NOT NULL DEFAULT '',
 

@@ -45,7 +45,7 @@ export default function App() {
     leaderboardVisible, topicVisible, whitelistEnabled, whitelistedUserIds,
     toggleLeaderboardVisibility, toggleTopicVisibility,
     toggleWhitelistEnabled, toggleUserWhitelist,
-    roundSettings, saveRoundSettings,
+    roundSettings, saveRoundSettings, toggleQualificationOverride,
   } = useCompetition();
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -182,6 +182,7 @@ export default function App() {
             whitelistedUserIds={whitelistedUserIds}
             onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
             roundSettings={roundSettings}
+            onToggleQualificationOverride={toggleQualificationOverride}
           />
         )}
 
