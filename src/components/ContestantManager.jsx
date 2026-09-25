@@ -149,7 +149,7 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
               disabled={isClearing}
             >
               <Trash2 size={16} />
-              <span>{isClearing ? 'Clearing...' : 'Clear All'}</span>
+              <span>{isClearing ? 'Wiping...' : 'Wipe All Data'}</span>
             </button>
           )}
         </div>

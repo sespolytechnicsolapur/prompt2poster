@@ -57,13 +57,15 @@ export function validateEvaluationScore(evalData) {
     calculatedSum += Math.round(score);
   }
 
-  // Verify total score calculation
+  // Verify and reconcile total score calculation
   const totalScore = Number(evalData.total_score);
   if (isNaN(totalScore)) {
-    errors.push('total_score must be a valid number');
+    // If AI omitted or corrupted total_score, auto-derive from sum of criteria
+    normalizedData.total_score = calculatedSum;
   } else if (totalScore !== calculatedSum) {
-    errors.push(`total_score mismatch: AI reported ${totalScore}, but actual sum of 7 criteria is ${calculatedSum}`);
-    // Auto-fix normalized total score to sum
+    console.warn(`[Score Validation] total_score mismatch: AI reported ${totalScore}, auto-correcting to exact sum of 8 criteria (${calculatedSum})`);
+    normalizedData.total_score = calculatedSum;
+  } else {
     normalizedData.total_score = calculatedSum;
   }
 
