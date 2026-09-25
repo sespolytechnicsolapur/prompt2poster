@@ -78,6 +78,14 @@ export function Navbar({
                 Organizer
               </button>
               {isAdmin && (
+                <button
+                  onClick={() => navTo('whitelist')}
+                  className={`nav-link-btn ${activePage === 'whitelist' ? 'active' : ''}`}
+                >
+                  Whitelist
+                </button>
+              )}
+              {isAdmin && (
                 <button 
                   onClick={() => {
                     if (setIsAdmin) setIsAdmin(false);
@@ -207,6 +215,16 @@ export function Navbar({
           >
             Organizer
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => { navTo('whitelist'); setMobileOpen(false); }}
+              className={`mobile-menu-item ${activePage === 'whitelist' ? 'mobile-menu-active' : ''}`}
+              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '1rem', cursor: 'pointer' }}
+            >
+              Whitelist
+            </button>
+          )}
 
           {isAdmin && (
             <button

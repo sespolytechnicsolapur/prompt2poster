@@ -11,7 +11,9 @@ export function AdminSubmissionTable({
   onEditScores,
   onToggleVisibility,
   onDelete,
-  onViewDetails
+  onViewDetails,
+  whitelistedUserIds,
+  onToggleUserWhitelist
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -81,6 +83,7 @@ export function AdminSubmissionTable({
               <th>College</th>
               <th style={{ textAlign: 'right' }}>Score</th>
               <th style={{ width: '60px', textAlign: 'center' }}>Status</th>
+              <th style={{ width: '80px', textAlign: 'center' }}>Whitelist</th>
               <th style={{ width: '160px', textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
@@ -140,6 +143,21 @@ export function AdminSubmissionTable({
                       style={{ fontSize: '0.625rem' }}>
                       {sub.is_hidden ? 'Hidden' : 'Visible'}
                     </span>
+                  </td>
+
+                  {/* Whitelist */}
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleUserWhitelist(sub.submitted_by_user_id, !whitelistedUserIds.has(sub.submitted_by_user_id));
+                      }}
+                      className={`btn btn-sm ${whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', height: '24px' }}
+                      title={whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'Remove from whitelist' : 'Add to whitelist'}
+                    >
+                      {whitelistedUserIds?.has(sub.submitted_by_user_id) ? 'ON' : 'OFF'}
+                    </button>
                   </td>
 
                   {/* Actions */}

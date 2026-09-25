@@ -8,6 +8,7 @@ import { Leaderboard } from './pages/Leaderboard';
 import { SubmissionDetails } from './pages/SubmissionDetails';
 import { TopicManagement } from './pages/TopicManagement';
 import { Login } from './pages/Login';
+import { Whitelist } from './pages/Whitelist';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
@@ -41,8 +42,9 @@ export default function App() {
     contestant, isAdmin, setIsAdmin,
     handleLogin, handleLogout,
 
-    leaderboardVisible, topicVisible,
+    leaderboardVisible, topicVisible, whitelistEnabled, whitelistedUserIds,
     toggleLeaderboardVisibility, toggleTopicVisibility,
+    toggleWhitelistEnabled, toggleUserWhitelist,
   } = useCompetition();
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -174,6 +176,10 @@ export default function App() {
             onRefresh={refreshLeaderboard}
             leaderboardVisible={leaderboardVisible}
             isAdmin={isAdmin}
+            whitelistEnabled={whitelistEnabled}
+            onToggleWhitelistEnabled={(v) => toggleWhitelistEnabled(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
           />
         )}
 
@@ -205,6 +211,19 @@ export default function App() {
             onViewDetails={handleViewDetails}
             isAdmin={isAdmin}
             setIsAdmin={setIsAdmin}
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+          />
+        )}
+
+        {/* WHITELIST */}
+        {activePage === 'whitelist' && (
+          <Whitelist
+            whitelistedUserIds={whitelistedUserIds}
+            onToggleUserWhitelist={(userId, isWhitelisted) => toggleUserWhitelist(userId, isWhitelisted, import.meta.env.VITE_ORGANIZER_PASSWORD)}
+            isAdmin={isAdmin}
+            whitelistEnabled={whitelistEnabled}
+            onToggleWhitelistEnabled={(v) => toggleWhitelistEnabled(v, import.meta.env.VITE_ORGANIZER_PASSWORD)}
           />
         )}
 

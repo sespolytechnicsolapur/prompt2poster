@@ -111,6 +111,8 @@ function maskKey(key) {
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
 }
 
+// Round-robin counter — resets on Vercel cold starts. This is acceptable
+// because the failover loop tries ALL keys regardless of starting index.
 let keyCounter = 0;
 
 export default async function handler(req, res) {
@@ -220,6 +222,7 @@ export default async function handler(req, res) {
     try {
       let cleaned = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
       cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // Greedy match is intentional — our schema has nested {score, reason} objects
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
       if (jsonMatch) cleaned = jsonMatch[0];
       parsedResult = JSON.parse(cleaned);

@@ -12,6 +12,10 @@ import {
   setLeaderboardVisibility,
   fetchTopicVisibility,
   setTopicVisibility,
+  fetchWhitelistEnabled,
+  setWhitelistEnabled,
+  toggleContestantWhitelistByUserId,
+  fetchWhitelistedContestants,
 } from '../services/submissionService';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { getLoggedInContestant, logoutContestant } from '../services/authService';
@@ -50,6 +54,8 @@ export function useCompetition() {
   // ── Visibility State ──────────────────────────────────────────────────────
   const [leaderboardVisible, setLeaderboardVisibleState] = useState(true);
   const [topicVisible, setTopicVisibleState]             = useState(true);
+  const [whitelistEnabled, setWhitelistEnabledState]     = useState(false);
+  const [whitelistedUserIds, setWhitelistedUserIds]      = useState(new Set());
 
   const [error, setError] = useState(null);
 
@@ -93,16 +99,23 @@ export function useCompetition() {
 
   const loadVisibility = useCallback(async () => {
     try {
-      const [lbVisible, tVisible] = await Promise.all([
+      const [lbVisible, tVisible, wEnabled] = await Promise.all([
         fetchLeaderboardVisibility(),
         fetchTopicVisibility(),
+        fetchWhitelistEnabled(),
       ]);
       setLeaderboardVisibleState(lbVisible);
       setTopicVisibleState(tVisible);
+      setWhitelistEnabledState(wEnabled);
+      
+      if (isAdmin && import.meta.env.VITE_ORGANIZER_PASSWORD) {
+        const whitelisted = await fetchWhitelistedContestants(import.meta.env.VITE_ORGANIZER_PASSWORD);
+        setWhitelistedUserIds(new Set(whitelisted.map(c => c.user_id)));
+      }
     } catch (err) {
       console.error('Failed to load visibility settings:', err);
     }
-  }, []);
+  }, [isAdmin]);
 
   // ── Initial Load ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -196,6 +209,30 @@ export function useCompetition() {
     }
   };
 
+  const toggleWhitelistEnabled = async (enabled, adminPassword) => {
+    try {
+      const result = await setWhitelistEnabled(enabled, adminPassword);
+      setWhitelistEnabledState(result);
+    } catch (err) {
+      console.error('Failed to toggle whitelist:', err);
+    }
+  };
+
+  const toggleUserWhitelist = async (userId, isWhitelisted, adminPassword) => {
+    try {
+      await toggleContestantWhitelistByUserId(userId, isWhitelisted, adminPassword);
+      setWhitelistedUserIds(prev => {
+        const next = new Set(prev);
+        if (isWhitelisted) next.add(userId);
+        else next.delete(userId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to toggle contestant whitelist:', err);
+      throw err;
+    }
+  };
+
   return {
     // Single topic
     activeTopic,
@@ -224,11 +261,15 @@ export function useCompetition() {
     handleLogin,
     handleLogout,
 
-    // Visibility
+    // Visibility & Whitelist
     leaderboardVisible,
     topicVisible,
+    whitelistEnabled,
+    whitelistedUserIds,
     toggleLeaderboardVisibility,
     toggleTopicVisibility,
+    toggleWhitelistEnabled,
+    toggleUserWhitelist,
     refreshVisibility: loadVisibility,
 
     error,

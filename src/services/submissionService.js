@@ -503,15 +503,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // First fetch current edit log
-      const { data: current } = await supabase
-        .from('submissions')
-        .select('score_edit_log')
-        .eq('id', id)
-        .single();
-
-      const existingLog = current?.score_edit_log || [];
-
+      // Update scores in a single UPDATE (no read needed)
       const { data, error } = await supabase
         .from('submissions')
         .update({
@@ -527,13 +519,35 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
           evaluation_reasoning:         updatedEvaluation,
           issues:                       updatedEvaluation.issues || [],
           overall_evaluation:           updatedEvaluation.overall_evaluation,
-          score_edit_log:               [...existingLog, editLogEntry],
         })
         .eq('id', id)
         .select()
         .single();
 
       if (error) console.error('[updateScores DB Error]:', error.message);
+
+      // Atomically append to score_edit_log via RPC (avoids read-modify-write race)
+      try {
+        await supabase.rpc('append_score_edit_log', {
+          submission_id: id,
+          new_entry: editLogEntry,
+        });
+      } catch (rpcErr) {
+        // Fallback: if the RPC function doesn't exist yet (migration not run),
+        // do the old read-modify-write approach
+        console.warn('[updateScores] RPC append_score_edit_log not available, using fallback:', rpcErr.message);
+        const { data: current } = await supabase
+          .from('submissions')
+          .select('score_edit_log')
+          .eq('id', id)
+          .single();
+        const existingLog = current?.score_edit_log || [];
+        await supabase
+          .from('submissions')
+          .update({ score_edit_log: [...existingLog, editLogEntry] })
+          .eq('id', id);
+      }
+
       if (data) return data;
     } catch (err) { console.error('[updateScores DB Error]:', err.message); }
   }
@@ -605,4 +619,88 @@ export async function setTopicVisibility(visible, adminPassword) {
   if (error) throw new Error(error.message);
   
   return visible;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WHITELIST CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch current whitelist enabled state.
+ * @returns {Promise<boolean>}
+ */
+export async function fetchWhitelistEnabled() {
+  if (!isSupabaseConfigured || !supabase) return false;
+  try {
+    const { data } = await supabase.from('topics').select('whitelist_enabled').eq('is_active', true).single();
+    return data?.whitelist_enabled ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Set whitelist enabled state (admin only).
+ * @param {boolean} enabled
+ * @param {string} adminPassword
+ * @returns {Promise<boolean>} New state
+ */
+export async function setWhitelistEnabled(enabled, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+  
+  const { error } = await supabase.from('topics').update({ whitelist_enabled: enabled }).eq('is_active', true);
+  if (error) throw new Error(error.message);
+  
+  return enabled;
+}
+
+/**
+ * Toggle a contestant's whitelist status by user_id
+ */
+export async function toggleContestantWhitelistByUserId(userId, isWhitelisted, adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase not configured');
+
+  const { data, error } = await supabase
+    .from('contestants')
+    .update({ is_whitelisted: isWhitelisted })
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Fetch all whitelisted contestants
+ */
+export async function fetchWhitelistedContestants(adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('*')
+    .eq('is_whitelisted', true);
+    
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+/**
+ * Fetch all contestants (for admin)
+ */
+export async function fetchAllContestants(adminPassword) {
+  if (adminPassword !== ORGANIZER_PASSWORD) throw new Error('Unauthorized');
+  if (!isSupabaseConfigured || !supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('contestants')
+    .select('*')
+    .order('created_at', { ascending: false });
+    
+  if (error) throw new Error(error.message);
+  return data || [];
 }

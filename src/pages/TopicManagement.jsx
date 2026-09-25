@@ -235,7 +235,7 @@ function TopicPoolTab({ topicPool, loadingPool, onAddTopic, onRemoveTopic }) {
 }
 
 // ── Submissions Management Tab ────────────────────────────────────────────────
-function SubmissionsTab({ adminPassword, onViewDetails }) {
+function SubmissionsTab({ adminPassword, onViewDetails, whitelistedUserIds, onToggleUserWhitelist }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editTarget, setEditTarget] = useState(null);
@@ -310,6 +310,8 @@ function SubmissionsTab({ adminPassword, onViewDetails }) {
         onToggleVisibility={handleToggleVisibility}
         onDelete={setDeleteTarget}
         onViewDetails={onViewDetails}
+        whitelistedUserIds={whitelistedUserIds}
+        onToggleUserWhitelist={onToggleUserWhitelist}
       />
 
       {/* Score Edit Modal */}
@@ -351,7 +353,9 @@ export function TopicManagement({
   onToggleTopic,
   onViewDetails,
   isAdmin,
-  setIsAdmin
+  setIsAdmin,
+  whitelistedUserIds,
+  onToggleUserWhitelist
 }) {
   const [unlocked, setUnlocked] = useState(isAdmin || !ORGANIZER_PASSWORD);
   const [activeTab, setActiveTab] = useState('topics');
@@ -453,7 +457,12 @@ export function TopicManagement({
 
       {/* ── Submissions Tab ─────────────────────────────────────────── */}
       {activeTab === 'submissions' && (
-        <SubmissionsTab adminPassword={adminPassword} onViewDetails={onViewDetails} />
+        <SubmissionsTab
+          adminPassword={adminPassword}
+          onViewDetails={onViewDetails}
+          whitelistedUserIds={whitelistedUserIds}
+          onToggleUserWhitelist={onToggleUserWhitelist}
+        />
       )}
 
       {/* ── Settings Tab ────────────────────────────────────────────── */}

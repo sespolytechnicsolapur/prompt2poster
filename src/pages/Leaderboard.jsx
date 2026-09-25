@@ -8,7 +8,11 @@ export function Leaderboard({
   onSelectSubmission,
   onRefresh,
   leaderboardVisible,
-  isAdmin
+  isAdmin,
+  whitelistEnabled,
+  onToggleWhitelistEnabled,
+  whitelistedUserIds,
+  onToggleUserWhitelist
 }) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -87,6 +91,21 @@ export function Leaderboard({
                 Hidden from Contestants
               </span>
             )}
+            {isAdmin && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Login Whitelist:</span>
+                <button
+                  onClick={() => onToggleWhitelistEnabled(!whitelistEnabled)}
+                  className={`btn btn-sm ${whitelistEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{
+                    backgroundColor: whitelistEnabled ? 'var(--status-success)' : 'transparent',
+                    borderColor: whitelistEnabled ? 'var(--status-success)' : 'var(--border-color)',
+                  }}
+                >
+                  {whitelistEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -144,6 +163,7 @@ export function Leaderboard({
                   <th>Contestant</th>
                   <th>Topic</th>
                   <th style={{ textAlign: 'right' }}>Score</th>
+                  {isAdmin && <th style={{ textAlign: 'center', width: '140px' }}>Whitelist</th>}
                   <th style={{ width: '50px' }}></th>
                 </tr>
               </thead>
@@ -215,6 +235,17 @@ export function Leaderboard({
                           fontFamily: 'var(--font-sans)'
                         }}>/100</span>
                       </td>
+                      {isAdmin && (
+                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => onToggleUserWhitelist(item.submitted_by_user_id, !whitelistedUserIds.has(item.submitted_by_user_id))}
+                            className={`btn btn-sm ${whitelistedUserIds.has(item.submitted_by_user_id) ? 'btn-ghost' : 'btn-secondary'}`}
+                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem' }}
+                          >
+                            {whitelistedUserIds.has(item.submitted_by_user_id) ? 'Remove' : 'Add'}
+                          </button>
+                        </td>
+                      )}
                       <td style={{ textAlign: 'right', color: 'var(--accent-primary)' }}>
                         <ArrowRight size={16} />
                       </td>

@@ -29,6 +29,37 @@ const ORGANIZER_PASSWORD = process.env.VITE_ORGANIZER_PASSWORD || '';
 app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 
+// ── Simple In-Memory Rate Limiter ────────────────────────────────────────────
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // max per window per IP
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return next();
+  }
+
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    console.warn(`[Rate Limit] IP ${ip} exceeded ${RATE_LIMIT_MAX_REQUESTS} requests/min`);
+    return res.status(429).json({ error: 'Too many requests. Please wait before trying again.' });
+  }
+  return next();
+}
+
+// Clean up stale rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS * 2) rateLimitMap.delete(ip);
+  }
+}, 5 * 60 * 1000);
+
 // ── In-Memory Stores (mirrored to localStorage on the client) ────────────────
 // These provide a server-side source of truth for features that need it.
 // In production with Supabase, these are backed by the database.
@@ -224,21 +255,23 @@ app.delete('/api/contestants/clear', requireAdmin, (_req, res) => {
 function generateFallbackEvaluation(topic, contestantName) {
   const relevance = Math.floor(Math.random() * 4) + 16;
   const hierarchy = Math.floor(Math.random() * 4) + 11;
-  const typography = Math.floor(Math.random() * 4) + 11;
+  const typography = Math.floor(Math.random() * 3) + 7;
   const composition = Math.floor(Math.random() * 4) + 11;
   const creativity = Math.floor(Math.random() * 4) + 11;
   const color = Math.floor(Math.random() * 3) + 7;
-  const communication = Math.floor(Math.random() * 3) + 7;
-  const total = relevance + hierarchy + typography + composition + creativity + color + communication;
+  const communication = Math.floor(Math.random() * 2) + 3;
+  const promptAuth = Math.floor(Math.random() * 3) + 7;
+  const total = relevance + hierarchy + typography + composition + creativity + color + communication + promptAuth;
 
   return {
     relevance_to_topic: { score: relevance, max_score: 20, reason: `The poster clearly addresses '${topic}' with clear central imagery and relevant key messaging.` },
     visual_hierarchy: { score: hierarchy, max_score: 15, reason: `Good primary focal point on header title. Secondary details could benefit from slightly stronger scaling.` },
-    typography_readability: { score: typography, max_score: 15, reason: `Main title typography is sharp and legible. Sub-headers maintain readable letter spacing and clean contrast.` },
+    typography_readability: { score: typography, max_score: 10, reason: `Main title typography is sharp and legible. Sub-headers maintain readable letter spacing and clean contrast.` },
     composition_layout: { score: composition, max_score: 15, reason: `Balanced grid structure with adequate margin spacing, avoiding visual clutter in key sections.` },
     creativity_originality: { score: creativity, max_score: 15, reason: `Distinctive artistic concept featuring modern graphic styling and imaginative topic interpretation.` },
     color_usage: { score: color, max_score: 10, reason: `Harmonious color palette with effective highlight accents, maintaining proper visual contrast.` },
-    overall_communication: { score: communication, max_score: 10, reason: `Communicates core topic takeaway effectively to a general competition audience.` },
+    overall_communication: { score: communication, max_score: 5, reason: `Communicates core topic takeaway effectively to a general competition audience.` },
+    prompt_authenticity: { score: promptAuth, max_score: 10, reason: `The prompt appears naturally composed with human creative intent, demonstrating genuine engagement with the topic.` },
     total_score: total,
     issues: [
       'Secondary body text contrast could be strengthened against darker background areas.',
@@ -254,7 +287,7 @@ function generateFallbackEvaluation(topic, contestantName) {
  * Body: { posterDataUrl, topic, contestantName }
  * Returns AI evaluation scores + reasoning
  */
-app.post('/api/evaluate', async (req, res) => {
+app.post('/api/evaluate', rateLimit, async (req, res) => {
   try {
     const { posterDataUrl, topic, contestantName } = req.body;
 
@@ -281,7 +314,7 @@ app.post('/api/evaluate', async (req, res) => {
     // Build message payload
     const userContent = [{
       type: 'text',
-      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 7 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
+      text: `Contestant Name: ${contestantName}\nAssigned Competition Topic: "${topic}"\n\nEvaluate the attached poster image across all 8 criteria. Return ONLY the raw JSON object — no markdown, no prose, no explanation outside the JSON.`
     }];
 
     if (hasImage) {
@@ -355,7 +388,7 @@ app.post('/api/re-evaluate', requireAdmin, async (req, res) => {
 
     console.log(`[Re-Evaluate] Redistributing score to ${score} for ${contestantName}`);
 
-    const userMessage = `Contestant: ${contestantName}\nTopic: "${topic}"\nTarget Total Score: ${score}/100\n\nRedistribute this total across all 7 criteria and write detailed reasoning for each. Return ONLY the raw JSON object.`;
+    const userMessage = `Contestant: ${contestantName}\nTopic: "${topic}"\nTarget Total Score: ${score}/100\n\nRedistribute this total across all 8 criteria and write detailed reasoning for each. Return ONLY the raw JSON object.`;
 
     const { rawContent, keyUsed } = await callGroqAPI({
       messages: [
