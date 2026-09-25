@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { LogIn, Eye, EyeOff, AlertCircle, User, KeyRound, Pencil } from 'lucide-react';
+import { LogIn, Eye, EyeOff, AlertCircle, User, KeyRound } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { loginContestant } from '../services/authService';
+import { cn } from '../lib/utils';
 
-/**
- * Login page for contestants.
- * Authenticates using User ID + Unique ID credentials
- * imported from the admin Excel upload.
- */
 export function Login({ onLoginSuccess }) {
   const [userId, setUserId] = useState('');
   const [uniqueId, setUniqueId] = useState('');
@@ -35,56 +32,37 @@ export function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{
-      maxWidth: '420px', margin: '3rem auto',
-      display: 'flex', flexDirection: 'column', gap: '1.5rem',
-      position: 'relative'
-    }}>
+    <div className="max-w-md mx-auto my-12 flex flex-col gap-6 relative">
       {/* Header */}
-      <div style={{ textAlign: 'center', animation: 'fade-up 0.5s ease-out both' }}>
-        <div style={{
-          width: '56px', height: '56px',
-          borderRadius: '16px',
-          backgroundColor: 'var(--text-primary)',
-          boxShadow: 'var(--shadow-md)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 1.25rem auto',
-          color: 'var(--text-inverse)'
-        }}>
-          <LogIn size={24} />
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="text-center"
+      >
+        <div className="w-16 h-16 rounded-2xl bg-primary text-inverse flex items-center justify-center mx-auto mb-5 shadow-sketchy transform -rotate-3 hover:rotate-3 transition-transform">
+          <LogIn size={28} />
         </div>
-        <h1 style={{
-          fontSize: '2rem', fontWeight: 800,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-display)',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.02em'
-        }}>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary font-display mb-2 tracking-tight">
           Contestant Login
         </h1>
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: '1rem', margin: 0, lineHeight: '1.6',
-          fontFamily: 'var(--font-sans)',
-        }}>
+        <p className="text-secondary text-base m-0 leading-relaxed font-sans">
           Enter the User ID and Unique ID provided to you at the competition.
         </p>
-      </div>
+      </motion.div>
 
       {/* Login Form */}
-      <form
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
         onSubmit={handleSubmit}
-        className="surface-card"
-        style={{
-          padding: '1.75rem',
-          display: 'flex', flexDirection: 'column', gap: '1.25rem',
-          animation: 'fade-up 0.6s ease-out both 0.1s'
-        }}
+        className="surface-card p-7 flex flex-col gap-6 shadow-sketchy"
       >
         {/* User ID */}
-        <div className="form-group">
-          <label className="form-label" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem' }}>
-            <User size={16} />
+        <div className="flex flex-col gap-2">
+          <label className="text-primary font-heading font-bold text-lg flex items-center gap-2">
+            <User size={18} className="text-accent" />
             <span>User ID</span>
           </label>
           <input
@@ -92,99 +70,81 @@ export function Login({ onLoginSuccess }) {
             placeholder="e.g. SES-042"
             value={userId}
             onChange={(e) => { setUserId(e.target.value); setError(null); }}
-            className="form-input"
+            className="form-input text-lg font-mono"
             autoFocus
             autoComplete="username"
-            style={{ fontFamily: 'var(--font-sans)' }}
           />
         </div>
 
         {/* Unique ID */}
-        <div className="form-group">
-          <label className="form-label" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem' }}>
-            <KeyRound size={16} />
+        <div className="flex flex-col gap-2">
+          <label className="text-primary font-heading font-bold text-lg flex items-center gap-2">
+            <KeyRound size={18} className="text-accent" />
             <span>Unique ID</span>
           </label>
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <input
               type={showId ? 'text' : 'password'}
               placeholder="Enter your unique code..."
               value={uniqueId}
               onChange={(e) => { setUniqueId(e.target.value); setError(null); }}
-              className="form-input"
-              style={{ paddingRight: '2.5rem', fontFamily: 'var(--font-sans)' }}
+              className="form-input text-lg font-mono pr-12 w-full"
               autoComplete="current-password"
             />
             <button
               type="button"
               onClick={() => setShowId(v => !v)}
-              style={{
-                position: 'absolute', right: '0.75rem', top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--text-muted)', padding: 0,
-                display: 'flex', alignItems: 'center'
-              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors flex items-center p-1"
               tabIndex={-1}
               aria-label={showId ? 'Hide Unique ID' : 'Show Unique ID'}
             >
-              {showId ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showId ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--status-danger-subtle)',
-            padding: '0.7rem 0.95rem',
-            borderRadius: '15px 225px 15px 255px / 255px 15px 225px 15px',
-            border: '2px solid var(--status-danger)',
-            fontSize: '0.9rem',
-            fontFamily: 'var(--font-sans)',
-            animation: 'wiggle 0.5s ease-out'
-          }}>
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 text-danger bg-danger-subtle p-3 rounded-[15px_225px_15px_255px/255px_15px_225px_15px] border-2 border-danger font-sans text-sm"
+          >
+            <AlertCircle size={18} className="shrink-0" />
+            <span className="font-bold">{error}</span>
+          </motion.div>
         )}
 
         {/* Submit Button */}
-        <button
+        <motion.button
+          whileHover={{ scale: (isLoading || !userId.trim() || !uniqueId.trim()) ? 1 : 1.02, rotate: 1 }}
+          whileTap={{ scale: (isLoading || !userId.trim() || !uniqueId.trim()) ? 1 : 0.98 }}
           type="submit"
-          className="btn btn-accent"
-          style={{
-            width: '100%', padding: '0.8rem 1rem',
-            fontSize: '1.1rem',
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
-            marginTop: '0.25rem',
-            borderRadius: 'var(--radius-sm)'
-          }}
+          className="btn btn-accent w-full py-4 text-xl font-heading font-bold mt-2 flex items-center justify-center gap-2"
           disabled={isLoading || !userId.trim() || !uniqueId.trim()}
         >
-          <LogIn size={18} />
+          <LogIn size={22} />
           <span>{isLoading ? 'Verifying...' : 'Login →'}</span>
-        </button>
-      </form>
+        </motion.button>
+      </motion.form>
 
       {/* Help text */}
-      <p style={{
-        textAlign: 'center', fontSize: '0.85rem',
-        color: 'var(--text-dim)', margin: 0,
-        fontFamily: 'var(--font-sans)',
-        animation: 'fade-up 0.5s ease-out both 0.3s'
-      }}>
+      <motion.p 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="text-center text-sm text-dim font-sans m-0"
+      >
         Your Unique ID was provided at the competition venue. Contact an organizer if you need assistance.
-      </p>
+      </motion.p>
 
       {/* Organizer Access Toggle */}
-      <div style={{
-        textAlign: 'center', marginTop: '0.5rem',
-        animation: 'fade-up 0.5s ease-out both 0.4s'
-      }}>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="text-center mt-2"
+      >
         <button
           onClick={() => {
             const pwd = prompt("Enter Organizer Password:");
@@ -194,19 +154,11 @@ export function Login({ onLoginSuccess }) {
               alert("Incorrect password.");
             }
           }}
-          style={{
-            background: 'none', border: 'none', color: 'var(--text-muted)',
-            fontSize: '0.9rem', cursor: 'pointer',
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 500,
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+          className="text-muted hover:text-primary transition-colors text-sm font-sans font-semibold underline underline-offset-4 decoration-muted hover:decoration-primary"
         >
           Organizer Access
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 }

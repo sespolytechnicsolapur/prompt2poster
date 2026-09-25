@@ -1,9 +1,8 @@
 import React from 'react';
 import { Eye, EyeOff, Trophy, FileText } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { motion } from 'framer-motion';
 
-/**
- * Admin settings panel for leaderboard and topic visibility toggles.
- */
 export function VisibilitySettings({
   leaderboardVisible,
   topicVisible,
@@ -12,29 +11,24 @@ export function VisibilitySettings({
   isUpdating
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Leaderboard Visibility */}
-      <div className="surface-card" style={{
-        padding: '1rem 1.25rem',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: '0.75rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <div style={{
-            width: '32px', height: '32px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: leaderboardVisible ? 'var(--status-success-subtle)' : 'var(--status-danger-subtle)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: leaderboardVisible ? 'var(--status-success)' : 'var(--status-danger)',
-            flexShrink: 0
-          }}>
-            <Trophy size={16} />
+      <motion.div 
+        whileHover={{ scale: 1.01 }}
+        className="surface-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 border border-border shadow-sm"
+      >
+        <div className="flex items-start gap-4">
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transform -rotate-3 transition-colors",
+            leaderboardVisible ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+          )}>
+            <Trophy size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <div className="text-base font-bold text-primary font-heading mb-1">
               Leaderboard Visibility
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <div className="text-sm text-secondary font-sans leading-relaxed">
               {leaderboardVisible
                 ? 'Contestants can see the live leaderboard and rankings.'
                 : 'Leaderboard is hidden from all contestants. Only admins can view it.'}
@@ -44,36 +38,34 @@ export function VisibilitySettings({
 
         <button
           onClick={() => onToggleLeaderboard(!leaderboardVisible)}
-          className={`btn btn-sm ${leaderboardVisible ? 'btn-secondary' : 'btn-primary'}`}
+          className={cn(
+            "btn px-5 py-2 font-bold flex items-center gap-2 shrink-0 border-2",
+            leaderboardVisible ? 'btn-secondary' : 'btn-primary'
+          )}
           disabled={isUpdating}
         >
-          {leaderboardVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+          {leaderboardVisible ? <EyeOff size={16} /> : <Eye size={16} />}
           <span>{leaderboardVisible ? 'Hide Leaderboard' : 'Show Leaderboard'}</span>
         </button>
-      </div>
+      </motion.div>
 
       {/* Topic Visibility */}
-      <div className="surface-card" style={{
-        padding: '1rem 1.25rem',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: '0.75rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <div style={{
-            width: '32px', height: '32px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: topicVisible ? 'var(--status-success-subtle)' : 'var(--status-danger-subtle)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: topicVisible ? 'var(--status-success)' : 'var(--status-danger)',
-            flexShrink: 0
-          }}>
-            <FileText size={16} />
+      <motion.div 
+        whileHover={{ scale: 1.01 }}
+        className="surface-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 border border-border shadow-sm"
+      >
+        <div className="flex items-start gap-4">
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transform rotate-3 transition-colors",
+            topicVisible ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+          )}>
+            <FileText size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <div className="text-base font-bold text-primary font-heading mb-1">
               Topic Visibility
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <div className="text-sm text-secondary font-sans leading-relaxed">
               {topicVisible
                 ? 'Contestants can see the competition topic.'
                 : 'Topic is hidden. Contestants see a "Topic will be revealed shortly" message.'}
@@ -83,23 +75,23 @@ export function VisibilitySettings({
 
         <button
           onClick={() => onToggleTopic(!topicVisible)}
-          className={`btn btn-sm ${topicVisible ? 'btn-secondary' : 'btn-primary'}`}
+          className={cn(
+            "btn px-5 py-2 font-bold flex items-center gap-2 shrink-0 border-2",
+            topicVisible ? 'btn-secondary' : 'btn-primary'
+          )}
           disabled={isUpdating}
         >
-          {topicVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+          {topicVisible ? <EyeOff size={16} /> : <Eye size={16} />}
           <span>{topicVisible ? 'Hide Topic' : 'Reveal Topic'}</span>
         </button>
-      </div>
+      </motion.div>
 
       {/* Status Summary */}
-      <div style={{
-        display: 'flex', gap: '0.5rem', flexWrap: 'wrap',
-        fontSize: '0.75rem', color: 'var(--text-dim)'
-      }}>
-        <span className={`badge badge-mono ${leaderboardVisible ? 'badge-success' : ''}`} style={{ fontSize: '0.625rem' }}>
+      <div className="flex flex-wrap gap-2 text-xs text-dim font-bold font-sans">
+        <span className={cn("badge badge-mono px-3 py-1", leaderboardVisible && 'bg-success-subtle text-success border-success')}>
           Leaderboard: {leaderboardVisible ? 'VISIBLE' : 'HIDDEN'}
         </span>
-        <span className={`badge badge-mono ${topicVisible ? 'badge-success' : ''}`} style={{ fontSize: '0.625rem' }}>
+        <span className={cn("badge badge-mono px-3 py-1", topicVisible && 'bg-success-subtle text-success border-success')}>
           Topic: {topicVisible ? 'VISIBLE' : 'HIDDEN'}
         </span>
       </div>
