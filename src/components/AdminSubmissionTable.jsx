@@ -718,11 +718,11 @@ export function AdminSubmissionTable({
 
           border-bottom:
             2px dashed
-            var(--border, #e5e7eb);
+            var(--border-color, #e5e7eb);
 
           background:
             var(
-              --surface-subtle,
+              --bg-surface-subtle,
               #fafafa
             );
 
@@ -772,11 +772,11 @@ export function AdminSubmissionTable({
 
           flex-shrink: 0;
 
-          background: #ffffff;
+          background: var(--bg-input, #ffffff);
 
           border:
             1px solid
-            #e5e7eb;
+            var(--border-color, #e5e7eb);
 
           border-radius: 14px;
 
@@ -792,7 +792,7 @@ export function AdminSubmissionTable({
 
         .submission-search:hover {
 
-          border-color: #d1d5db;
+          border-color: var(--border-strong, #d1d5db);
 
         }
 
@@ -800,16 +800,11 @@ export function AdminSubmissionTable({
 
         .submission-search:focus-within {
 
-          border-color: #111827;
+          border-color: var(--border-focus, #111827);
 
           box-shadow:
             0 0 0 3px
-            rgba(
-              17,
-              24,
-              39,
-              0.07
-            );
+            var(--accent-primary-subtle, rgba(17,24,39,0.07));
 
         }
 
@@ -826,7 +821,7 @@ export function AdminSubmissionTable({
           transform:
             translateY(-50%);
 
-          color: #9ca3af;
+          color: var(--text-dim, #9ca3af);
 
           pointer-events: none;
 
@@ -857,7 +852,7 @@ export function AdminSubmissionTable({
 
           font-weight: 500;
 
-          color: #111827;
+          color: var(--text-primary, #111827);
 
           box-sizing: border-box;
 
@@ -867,7 +862,7 @@ export function AdminSubmissionTable({
 
         .submission-search-input::placeholder {
 
-          color: #9ca3af;
+          color: var(--text-dim, #9ca3af);
 
           font-weight: 400;
 
@@ -900,9 +895,9 @@ export function AdminSubmissionTable({
 
           border-radius: 8px;
 
-          background: #f3f4f6;
+          background: var(--bg-surface-hover, #f3f4f6);
 
-          color: #6b7280;
+          color: var(--text-secondary, #6b7280);
 
           cursor: pointer;
 
@@ -912,9 +907,9 @@ export function AdminSubmissionTable({
 
         .submission-search-clear:hover {
 
-          background: #e5e7eb;
+          background: var(--bg-surface-active, #e5e7eb);
 
-          color: #111827;
+          color: var(--text-primary, #111827);
 
         }
 
