@@ -116,7 +116,7 @@ export function Leaderboard({
           if (item.qualification_override === 'disqualified') return false;
 
           return item.total_score >= cutoffScore;
-        });
+        }).sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
       }
 
       if (activeSubTab === 'not_qualified') {
@@ -125,11 +125,11 @@ export function Leaderboard({
           if (item.qualification_override === 'qualified') return false;
 
           return item.total_score < cutoffScore;
-        });
+        }).sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
       }
     }
 
-    return roundFiltered;
+    return roundFiltered.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
   }, [
     leaderboard,
     searchTerm,
