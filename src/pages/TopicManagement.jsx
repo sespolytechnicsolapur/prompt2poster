@@ -1008,8 +1008,6 @@ function SubmissionsTab({
 
         </div>
 
-        </div>
-
       </div>
 
       <div className="flex justify-end mb-4 pr-6">
