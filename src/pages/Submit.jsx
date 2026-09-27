@@ -87,6 +87,28 @@ export function Submit({
         )
       : false;
 
+  const cutoffScore = roundSettings?.qualification_cutoff || 60;
+  
+  let isNotQualified = false;
+  if (currentRound === 2 && leaderboard && contestant) {
+    const round1Submission = leaderboard.find(
+      (s) => s.submitted_by_user_id === contestant.user_id && (s.round_number || 1) === 1
+    );
+
+    if (!round1Submission) {
+      isNotQualified = true; // No round 1 submission means not qualified
+    } else {
+      const override = round1Submission.qualification_override;
+      const score = round1Submission.total_score || 0;
+      
+      if (override === 'disqualified') {
+        isNotQualified = true;
+      } else if (override !== 'qualified' && score < cutoffScore) {
+        isNotQualified = true;
+      }
+    }
+  }
+
   const fileInputRef = useRef(null);
   const screenshotInputRef = useRef(null);
 
@@ -265,6 +287,41 @@ export function Submit({
   /* ==========================================
      SUCCESS STATE
   ========================================== */
+
+  if (isNotQualified) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="submit-success-page"
+      >
+        <div className="submit-success-glow" style={{ background: 'var(--danger-glow)' }} />
+
+        <div className="submit-success-icon" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' }}>
+          <AlertCircle size={42} />
+        </div>
+
+        <div className="submit-success-badge" style={{ color: 'var(--danger)', background: 'var(--danger-bg)' }}>
+          <AlertCircle size={14} />
+          Qualification Required
+        </div>
+
+        <h1>Not Qualified</h1>
+
+        <p>
+          Unfortunately, your Round 1 score did not meet the qualification cutoff for Round 2, or you have been disqualified.
+        </p>
+
+        <button
+          onClick={() => window.location.href = '/'}
+          className="submit-btn primary mt-8"
+          style={{ width: 'auto', padding: '0 2rem' }}
+        >
+          Return Home
+        </button>
+      </motion.div>
+    );
+  }
 
   if (isSubmitted || hasAlreadySubmitted) {
     return (

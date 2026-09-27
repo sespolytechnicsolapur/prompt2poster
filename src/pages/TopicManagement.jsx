@@ -35,6 +35,7 @@ import { reEvaluateWithNewScore } from '../services/evaluationService';
 import {
   fetchLeaderboard,
   deleteSubmission,
+  clearAllSubmissions,
   toggleSubmissionVisibility,
   updateSubmissionScores,
 } from '../services/submissionService';
@@ -838,6 +839,13 @@ function SubmissionsTab({
   };
 
 
+  const handleClearAllSubmissions = async () => {
+    if (window.confirm('Are you sure you want to clear ALL submissions? This cannot be undone.')) {
+      await clearAllSubmissions();
+      await loadAll();
+    }
+  };
+
   const handleReEvaluate =
     async (newTotalScore) => {
 
@@ -1000,8 +1008,19 @@ function SubmissionsTab({
 
         </div>
 
+        </div>
+
       </div>
 
+      <div className="flex justify-end mb-4 pr-6">
+        <button
+          onClick={handleClearAllSubmissions}
+          className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors font-semibold"
+        >
+          <Trash2 size={16} />
+          Clear All Submissions
+        </button>
+      </div>
 
       <AdminSubmissionTable
         submissions={submissions}

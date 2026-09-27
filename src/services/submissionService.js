@@ -438,6 +438,20 @@ export async function deleteSubmission(id) {
 }
 
 /**
+ * Permanently delete all submissions.
+ */
+export async function clearAllSubmissions() {
+  lsSetSubmissions([]);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase.from('submissions').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // delete all
+      if (error) console.error('[clearAllSubmissions DB Error]:', error.message);
+    } catch (err) { console.error('[clearAllSubmissions DB Error]:', err.message); }
+  }
+}
+
+/**
  * Toggle a submission's hidden status.
  * @param {string} id - Submission ID
  * @param {boolean} isHidden - New hidden state
