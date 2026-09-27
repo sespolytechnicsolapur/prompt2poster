@@ -32,7 +32,7 @@ app.use(express.json({ limit: '25mb' }));
 // ── Simple In-Memory Rate Limiter ────────────────────────────────────────────
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // max per window per IP
+const RATE_LIMIT_MAX_REQUESTS = 100; // Increased to 100 for load testing (was 10)
 
 function rateLimit(req, res, next) {
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
