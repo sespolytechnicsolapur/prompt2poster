@@ -42,3 +42,5 @@ yarn-error.log*
 # Python / Test Scripts
 venv/
 scratch/
+
+backup_eval_site/

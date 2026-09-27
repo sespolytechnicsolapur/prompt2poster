@@ -63,6 +63,8 @@ export function ScoreEditModal({
     }
   };
 
+  const [manualOverride, setManualOverride] = useState(false);
+
   const handleSave = async () => {
     setIsSaving(true);
     setError(null);
@@ -70,15 +72,20 @@ export function ScoreEditModal({
     try {
       let evaluationToSave = reEvalResult;
       
-      const parsedNewTotal = Number(newTotal);
-      if (!reEvalResult && !isNaN(parsedNewTotal) && parsedNewTotal !== submission?.total_score) {
-        setIsReEvaluating(true);
-        evaluationToSave = await onReEvaluate(parsedNewTotal);
-        setIsReEvaluating(false);
-      }
-
-      if (!evaluationToSave) {
+      if (manualOverride) {
         evaluationToSave = buildEvaluationFromScores(scores, evaluation);
+        evaluationToSave.total_score = calculatedSum;
+      } else {
+        const parsedNewTotal = Number(newTotal);
+        if (!reEvalResult && !isNaN(parsedNewTotal) && parsedNewTotal !== submission?.total_score) {
+          setIsReEvaluating(true);
+          evaluationToSave = await onReEvaluate(parsedNewTotal);
+          setIsReEvaluating(false);
+        }
+
+        if (!evaluationToSave) {
+          evaluationToSave = buildEvaluationFromScores(scores, evaluation);
+        }
       }
 
       await onSave(evaluationToSave);
@@ -121,40 +128,62 @@ export function ScoreEditModal({
             </button>
           </div>
 
-          {/* AI Re-Evaluate Section */}
+          {/* Control Section */}
           <div className="p-4 bg-surface-subtle rounded-sketchy border border-border shadow-inner">
-            <div className="text-sm font-bold text-primary font-sans mb-2">
-              Override Total Score & Auto Re-evaluate
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={newTotal}
-                  onChange={(e) => setNewTotal(e.target.value)}
-                  className="form-input w-20 text-center font-mono text-lg py-1 px-2"
+                  type="checkbox"
+                  checked={manualOverride}
+                  onChange={(e) => setManualOverride(e.target.checked)}
+                  className="w-4 h-4 text-accent border-border rounded focus:ring-accent"
                 />
-                <span className="text-sm font-bold text-muted font-mono">/100</span>
-              </div>
-              
-              <button
-                onClick={handleReEvaluate}
-                className="btn btn-accent px-4 py-2 font-bold text-sm ml-auto flex items-center gap-2"
-                disabled={isReEvaluating}
-              >
-                {isReEvaluating ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <RotateCw size={16} />
-                )}
-                <span>{isReEvaluating ? 'AI Processing...' : 'AI Re-evaluate'}</span>
-              </button>
+                <span className="text-sm font-bold text-primary font-sans">
+                  Manual Override Mode
+                </span>
+              </label>
             </div>
-            <p className="text-xs text-dim mt-2 m-0 font-sans leading-relaxed">
-              The AI will redistribute sub-scores to match this total and generate matching reasoning.
-            </p>
+
+            {!manualOverride ? (
+              <>
+                <div className="text-sm font-bold text-primary font-sans mb-2">
+                  Override Total Score & Auto Re-evaluate
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={newTotal}
+                      onChange={(e) => setNewTotal(e.target.value)}
+                      className="form-input w-20 text-center font-mono text-lg py-1 px-2"
+                    />
+                    <span className="text-sm font-bold text-muted font-mono">/100</span>
+                  </div>
+                  
+                  <button
+                    onClick={handleReEvaluate}
+                    className="btn btn-accent px-4 py-2 font-bold text-sm ml-auto flex items-center gap-2"
+                    disabled={isReEvaluating}
+                  >
+                    {isReEvaluating ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <RotateCw size={16} />
+                    )}
+                    <span>{isReEvaluating ? 'AI Processing...' : 'AI Re-evaluate'}</span>
+                  </button>
+                </div>
+                <p className="text-xs text-dim mt-2 m-0 font-sans leading-relaxed">
+                  The AI will redistribute sub-scores to match this total and generate matching reasoning.
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-warning font-bold m-0 font-sans leading-relaxed">
+                Manual Override Active. AI recalculation is disabled. Edit the individual sub-scores below. The sum will be saved directly to the database.
+              </p>
+            )}
           </div>
 
           {/* Individual Criteria Scores */}
