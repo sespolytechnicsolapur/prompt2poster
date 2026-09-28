@@ -225,6 +225,11 @@ export function Submit({
       return;
     }
 
+    if (!selectedScreenshotFile) {
+      setError('Please upload the AI chat screenshot');
+      return;
+    }
+
     if (!contestant) {
       setError('You must be logged in to submit');
       return;
@@ -649,9 +654,6 @@ export function Submit({
               <label>
                 <MessageSquare size={15} />
                 AI Chat Screenshot
-                <span className="optional-label">
-                  Optional
-                </span>
               </label>
 
               <p className="submit-field-description">
