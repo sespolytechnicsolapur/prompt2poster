@@ -206,3 +206,5 @@ npm run build
 
 * **Frontend**: Deploy the built static assets in `dist/` to Vercel, Netlify, or Cloudflare Pages.
 * **Backend**: Deploy `server/index.js` to Node.js hosting (e.g. Render, Railway, Vercel Serverless Functions) and set `GROQ_API_KEY` in environment secrets..
+
+<!-- internal update trace: 20260929012801 -->
