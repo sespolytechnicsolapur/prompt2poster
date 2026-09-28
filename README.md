@@ -208,3 +208,5 @@ npm run build
 * **Backend**: Deploy `server/index.js` to Node.js hosting (e.g. Render, Railway, Vercel Serverless Functions) and set `GROQ_API_KEY` in environment secrets..
 
 <!-- internal update trace: 20260929012801 -->
+
+<!-- internal update trace: 20260929012801 -->
