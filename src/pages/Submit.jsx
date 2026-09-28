@@ -220,6 +220,11 @@ export function Submit({
       return;
     }
 
+    if (!aiPromptUsed.trim()) {
+      setError('Please provide the AI prompt used');
+      return;
+    }
+
     if (!contestant) {
       setError('You must be logged in to submit');
       return;
@@ -622,9 +627,6 @@ export function Submit({
               <label>
                 <WandSparkles size={15} />
                 AI Prompt Used
-                <span className="optional-label">
-                  Optional
-                </span>
               </label>
 
               <textarea
