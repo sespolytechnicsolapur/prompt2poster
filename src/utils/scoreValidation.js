@@ -11,7 +11,7 @@ export const CRITERIA_DEFINITIONS = [
   { key: 'creativity_originality', label: 'Creativity / Originality', maxScore: 15 },
   { key: 'color_usage', label: 'Color Usage', maxScore: 10 },
   { key: 'overall_communication', label: 'Overall Communication', maxScore: 5 },
-  { key: 'prompt_authenticity', label: 'Prompt Authenticity', maxScore: 10 },
+  { key: 'prompt_authenticity', label: 'Prompt Authenticity & Human Element', maxScore: 10 },
 ];
 
 export const TOTAL_MAX_SCORE = 100;

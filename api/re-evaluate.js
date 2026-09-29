@@ -16,7 +16,7 @@ The 8 criteria and their maximum scores are:
 5. Creativity / originality (Max 15)
 6. Color usage (Max 10)
 7. Overall communication (Max 5)
-8. Prompt Authenticity & Human Element (Max 10)
+8. Prompt Authenticity & Quality (Max 10)
 
 RULES:
 - The sum of all 8 individual scores MUST equal EXACTLY the target total provided.
@@ -81,13 +81,13 @@ CRITICAL RULES:
 - VERY IMPORTANT: Keep ALL reasons extremely concise (maximum 2 sentences) to prevent token truncation!
 `;
 
-// Helper to extract and sanitize all configured Groq API keys (comma-separated support)
-function getGroqApiKeys() {
-  const raw = process.env.GROQ_API_KEY || '';
+// Helper to extract and sanitize all configured Gemini API keys (comma-separated support)
+function getGeminiApiKeys() {
+  const raw = process.env.GEMINI_API_KEY || '';
   return raw
     .split(',')
     .map(k => k.trim())
-    .filter(k => k && k.startsWith('gsk_'));
+    .filter(k => k && k.length > 10);
 }
 
 // Mask key for secure logging
@@ -118,13 +118,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing newTotalScore, topic, or contestantName' });
     }
 
-    const keys = getGroqApiKeys();
-    const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+    const keys = getGeminiApiKeys();
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest';
 
     if (keys.length === 0) {
       return res.status(500).json({
         success: false,
-        error: 'GROQ_API_KEY is not configured in Vercel environment variables.'
+        error: 'GEMINI_API_KEY is not configured in Vercel environment variables.'
       });
     }
 
@@ -152,7 +152,7 @@ export default async function handler(req, res) {
       const masked = maskKey(currentKey);
 
       try {
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -165,43 +165,42 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 4096,
-            reasoning_effort: 'none'
+            max_tokens: 4096
           })
         });
 
-        if (!groqResponse.ok) {
-          const errorText = await groqResponse.text();
-          console.warn(`[Groq API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${groqResponse.status}: ${errorText.slice(0, 200)}`);
-          lastError = `HTTP ${groqResponse.status}: ${errorText}`;
+        if (!geminiResponse.ok) {
+          const errorText = await geminiResponse.text();
+          console.warn(`[Gemini API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${geminiResponse.status}: ${errorText.slice(0, 200)}`);
+          lastError = `HTTP ${geminiResponse.status}: ${errorText}`;
           continue;
         }
 
-        const data = await groqResponse.json();
+        const data = await geminiResponse.json();
         successfulData = data;
         keyUsedMask = masked;
         break;
       } catch (fetchErr) {
-        console.warn(`[Groq Network Warning] Key #${activeIdx + 1} (${masked}): ${fetchErr.message}`);
+        console.warn(`[Gemini Network Warning] Key #${activeIdx + 1} (${masked}): ${fetchErr.message}`);
         lastError = fetchErr.message;
       }
     }
 
     if (!successfulData) {
-      console.error(`[Evaluate] All ${keys.length} Groq API key(s) failed.`);
+      console.error(`[Evaluate] All ${keys.length} Gemini API key(s) failed.`);
       return res.status(502).json({
         success: false,
-        error: `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
+        error: `All ${keys.length} Gemini API key(s) failed. Last error: ${lastError}`
       });
     }
 
     const contentText = successfulData.choices[0]?.message?.content;
 
     if (!contentText) {
-      return res.status(500).json({ success: false, error: 'Empty response from Groq API' });
+      return res.status(500).json({ success: false, error: 'Empty response from Gemini API' });
     }
 
-    console.log('[Groq Raw Response]:', contentText.slice(0, 500));
+    console.log('[Gemini Raw Response]:', contentText.slice(0, 500));
 
     let parsedResult;
     try {
@@ -222,7 +221,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       evaluation: parsedResult,
-      source: 'groq-api',
+      source: 'gemini-api',
       keyUsed: keyUsedMask
     });
 

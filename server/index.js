@@ -16,7 +16,7 @@ import dotenv from 'dotenv';
 import * as XLSX from 'xlsx';
 
 import { EVALUATION_SYSTEM_PROMPT, RE_EVALUATION_SYSTEM_PROMPT } from './prompts.js';
-import { callGroqAPI, getGroqApiKeys, maskKey } from './groqClient.js';
+import { callGeminiAPI, getGeminiApiKeys, maskKey } from './geminiClient.js';
 import { parseGroqResponse } from './parseAIResponse.js';
 
 dotenv.config();
@@ -87,13 +87,13 @@ function requireAdmin(req, res, next) {
 // HEALTH CHECK
 // ══════════════════════════════════════════════════════════════════════════════
 app.get('/api/health', (_req, res) => {
-  const keys = getGroqApiKeys();
+  const keys = getGeminiApiKeys();
   res.json({
     status: 'ok',
     service: 'Prompt2Poster Evaluation Engine',
     timestamp: new Date().toISOString(),
-    groqKeyConfigured: keys.length > 0,
-    groqKeyCount: keys.length,
+    geminiKeyConfigured: keys.length > 0,
+    geminiKeyCount: keys.length,
     contestantsLoaded: contestantStore.length,
   });
 });
@@ -295,16 +295,16 @@ app.post('/api/evaluate', rateLimit, async (req, res) => {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
     }
 
-    const keys = getGroqApiKeys();
+    const keys = getGeminiApiKeys();
 
     // Fallback mode when no API keys configured
     if (keys.length === 0) {
-      console.warn(`[Evaluate] No GROQ_API_KEY configured. Using fallback for: ${contestantName}`);
+      console.warn(`[Evaluate] No GEMINI_API_KEY configured. Using fallback for: ${contestantName}`);
       return res.json({
         success: true,
         evaluation: generateFallbackEvaluation(topic, contestantName),
         source: 'local-ai-engine',
-        notice: 'Groq API Key not configured. Returned validated evaluation score.'
+        notice: 'Gemini API Key not configured. Returned validated evaluation score.'
       });
     }
 
@@ -323,14 +323,14 @@ app.post('/api/evaluate', rateLimit, async (req, res) => {
       console.warn('[Evaluate] WARNING: No valid image data URL received');
     }
 
-    const { rawContent, keyUsed } = await callGroqAPI({
+    const { rawContent, keyUsed } = await callGeminiAPI({
       messages: [
         { role: 'system', content: EVALUATION_SYSTEM_PROMPT },
         { role: 'user', content: userContent }
       ]
     });
 
-    console.log('[Groq Raw Response]:', rawContent.slice(0, 500));
+    console.log('[Gemini Raw Response]:', rawContent.slice(0, 500));
     const parsedResult = parseGroqResponse(rawContent);
 
     return res.json({
@@ -344,7 +344,7 @@ app.post('/api/evaluate', rateLimit, async (req, res) => {
     console.error('[Evaluate Error]:', error.message);
 
     if (error.message === 'NO_KEYS_CONFIGURED') {
-      return res.status(500).json({ success: false, error: 'Groq API key not configured' });
+      return res.status(500).json({ success: false, error: 'Gemini API key not configured' });
     }
 
     return res.status(error.message.includes('All') ? 502 : 500).json({
@@ -378,11 +378,11 @@ app.post('/api/re-evaluate', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'newTotalScore must be between 0 and 100' });
     }
 
-    const keys = getGroqApiKeys();
+    const keys = getGeminiApiKeys();
     if (keys.length === 0) {
       return res.status(500).json({
         success: false,
-        error: 'Groq API key not configured for re-evaluation'
+        error: 'Gemini API key not configured for re-evaluation'
       });
     }
 
@@ -390,7 +390,7 @@ app.post('/api/re-evaluate', requireAdmin, async (req, res) => {
 
     const userMessage = `Contestant: ${contestantName}\nTopic: "${topic}"\nTarget Total Score: ${score}/100\n\nRedistribute this total across all 8 criteria and write detailed reasoning for each. Return ONLY the raw JSON object.`;
 
-    const { rawContent, keyUsed } = await callGroqAPI({
+    const { rawContent, keyUsed } = await callGeminiAPI({
       messages: [
         { role: 'system', content: RE_EVALUATION_SYSTEM_PROMPT },
         { role: 'user', content: userMessage }
@@ -405,7 +405,7 @@ app.post('/api/re-evaluate', requireAdmin, async (req, res) => {
     return res.json({
       success: true,
       evaluation: parsedResult,
-      source: 'groq-api-reevaluation',
+      source: 'gemini-api-reevaluation',
       keyUsed
     });
 
@@ -450,11 +450,11 @@ app.post('/api/topic-visibility', requireAdmin, (req, res) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 app.listen(PORT, () => {
-  const keys = getGroqApiKeys();
+  const keys = getGeminiApiKeys();
   console.log(`====================================================`);
   console.log(` Prompt2Poster Backend Engine running on port ${PORT}`);
   console.log(` API Endpoint: http://localhost:${PORT}/api/evaluate`);
-  console.log(` Configured Groq Keys (${keys.length}): ${keys.length > 0 ? keys.map(maskKey).join(', ') : 'None (Fallback Mode)'}`);
+  console.log(` Configured Gemini Keys (${keys.length}): ${keys.length > 0 ? keys.map(maskKey).join(', ') : 'None (Fallback Mode)'}`);
   console.log(` Round-Robin Rotation: ${keys.length > 1 ? 'ACTIVE (' + keys.length + ' keys)' : (keys.length === 1 ? 'Single Key' : 'Disabled')}`);
   console.log(` Admin Password: ${ORGANIZER_PASSWORD ? 'Configured' : 'Not Set (open access)'}`);
   console.log(`====================================================`);

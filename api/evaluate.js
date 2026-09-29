@@ -33,8 +33,10 @@ Evaluate color harmony, contrast, consistency, and appropriateness. Name the act
 7. Overall communication (Max 5 points):
 Evaluate how effectively the complete poster communicates its intended message to a viewer.
 
-8. Prompt Authenticity & Human Element (Max 10 points):
-Evaluate whether the prompt used to generate the image seems human-written. Dock points if it looks overly structured or like typical AI-generated text. The prompt must also accurately describe the resulting poster.
+8. Prompt Authenticity & Quality (Max 10 points):
+Evaluate the prompt's wording, sentences, and structure against professional AI prompting techniques (e.g., style, lighting, camera angles, specific keywords). 1-line or low-effort prompts MUST be severely penalized (score 0-3). Critically verify if the prompt accurately and precisely describes the actual visual contents of the image. Deduct points heavily for generic text or mismatch between prompt and image.
+
+CRITICAL GRADING INSTRUCTION: Your grading must be ACCURATE, OBJECTIVE, and APPROPRIATE. Since this is a PROMPT ENGINEERING competition, the quality of the prompt is the foundation of the score. If the prompt is low-effort, brief (e.g., 1-liners), or generic, it means the student relied heavily on the AI's defaults. Therefore, if the 'Prompt Authenticity & Quality' score is low (e.g., under 5/10), you MUST aggressively dock points across ALL other visual categories (Relevance, Creativity, Hierarchy, etc.), even if the resulting image looks beautiful. Do not award high visual scores to an image generated from a lazy prompt.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
@@ -78,7 +80,7 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
   "prompt_authenticity": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<strictly 1-2 sentence explanation of prompt authenticity and match>"
+    "reason": "<strictly 1-2 sentence explanation of prompt wording, strict keyword verification, and image match>"
   },
   "total_score": <exact arithmetic sum of all 8 individual scores above>,
   "issues": [
@@ -96,13 +98,13 @@ CRITICAL RULES:
 - VERY IMPORTANT: Keep ALL reasons extremely concise (maximum 2 sentences) to prevent token truncation!
 `;
 
-// Helper to extract and sanitize all configured Groq API keys (comma-separated support)
-function getGroqApiKeys() {
-  const raw = process.env.GROQ_API_KEY || '';
+// Helper to extract and sanitize all configured Gemini API keys (comma-separated support)
+function getGeminiApiKeys() {
+  const raw = process.env.GEMINI_API_KEY || '';
   return raw
     .split(',')
     .map(k => k.trim())
-    .filter(k => k && k.startsWith('gsk_'));
+    .filter(k => k && k.length > 10);
 }
 
 // Mask key for secure logging
@@ -128,13 +130,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing topic or contestantName' });
     }
 
-    const keys = getGroqApiKeys();
-    const model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+    const keys = getGeminiApiKeys();
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest';
 
     if (keys.length === 0) {
       return res.status(500).json({
         success: false,
-        error: 'GROQ_API_KEY is not configured in Vercel environment variables.'
+        error: 'GEMINI_API_KEY is not configured in Vercel environment variables.'
       });
     }
 
@@ -167,7 +169,7 @@ export default async function handler(req, res) {
       const masked = maskKey(currentKey);
 
       try {
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -180,43 +182,42 @@ export default async function handler(req, res) {
               { role: 'user', content: userContent }
             ],
             temperature: 0.2,
-            max_tokens: 4096,
-            reasoning_effort: 'none'
+            max_tokens: 4096
           })
         });
 
-        if (!groqResponse.ok) {
-          const errorText = await groqResponse.text();
-          console.warn(`[Groq API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${groqResponse.status}: ${errorText.slice(0, 200)}`);
-          lastError = `HTTP ${groqResponse.status}: ${errorText}`;
+        if (!geminiResponse.ok) {
+          const errorText = await geminiResponse.text();
+          console.warn(`[Gemini API Warning] Key #${activeIdx + 1} (${masked}) returned HTTP ${geminiResponse.status}: ${errorText.slice(0, 200)}`);
+          lastError = `HTTP ${geminiResponse.status}: ${errorText}`;
           continue;
         }
 
-        const data = await groqResponse.json();
+        const data = await geminiResponse.json();
         successfulData = data;
         keyUsedMask = masked;
         break;
       } catch (fetchErr) {
-        console.warn(`[Groq Network Warning] Key #${activeIdx + 1} (${masked}): ${fetchErr.message}`);
+        console.warn(`[Gemini Network Warning] Key #${activeIdx + 1} (${masked}): ${fetchErr.message}`);
         lastError = fetchErr.message;
       }
     }
 
     if (!successfulData) {
-      console.error(`[Evaluate] All ${keys.length} Groq API key(s) failed.`);
+      console.error(`[Evaluate] All ${keys.length} Gemini API key(s) failed.`);
       return res.status(502).json({
         success: false,
-        error: `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
+        error: `All ${keys.length} Gemini API key(s) failed. Last error: ${lastError}`
       });
     }
 
     const contentText = successfulData.choices[0]?.message?.content;
 
     if (!contentText) {
-      return res.status(500).json({ success: false, error: 'Empty response from Groq API' });
+      return res.status(500).json({ success: false, error: 'Empty response from Gemini API' });
     }
 
-    console.log('[Groq Raw Response]:', contentText.slice(0, 500));
+    console.log('[Gemini Raw Response]:', contentText.slice(0, 500));
 
     let parsedResult;
     try {
@@ -237,7 +238,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       evaluation: parsedResult,
-      source: 'groq-api',
+      source: 'gemini-api',
       keyUsed: keyUsedMask
     });
 

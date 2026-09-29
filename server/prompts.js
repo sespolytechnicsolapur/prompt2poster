@@ -42,8 +42,10 @@ Evaluate color harmony, contrast, consistency, and appropriateness. Name the act
 7. Overall communication (Max 5 points):
 Evaluate how effectively the complete poster communicates its intended message to a viewer.
 
-8. Prompt Authenticity & Human Element (Max 10 points):
-Evaluate whether the prompt used to generate the image seems human-written. Dock points if it looks overly structured or like typical AI-generated text. The prompt must also accurately describe the resulting poster.
+8. Prompt Authenticity & Quality (Max 10 points):
+Evaluate the prompt's wording, sentences, and structure against professional AI prompting techniques (e.g., style, lighting, camera angles, specific keywords). 1-line or low-effort prompts MUST be severely penalized (score 0-3). Critically verify if the prompt accurately and precisely describes the actual visual contents of the image. Deduct points heavily for generic text or mismatch between prompt and image.
+
+CRITICAL GRADING INSTRUCTION: Your grading must be ACCURATE, OBJECTIVE, and APPROPRIATE. Since this is a PROMPT ENGINEERING competition, the quality of the prompt is the foundation of the score. If the prompt is low-effort, brief (e.g., 1-liners), or generic, it means the student relied heavily on the AI's defaults. Therefore, if the 'Prompt Authenticity & Quality' score is low (e.g., under 5/10), you MUST aggressively dock points across ALL other visual categories (Relevance, Creativity, Hierarchy, etc.), even if the resulting image looks beautiful. Do not award high visual scores to an image generated from a lazy prompt.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
@@ -87,7 +89,7 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
   "prompt_authenticity": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation of prompt authenticity and match>"
+    "reason": "<detailed explanation of prompt wording, strict keyword verification, and image match>"
   },
   "total_score": <exact arithmetic sum of all 8 individual scores above>,
   "issues": [
@@ -120,7 +122,7 @@ The 8 criteria and their maximum scores are:
 5. Creativity / originality (Max 15)
 6. Color usage (Max 10)
 7. Overall communication (Max 5)
-8. Prompt Authenticity & Human Element (Max 10)
+8. Prompt Authenticity & Quality (Max 10)
 
 RULES:
 - The sum of all 8 individual scores MUST equal EXACTLY the target total provided.

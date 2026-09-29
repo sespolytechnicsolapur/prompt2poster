@@ -1,5 +1,5 @@
 /**
- * Prompt2Poster — Groq API Client
+ * Prompt2Poster — Gemini API Client
  *
  * Reusable client with round-robin key rotation and automatic failover.
  * Extracted from server/index.js for clean separation of concerns.
@@ -10,16 +10,16 @@ dotenv.config();
 
 // ── Key Management ────────────────────────────────────────────────────────────
 
-/** Parses comma-separated Groq API keys from environment */
-export function getGroqApiKeys() {
-  const raw = process.env.GROQ_API_KEY || '';
+/** Parses comma-separated Gemini API keys from environment */
+export function getGeminiApiKeys() {
+  const raw = process.env.GEMINI_API_KEY || '';
   return raw
     .split(',')
     .map(k => k.trim())
-    .filter(k => k && k.startsWith('gsk_'));
+    .filter(k => k && k.length > 10);
 }
 
-/** Masks a key for safe logging (e.g. gsk_2s8...p41y) */
+/** Masks a key for safe logging */
 export function maskKey(key) {
   if (!key || key.length < 12) return '***';
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
@@ -27,34 +27,30 @@ export function maskKey(key) {
 
 /**
  * Round-robin counter shared across all calls within this process.
- * NOTE: In serverless (Vercel), this resets on cold start. This is intentional —
- * the failover loop tries all keys regardless of starting index, so perfect
- * round-robin distribution is not required. True cross-instance distribution
- * would require external state (Redis/KV) which is overkill for this use case.
  */
 let keyCounter = 0;
 
 // ── Core API Caller ───────────────────────────────────────────────────────────
 
 /**
- * Calls the Groq chat completions API with automatic key rotation and failover.
+ * Calls the Gemini chat completions API (via OpenAI compatible endpoint) with automatic key rotation and failover.
  *
  * @param {Object} options
  * @param {Array} options.messages - Chat messages array [{role, content}]
- * @param {string} [options.model] - Model identifier (defaults to env GROQ_MODEL)
+ * @param {string} [options.model] - Model identifier (defaults to env GEMINI_MODEL)
  * @param {number} [options.temperature=0.2] - Sampling temperature
  * @param {number} [options.maxTokens=8192] - Maximum response tokens
  * @returns {Promise<{data: Object, keyUsed: string}>} Parsed API response and masked key
  * @throws {Error} If all keys fail or response is empty
  */
-export async function callGroqAPI({
+export async function callGeminiAPI({
   messages,
   model = null,
   temperature = 0.2,
   maxTokens = 8192
 }) {
-  const keys = getGroqApiKeys();
-  const activeModel = model || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+  const keys = getGeminiApiKeys();
+  const activeModel = model || process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest';
 
   if (keys.length === 0) {
     throw new Error('NO_KEYS_CONFIGURED');
@@ -75,12 +71,12 @@ export async function callGroqAPI({
     const masked = maskKey(currentKey);
 
     console.log(
-      `[Groq Client] [Attempt ${attempt + 1}/${keys.length}] ` +
+      `[Gemini Client] [Attempt ${attempt + 1}/${keys.length}] ` +
       `Using Key #${activeIdx + 1} (${masked}) | model=${activeModel}`
     );
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,15 +86,14 @@ export async function callGroqAPI({
           model: activeModel,
           messages,
           temperature,
-          max_tokens: maxTokens,
-          reasoning_effort: 'none'
+          max_tokens: maxTokens
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.warn(
-          `[Groq Client] Key #${activeIdx + 1} (${masked}) ` +
+          `[Gemini Client] Key #${activeIdx + 1} (${masked}) ` +
           `returned HTTP ${response.status}: ${errorText.slice(0, 200)}`
         );
         lastError = `HTTP ${response.status}: ${errorText}`;
@@ -112,7 +107,7 @@ export async function callGroqAPI({
 
     } catch (fetchErr) {
       console.warn(
-        `[Groq Client] Key #${activeIdx + 1} (${masked}) ` +
+        `[Gemini Client] Key #${activeIdx + 1} (${masked}) ` +
         `network error: ${fetchErr.message}`
       );
       lastError = fetchErr.message;
@@ -121,13 +116,13 @@ export async function callGroqAPI({
 
   if (!successfulData) {
     throw new Error(
-      `All ${keys.length} Groq API key(s) failed. Last error: ${lastError}`
+      `All ${keys.length} Gemini API key(s) failed. Last error: ${lastError}`
     );
   }
 
   const contentText = successfulData.choices?.[0]?.message?.content;
   if (!contentText) {
-    throw new Error('Empty response content from Groq API');
+    throw new Error('Empty response content from Gemini API');
   }
 
   return { rawContent: contentText, keyUsed: keyUsedMask };
