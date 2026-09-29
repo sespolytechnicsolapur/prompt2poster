@@ -50,7 +50,7 @@ export async function callGeminiAPI({
   maxTokens = 8192
 }) {
   const keys = getGeminiApiKeys();
-  const activeModel = model || process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest';
+  const activeModel = model || process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
   if (keys.length === 0) {
     throw new Error('NO_KEYS_CONFIGURED');
