@@ -36,7 +36,10 @@ Evaluate how effectively the complete poster communicates its intended message t
 8. Prompt Authenticity & Quality (Max 10 points):
 Evaluate the prompt's wording, sentences, and structure against professional AI prompting techniques (e.g., style, lighting, camera angles, specific keywords). 1-line or low-effort prompts MUST be severely penalized (score 0-3). Critically verify if the prompt accurately and precisely describes the actual visual contents of the image. Deduct points heavily for generic text or mismatch between prompt and image.
 
-CRITICAL GRADING INSTRUCTION: Your grading must be ACCURATE, OBJECTIVE, and APPROPRIATE. Since this is a PROMPT ENGINEERING competition, the quality of the prompt is the foundation of the score. If the prompt is low-effort, brief (e.g., 1-liners), or generic, it means the student relied heavily on the AI's defaults. Therefore, if the 'Prompt Authenticity & Quality' score is low (e.g., under 5/10), you MUST aggressively dock points across ALL other visual categories (Relevance, Creativity, Hierarchy, etc.), even if the resulting image looks beautiful. Do not award high visual scores to an image generated from a lazy prompt.
+CRITICAL GRADING INSTRUCTION: Your grading must be ACCURATE, OBJECTIVE, and APPROPRIATE. 
+Since this is a PROMPT ENGINEERING competition, the quality of the prompt is the foundation of the score. 
+1. If the prompt is just the assigned topic copied and pasted, or extremely short (under 10 words), you MUST give a 0 for Prompt Authenticity AND severely penalize Creativity and Relevance (docking at least 50% of their points), even if the resulting image looks beautiful. Do not award high visual scores to an image generated from a lazy prompt.
+2. If the image contains obvious "AI slop" such as unreadable gibberish text, spelling errors, weird artifacts, or nonsensical structural blending, you MUST severely penalize Typography (score 0-3) and Overall Communication, explicitly citing the AI artifacts as the reason.
 
 OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping text) adhering to this exact schema:
