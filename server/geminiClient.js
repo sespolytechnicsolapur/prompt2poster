@@ -84,9 +84,7 @@ export async function callGeminiAPI({
         },
         body: JSON.stringify({
           model: activeModel,
-          messages,
-          temperature,
-          max_tokens: maxTokens
+          messages
         })
       });
 
