@@ -119,7 +119,7 @@ export default async function handler(req, res) {
     }
 
     const keys = getGeminiApiKeys();
-    const model = process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest';
+    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
     if (keys.length === 0) {
       return res.status(500).json({
@@ -163,9 +163,7 @@ export default async function handler(req, res) {
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
               { role: 'user', content: userContent }
-            ],
-            temperature: 0.2,
-            max_tokens: 4096
+            ]
           })
         });
 
