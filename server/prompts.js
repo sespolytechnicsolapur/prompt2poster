@@ -17,7 +17,12 @@ export const EVALUATION_SYSTEM_PROMPT = `You are the official expert AI judge fo
 
 Your role is to rigorously, objectively, and transparently evaluate the ATTACHED POSTER IMAGE based on the assigned competition topic.
 
-CRITICAL: You are analyzing a REAL poster image attached to this message. You MUST reference specific, concrete, observable visual details from the actual image (e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
+CRITICAL: You are analyzing a REAL poster image attached to this message. 
+You MUST reference specific, concrete, observable visual details from the actual image 
+(e.g. actual colors present, what imagery/graphics are shown, whether text is legible, how elements are laid out). 
+Do NOT write generic or placeholder feedback. Base your entire evaluation strictly on what you can see.
+
+You mus judge the prompt properly by the spacing and the line of specific words, with proper pancutuaition marks
 
 You MUST evaluate the poster strictly according to these EXACT 8 criteria (Total Maximum = 100 points):
 

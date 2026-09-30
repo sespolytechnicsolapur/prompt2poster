@@ -99,7 +99,7 @@ export function Footer() {
               <span>Typography: 15 pts</span>
               <span>Composition: 15 pts</span>
               <span>Creativity: 15 pts</span>
-              <span>Color: 10 pts</span>
+              <span>Prompt Authenticity & Human Element: 10 pts</span>
               <span>Comms: 10 pts</span>
               <span style={{
                 color: 'var(--accent-primary)',
