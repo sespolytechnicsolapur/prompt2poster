@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   typography_readability_score INTEGER NOT NULL CHECK (typography_readability_score BETWEEN 0 AND 10),
   composition_layout_score     INTEGER NOT NULL CHECK (composition_layout_score     BETWEEN 0 AND 15),
   creativity_originality_score INTEGER NOT NULL CHECK (creativity_originality_score BETWEEN 0 AND 15),
-  design_direction_score       INTEGER NOT NULL CHECK (design_direction_score       BETWEEN 0 AND 10),
+  color_usage_score            INTEGER NOT NULL CHECK (color_usage_score            BETWEEN 0 AND 10),
   overall_communication_score  INTEGER NOT NULL CHECK (overall_communication_score  BETWEEN 0 AND 5),
   prompt_authenticity_score    INTEGER NOT NULL CHECK (prompt_authenticity_score    BETWEEN 0 AND 10),
 

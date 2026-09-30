@@ -267,7 +267,7 @@ export async function saveSubmission(submissionData) {
     typography_readability_score: evaluation.typography_readability.score,
     composition_layout_score:     evaluation.composition_layout.score,
     creativity_originality_score: evaluation.creativity_originality.score,
-    design_direction_score:       evaluation.design_direction.score,
+    color_usage_score:            evaluation.design_direction.score,
     overall_communication_score:  evaluation.overall_communication.score,
     prompt_authenticity_score:    evaluation.prompt_authenticity.score,
     total_score:        evaluation.total_score,
@@ -318,7 +318,7 @@ export async function saveSubmission(submissionData) {
         typography_readability_score: record.typography_readability_score,
         composition_layout_score:     record.composition_layout_score,
         creativity_originality_score: record.creativity_originality_score,
-        design_direction_score:       record.design_direction_score,
+        color_usage_score:            record.color_usage_score,
         overall_communication_score:  record.overall_communication_score,
         prompt_authenticity_score:    record.prompt_authenticity_score,
         total_score:                  record.total_score,
@@ -529,7 +529,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
     entry.typography_readability_score  = updatedEvaluation.typography_readability.score;
     entry.composition_layout_score     = updatedEvaluation.composition_layout.score;
     entry.creativity_originality_score = updatedEvaluation.creativity_originality.score;
-    entry.design_direction_score       = updatedEvaluation.design_direction.score;
+    entry.color_usage_score            = updatedEvaluation.design_direction.score;
     entry.overall_communication_score  = updatedEvaluation.overall_communication.score;
     entry.prompt_authenticity_score    = updatedEvaluation.prompt_authenticity.score;
     entry.total_score                  = updatedEvaluation.total_score;
@@ -551,7 +551,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
           typography_readability_score: updatedEvaluation.typography_readability.score,
           composition_layout_score:     updatedEvaluation.composition_layout.score,
           creativity_originality_score: updatedEvaluation.creativity_originality.score,
-          design_direction_score:       updatedEvaluation.design_direction.score,
+          color_usage_score:            updatedEvaluation.design_direction.score,
           overall_communication_score:  updatedEvaluation.overall_communication.score,
           prompt_authenticity_score:    updatedEvaluation.prompt_authenticity.score,
           total_score:                  updatedEvaluation.total_score,
