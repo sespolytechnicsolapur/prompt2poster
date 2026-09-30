@@ -68,9 +68,6 @@ CREATE TABLE IF NOT EXISTS submissions (
   -- Contestant login link
   submitted_by_user_id TEXT DEFAULT '',
 
-  -- Optional chat screenshot from the AI tool used
-  chat_screenshot_path TEXT DEFAULT '',
-  chat_screenshot_url TEXT DEFAULT '',
 
   -- AI Prompt used by contestant to generate the poster
   ai_prompt_used TEXT DEFAULT '',
@@ -81,7 +78,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   typography_readability_score INTEGER NOT NULL CHECK (typography_readability_score BETWEEN 0 AND 10),
   composition_layout_score     INTEGER NOT NULL CHECK (composition_layout_score     BETWEEN 0 AND 15),
   creativity_originality_score INTEGER NOT NULL CHECK (creativity_originality_score BETWEEN 0 AND 15),
-  color_usage_score            INTEGER NOT NULL CHECK (color_usage_score            BETWEEN 0 AND 10),
+  design_direction_score       INTEGER NOT NULL CHECK (design_direction_score       BETWEEN 0 AND 10),
   overall_communication_score  INTEGER NOT NULL CHECK (overall_communication_score  BETWEEN 0 AND 5),
   prompt_authenticity_score    INTEGER NOT NULL CHECK (prompt_authenticity_score    BETWEEN 0 AND 10),
 

@@ -65,11 +65,6 @@ export function Submit({
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const [selectedScreenshotFile, setSelectedScreenshotFile] =
-    useState(null);
-
-  const [screenshotPreviewUrl, setScreenshotPreviewUrl] =
-    useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -110,7 +105,6 @@ export function Submit({
   }
 
   const fileInputRef = useRef(null);
-  const screenshotInputRef = useRef(null);
 
   let assignedTopic = activeTopic;
 
@@ -190,49 +184,6 @@ export function Submit({
     setError(null);
   };
 
-  /* ==========================================
-     SCREENSHOT FILE
-  ========================================== */
-
-  const handleScreenshotSelect = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setError(
-        'Please select a valid image file (PNG, JPG, WebP) for the chat screenshot'
-      );
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Screenshot must be less than 10MB');
-      return;
-    }
-
-    setSelectedScreenshotFile(file);
-    setError(null);
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      setScreenshotPreviewUrl(e.target.result);
-    };
-
-    reader.readAsDataURL(file);
-  };
-
-  const clearScreenshotSelection = () => {
-    setSelectedScreenshotFile(null);
-    setScreenshotPreviewUrl(null);
-
-    if (screenshotInputRef.current) {
-      screenshotInputRef.current.value = '';
-    }
-
-    setError(null);
-  };
 
   /* ==========================================
      SUBMIT
@@ -251,10 +202,6 @@ export function Submit({
       return;
     }
 
-    if (!selectedScreenshotFile) {
-      setError('Please upload the AI chat screenshot');
-      return;
-    }
 
     if (!contestant) {
       setError('You must be logged in to submit');
@@ -296,7 +243,6 @@ export function Submit({
           imageUrlForAi !== previewUrl
             ? imageUrlForAi
             : selectedFile,
-        chatScreenshotFile: selectedScreenshotFile,
         aiPromptUsed: aiPromptUsed.trim(),
         evaluation,
       });
@@ -675,74 +621,7 @@ export function Submit({
               </small>
             </div>
 
-            {/* Screenshot */}
-            <div className="submit-field full">
-              <label>
-                <MessageSquare size={15} />
-                AI Chat Screenshot
-              </label>
 
-              <p className="submit-field-description">
-                Upload a screenshot showing your AI
-                conversation, prompt, and generated image.
-              </p>
-
-              {!screenshotPreviewUrl ? (
-                <div
-                  onClick={() =>
-                    screenshotInputRef.current?.click()
-                  }
-                  className="submit-upload-small"
-                >
-                  <input
-                    type="file"
-                    ref={screenshotInputRef}
-                    onChange={handleScreenshotSelect}
-                    accept="image/jpeg,image/png,image/webp"
-                    hidden
-                  />
-
-                  <div className="submit-upload-small-icon">
-                    <ImageIcon size={21} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      Upload AI chat screenshot
-                    </strong>
-
-                    <span>
-                      PNG, JPG or WebP • Maximum 10MB
-                    </span>
-                  </div>
-
-                  <ArrowRight size={18} />
-                </div>
-              ) : (
-                <div className="submit-file-selected">
-                  <div className="submit-file-icon">
-                    <ImageIcon size={19} />
-                  </div>
-
-                  <div className="submit-file-info">
-                    <strong>
-                      {selectedScreenshotFile?.name}
-                    </strong>
-
-                    <span>Screenshot ready</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={clearScreenshotSelection}
-                    className="submit-remove-file"
-                    title="Remove screenshot"
-                  >
-                    <X size={17} />
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </section>
 

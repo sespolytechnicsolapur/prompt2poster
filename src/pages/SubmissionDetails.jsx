@@ -360,45 +360,7 @@ export function SubmissionDetails({
               </motion.div>
             )}
 
-            {/* Chat Screenshot */}
-            {submission.chat_screenshot_url && (
-              <motion.div
-                variants={itemVariants}
-                className="submission-info-card"
-              >
-                <div className="submission-card-heading">
-                  <div className="submission-heading-icon blue">
-                    <ImageIcon size={17} />
-                  </div>
 
-                  <div>
-                    <span>Supporting Evidence</span>
-                    <h3>AI Chat Screenshot</h3>
-                  </div>
-                </div>
-
-                <a
-                  href={submission.chat_screenshot_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="submission-chat-preview"
-                >
-                  <img
-                    src={submission.chat_screenshot_url}
-                    alt="AI Chat Screenshot"
-                  />
-
-                  <div className="submission-chat-overlay">
-                    <div>
-                      <Maximize2 size={18} />
-                      <span>View Full Image</span>
-                    </div>
-
-                    <ExternalLink size={16} />
-                  </div>
-                </a>
-              </motion.div>
-            )}
           </motion.div>
 
           {/* =====================================

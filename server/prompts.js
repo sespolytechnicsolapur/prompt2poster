@@ -36,14 +36,14 @@ Evaluate arrangement, spacing, alignment, balance, and organization of visual el
 5. Creativity / originality (Max 15 points):
 Evaluate originality of concept, creative interpretation of topic, and distinctive visual presentation. Be specific about what is or isn't creative.
 
-6. Color usage (Max 10 points):
-Evaluate color harmony, contrast, consistency, and appropriateness. Name the actual dominant colors you see in the poster.
+6. Design Direction & Aesthetic Cohesion (Max 10 points):
+Evaluate the intentionality behind the visual style. The poster MUST have a clear, deliberate design direction. Random, chaotic, or generic AI slop should receive a very low score.
 
 7. Overall communication (Max 5 points):
 Evaluate how effectively the complete poster communicates its intended message to a viewer.
 
 8. Prompt Authenticity & Quality (Max 10 points):
-Evaluate the prompt's wording, sentences, and structure against professional AI prompting techniques (e.g., style, lighting, camera angles, specific keywords). 1-line or low-effort prompts MUST be severely penalized (score 0-3). Critically verify if the prompt accurately and precisely describes the actual visual contents of the image. Deduct points heavily for generic text or mismatch between prompt and image.
+Evaluate the prompt's wording, sentences, and structure against professional AI prompting techniques (e.g., style, lighting, camera angles, specific keywords). The prompt MUST be long, highly detailed, and specific. 1-line or low-effort prompts MUST be severely penalized (score 0-3). Critically verify if the prompt accurately and precisely describes the actual visual contents of the image. Deduct points heavily for generic text or mismatch between prompt and image.
 
 CRITICAL GRADING INSTRUCTION: Your grading must be ACCURATE, OBJECTIVE, and APPROPRIATE. 
 Since this is a PROMPT ENGINEERING competition, the quality of the prompt is the foundation of the score. 
@@ -79,10 +79,10 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
     "max_score": 15,
     "reason": "<detailed explanation referencing actual observed visual content>"
   },
-  "color_usage": {
+  "design_direction": {
     "score": <integer 0-10>,
     "max_score": 10,
-    "reason": "<detailed explanation naming the actual colors seen>"
+    "reason": "<detailed explanation of design intent and cohesion>"
   },
   "overall_communication": {
     "score": <integer 0-5>,
@@ -123,7 +123,7 @@ The 8 criteria and their maximum scores are:
 3. Typography / readability (Max 10)
 4. Composition / layout (Max 15)
 5. Creativity / originality (Max 15)
-6. Color usage (Max 10)
+6. Design Direction & Aesthetic Cohesion (Max 10)
 7. Overall communication (Max 5)
 8. Prompt Authenticity & Quality (Max 10)
 
@@ -164,7 +164,7 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
     "max_score": 15,
     "reason": "<detailed explanation>"
   },
-  "color_usage": {
+  "design_direction": {
     "score": <integer 0-10>,
     "max_score": 10,
     "reason": "<detailed explanation>"

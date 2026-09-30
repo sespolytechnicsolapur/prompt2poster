@@ -258,10 +258,10 @@ function generateFallbackEvaluation(topic, contestantName) {
   const typography = Math.floor(Math.random() * 3) + 7;
   const composition = Math.floor(Math.random() * 4) + 11;
   const creativity = Math.floor(Math.random() * 4) + 11;
-  const color = Math.floor(Math.random() * 3) + 7;
+  const designDirection = Math.floor(Math.random() * 3) + 7;
   const communication = Math.floor(Math.random() * 2) + 3;
   const promptAuth = Math.floor(Math.random() * 3) + 7;
-  const total = relevance + hierarchy + typography + composition + creativity + color + communication + promptAuth;
+  const total = relevance + hierarchy + typography + composition + creativity + designDirection + communication + promptAuth;
 
   return {
     relevance_to_topic: { score: relevance, max_score: 20, reason: `The poster clearly addresses '${topic}' with clear central imagery and relevant key messaging.` },
@@ -269,7 +269,7 @@ function generateFallbackEvaluation(topic, contestantName) {
     typography_readability: { score: typography, max_score: 10, reason: `Main title typography is sharp and legible. Sub-headers maintain readable letter spacing and clean contrast.` },
     composition_layout: { score: composition, max_score: 15, reason: `Balanced grid structure with adequate margin spacing, avoiding visual clutter in key sections.` },
     creativity_originality: { score: creativity, max_score: 15, reason: `Distinctive artistic concept featuring modern graphic styling and imaginative topic interpretation.` },
-    color_usage: { score: color, max_score: 10, reason: `Harmonious color palette with effective highlight accents, maintaining proper visual contrast.` },
+    design_direction: { score: designDirection, max_score: 10, reason: `Clear, deliberate design direction with strong aesthetic cohesion and intentional style choices.` },
     overall_communication: { score: communication, max_score: 5, reason: `Communicates core topic takeaway effectively to a general competition audience.` },
     prompt_authenticity: { score: promptAuth, max_score: 10, reason: `The prompt appears naturally composed with human creative intent, demonstrating genuine engagement with the topic.` },
     total_score: total,

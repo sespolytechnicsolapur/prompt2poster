@@ -14,7 +14,7 @@ The 8 criteria and their maximum scores are:
 3. Typography / readability (Max 10)
 4. Composition / layout (Max 15)
 5. Creativity / originality (Max 15)
-6. Color usage (Max 10)
+6. Design Direction & Aesthetic Cohesion (Max 10)
 7. Overall communication (Max 5)
 8. Prompt Authenticity & Quality (Max 10)
 
@@ -55,7 +55,7 @@ You MUST return ONLY a raw valid JSON object (no markdown backticks, no wrapping
     "max_score": 15,
     "reason": "<strictly 1-2 sentence explanation>"
   },
-  "color_usage": {
+  "design_direction": {
     "score": <integer 0-10>,
     "max_score": 10,
     "reason": "<strictly 1-2 sentence explanation>"

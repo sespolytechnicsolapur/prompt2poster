@@ -9,7 +9,7 @@ export const CRITERIA_DEFINITIONS = [
   { key: 'typography_readability', label: 'Typography / Readability', maxScore: 10 },
   { key: 'composition_layout', label: 'Composition / Layout', maxScore: 15 },
   { key: 'creativity_originality', label: 'Creativity / Originality', maxScore: 15 },
-  { key: 'color_usage', label: 'Color Usage', maxScore: 10 },
+  { key: 'design_direction', label: 'Design Direction & Cohesion', maxScore: 10 },
   { key: 'overall_communication', label: 'Overall Communication', maxScore: 5 },
   { key: 'prompt_authenticity', label: 'Prompt Authenticity & Human Element', maxScore: 10 },
 ];

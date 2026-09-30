@@ -244,7 +244,7 @@ export async function uploadImageToSupabase(file, userId, folder = 'submissions'
  */
 export async function saveSubmission(submissionData) {
   const {
-    contestantName, topic, posterFile, chatScreenshotFile,
+    contestantName, topic, posterFile,
     evaluation, aiPromptUsed = '', submittedByUserId = '',
     collegeName = ''
   } = submissionData;
@@ -260,7 +260,6 @@ export async function saveSubmission(submissionData) {
       round_number: currentRound,
       poster_storage_path: 'uploading...',
     poster_url: null,
-    chat_screenshot_url: null,
     submitted_by_user_id: submittedByUserId,
     ai_prompt_used: aiPromptUsed,
     relevance_to_topic_score:     evaluation.relevance_to_topic.score,
@@ -268,7 +267,7 @@ export async function saveSubmission(submissionData) {
     typography_readability_score: evaluation.typography_readability.score,
     composition_layout_score:     evaluation.composition_layout.score,
     creativity_originality_score: evaluation.creativity_originality.score,
-    color_usage_score:            evaluation.color_usage.score,
+    design_direction_score:       evaluation.design_direction.score,
     overall_communication_score:  evaluation.overall_communication.score,
     prompt_authenticity_score:    evaluation.prompt_authenticity.score,
     total_score:        evaluation.total_score,
@@ -304,16 +303,6 @@ export async function saveSubmission(submissionData) {
       }
     }
 
-    let finalScreenshotUrl = '';
-    if (chatScreenshotFile) {
-      if (typeof chatScreenshotFile === 'string' && chatScreenshotFile.startsWith('https://')) {
-        finalScreenshotUrl = chatScreenshotFile;
-      } else {
-        const snapUpload = await uploadImageToSupabase(chatScreenshotFile, submittedByUserId, 'screenshots');
-        if (snapUpload.url) finalScreenshotUrl = snapUpload.url;
-      }
-    }
-
     try {
       const dbPayload = {
         contestant_name:              record.contestant_name,
@@ -322,7 +311,6 @@ export async function saveSubmission(submissionData) {
         round_number:                 record.round_number,
         poster_storage_path:          storagePath,
         poster_url:                   finalPosterUrl,
-        chat_screenshot_url:          finalScreenshotUrl,
         submitted_by_user_id:         record.submitted_by_user_id,
         ai_prompt_used:               record.ai_prompt_used,
         relevance_to_topic_score:     record.relevance_to_topic_score,
@@ -330,7 +318,7 @@ export async function saveSubmission(submissionData) {
         typography_readability_score: record.typography_readability_score,
         composition_layout_score:     record.composition_layout_score,
         creativity_originality_score: record.creativity_originality_score,
-        color_usage_score:            record.color_usage_score,
+        design_direction_score:       record.design_direction_score,
         overall_communication_score:  record.overall_communication_score,
         prompt_authenticity_score:    record.prompt_authenticity_score,
         total_score:                  record.total_score,
@@ -541,7 +529,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
     entry.typography_readability_score  = updatedEvaluation.typography_readability.score;
     entry.composition_layout_score     = updatedEvaluation.composition_layout.score;
     entry.creativity_originality_score = updatedEvaluation.creativity_originality.score;
-    entry.color_usage_score            = updatedEvaluation.color_usage.score;
+    entry.design_direction_score       = updatedEvaluation.design_direction.score;
     entry.overall_communication_score  = updatedEvaluation.overall_communication.score;
     entry.prompt_authenticity_score    = updatedEvaluation.prompt_authenticity.score;
     entry.total_score                  = updatedEvaluation.total_score;
@@ -563,7 +551,7 @@ export async function updateSubmissionScores(id, updatedEvaluation, previousScor
           typography_readability_score: updatedEvaluation.typography_readability.score,
           composition_layout_score:     updatedEvaluation.composition_layout.score,
           creativity_originality_score: updatedEvaluation.creativity_originality.score,
-          color_usage_score:            updatedEvaluation.color_usage.score,
+          design_direction_score:       updatedEvaluation.design_direction.score,
           overall_communication_score:  updatedEvaluation.overall_communication.score,
           prompt_authenticity_score:    updatedEvaluation.prompt_authenticity.score,
           total_score:                  updatedEvaluation.total_score,
