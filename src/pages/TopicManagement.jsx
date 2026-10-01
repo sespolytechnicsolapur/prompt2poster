@@ -20,6 +20,7 @@ import {
   Database,
   Trophy,
   LayoutDashboard,
+  Download,
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,6 +30,7 @@ import { ScoreEditModal } from '../components/ScoreEditModal';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { ContestantManager } from '../components/ContestantManager';
 import { VisibilitySettings } from '../components/VisibilitySettings';
+import { BackupPanel } from '../components/BackupPanel';
 
 import { reEvaluateWithNewScore } from '../services/evaluationService';
 
@@ -1196,6 +1198,11 @@ export function TopicManagement({
       label: 'Settings',
       icon: Settings,
     },
+    {
+      id: 'backup',
+      label: 'Backup',
+      icon: Download,
+    },
   ];
 
 
@@ -1716,6 +1723,23 @@ export function TopicManagement({
               }
             />
 
+          </motion.div>
+
+        )}
+
+
+        {/* =================================================
+            BACKUP & EXPORT
+        ================================================= */}
+
+        {activeTab === 'backup' && (
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="organizer-tab-content"
+          >
+            <BackupPanel />
           </motion.div>
 
         )}

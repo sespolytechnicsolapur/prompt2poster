@@ -12,6 +12,7 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
   const [successMsg, setSuccessMsg]     = useState(null);
   const [error, setError]               = useState(null);
   const [isDeletingUserId, setIsDeletingUserId] = useState(null);
+  const [appendMode, setAppendMode]     = useState(false);
   const fileInputRef = useRef(null);
 
   const showSuccess = (msg) => {
@@ -50,9 +51,19 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
     setError(null);
 
     try {
-      const result = await uploadContestantExcel(file, adminPassword);
-      setContestants(result.contestants || []);
-      showSuccess(`Successfully imported ${result.count} contestants`);
+      const result = await uploadContestantExcel(file, adminPassword, appendMode);
+      if (appendMode) {
+        // Merge into existing list without duplicates
+        setContestants(prev => {
+          const existingIds = new Set(prev.map(c => c.user_id));
+          const newOnes = (result.contestants || []).filter(c => !existingIds.has(c.user_id));
+          return [...prev, ...newOnes];
+        });
+        showSuccess(`Added ${result.count} contestants (append mode — leaderboard preserved)`);
+      } else {
+        setContestants(result.contestants || []);
+        showSuccess(`Successfully imported ${result.count} contestants (previous data wiped)`);
+      }
     } catch (err) {
       setError(err.message || 'Failed to upload contestant file');
     } finally {
@@ -121,8 +132,29 @@ export function ContestantManager({ adminPassword, onToggleUserWhitelist }) {
 
         <p className="text-sm text-secondary font-sans m-0 leading-relaxed max-w-2xl">
           Upload an Excel file with columns: <strong className="text-primary font-bold">Name</strong> | <strong className="text-primary font-bold">User ID</strong> | <strong className="text-primary font-bold">Unique ID</strong> | <strong className="text-primary font-bold">College Name</strong>.
-          This will <strong className="text-danger font-bold">replace</strong> all existing contestants.
+          {appendMode
+            ? <span className="text-success font-bold"> Append mode ON — new contestants will be added without touching existing scores.</span>
+            : <span className="text-danger font-bold"> This will <u>replace</u> all existing contestants and wipe the leaderboard.</span>
+          }
         </p>
+
+        {/* Append Mode Toggle */}
+        <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-surface-subtle">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={appendMode}
+              onChange={e => setAppendMode(e.target.checked)}
+              className="w-4 h-4 accent-success cursor-pointer"
+            />
+            <span className="text-sm font-bold text-primary font-sans">Append Mode</span>
+          </label>
+          <span className="text-xs text-secondary font-sans">
+            {appendMode
+              ? '✅ Safe — adds new contestants on top of existing ones. Leaderboard stays intact.'
+              : '⚠️ Off — uploading will wipe ALL existing contestants and scores.'}
+          </span>
+        </div>
 
         <input
           ref={fileInputRef}

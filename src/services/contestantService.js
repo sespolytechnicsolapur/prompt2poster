@@ -9,9 +9,10 @@ const ORGANIZER_PASSWORD = import.meta.env.VITE_ORGANIZER_PASSWORD;
  *
  * @param {File} file - The .xlsx or .xls file to upload
  * @param {string} adminPassword - The organizer admin password
+ * @param {boolean} appendMode - If true, adds contestants on top of existing ones without wiping the leaderboard
  * @returns {Promise<{count: number, contestants: Array}>} Parsed results
  */
-export async function uploadContestantExcel(file, adminPassword) {
+export async function uploadContestantExcel(file, adminPassword, appendMode = false) {
   if (adminPassword !== ORGANIZER_PASSWORD) {
     throw new Error('Unauthorized: Invalid admin password');
   }
@@ -59,14 +60,19 @@ export async function uploadContestantExcel(file, adminPassword) {
     throw new Error('No valid contestant rows found. Expected format: Name | UserID | UniqueID | CollegeName');
   }
 
-  // Clear existing submissions first to wipe the leaderboard
-  await supabase.from('submissions').delete().neq('contestant_name', '___dummy___');
+  if (!appendMode) {
+    // Clear existing submissions first to wipe the leaderboard
+    await supabase.from('submissions').delete().neq('contestant_name', '___dummy___');
 
-  // Clear existing contestants
-  await supabase.from('contestants').delete().neq('name', '___dummy___');
+    // Clear existing contestants
+    await supabase.from('contestants').delete().neq('name', '___dummy___');
+  }
 
-  // Batch insert into Supabase
-  const { error } = await supabase.from('contestants').insert(contestants);
+  // In append mode: upsert so duplicate user_ids are updated, not errored
+  // In replace mode: plain insert into freshly cleared table
+  const { error } = appendMode
+    ? await supabase.from('contestants').upsert(contestants, { onConflict: 'user_id' })
+    : await supabase.from('contestants').insert(contestants);
   if (error) {
     throw new Error(`Supabase Insert Error: ${error.message}`);
   }
