@@ -180,6 +180,7 @@ app.post('/api/contestants/upload', requireAdmin, (req, res) => {
       const name = String(row[0] || '').trim();
       const userId = String(row[1] || '').trim();
       const uniqueId = String(row[2] || '').trim();
+      const collegeName = String(row[3] || '').trim();
 
       // Skip header-like rows
       if (i === 0 && (
@@ -192,7 +193,7 @@ app.post('/api/contestants/upload', requireAdmin, (req, res) => {
       }
 
       if (name && userId && uniqueId) {
-        contestants.push({ name, user_id: userId, unique_id: uniqueId });
+        contestants.push({ name, user_id: userId, unique_id: uniqueId, college_name: collegeName });
       }
     }
 
@@ -209,7 +210,7 @@ app.post('/api/contestants/upload', requireAdmin, (req, res) => {
     return res.json({
       success: true,
       count: contestants.length,
-      contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id }))
+      contestants: contestants.map(c => ({ name: c.name, user_id: c.user_id, college_name: c.college_name }))
     });
 
   } catch (err) {
@@ -231,6 +232,7 @@ app.get('/api/contestants/list', requireAdmin, (_req, res) => {
       name: c.name,
       user_id: c.user_id,
       unique_id: c.unique_id,
+      college_name: c.college_name,
     }))
   });
 });
